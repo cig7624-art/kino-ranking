@@ -12,12 +12,12 @@ st.set_page_config(
 st.markdown("""
 <style>
 .stApp {
-    background: linear-gradient(180deg, #0f172a 0%, #111827 100%);
+    background: #0f172a;
 }
 
 .block-container {
-    padding-top: 2rem;
-    padding-bottom: 3rem;
+    padding-top: 1.5rem;
+    padding-bottom: 2rem;
 }
 
 h1, h2, h3, p, label, div, span {
@@ -25,50 +25,49 @@ h1, h2, h3, p, label, div, span {
 }
 
 h1 {
-    font-size: 42px !important;
+    font-size: 36px !important;
     font-weight: 900 !important;
-    margin-bottom: 4px !important;
+    margin-bottom: 2px !important;
 }
 
 .subtitle {
     color: #cbd5e1 !important;
-    font-size: 16px;
-    margin-bottom: 24px;
+    font-size: 15px;
+    margin-bottom: 18px;
 }
 
 .metric-card {
-    background: linear-gradient(135deg, #1e293b, #334155);
-    padding: 22px;
-    border-radius: 22px;
-    border: 1px solid #475569;
-    box-shadow: 0 10px 28px rgba(0,0,0,0.28);
-    min-height: 128px;
+    background: #1e293b;
+    padding: 16px 18px;
+    border-radius: 16px;
+    border: 1px solid #334155;
+    min-height: 95px;
 }
 
 .card-title {
-    font-size: 15px;
+    font-size: 14px;
     color: #cbd5e1 !important;
-    margin-bottom: 10px;
+    margin-bottom: 6px;
 }
 
 .big-number {
-    font-size: 36px;
+    font-size: 30px;
     font-weight: 900;
     color: #38bdf8 !important;
 }
 
 .card-sub {
-    font-size: 13px;
+    font-size: 12px;
     color: #94a3b8 !important;
-    margin-top: 6px;
+    margin-top: 3px;
 }
 
 .rank-card {
     background-color: #111827;
     border: 1px solid #334155;
-    border-radius: 18px;
-    padding: 15px 18px;
-    margin-bottom: 10px;
+    border-radius: 10px;
+    padding: 7px 10px;
+    margin-bottom: 5px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -77,58 +76,74 @@ h1 {
 .rank-left {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 10px;
 }
 
 .rank-num {
     background-color: #1e293b;
     color: #38bdf8 !important;
-    font-weight: 900;
-    border-radius: 12px;
-    padding: 8px 12px;
-    min-width: 52px;
+    font-weight: 800;
+    border-radius: 8px;
+    padding: 4px 8px;
+    min-width: 44px;
     text-align: center;
+    font-size: 13px;
 }
 
 .title-text {
-    font-size: 17px;
+    font-size: 14px;
     font-weight: 700;
 }
 
 .badge-new {
     color: #f97316 !important;
     font-weight: 900;
+    font-size: 13px;
 }
 
 .badge-up {
     color: #22c55e !important;
     font-weight: 900;
+    font-size: 13px;
 }
 
 .badge-down {
     color: #ef4444 !important;
     font-weight: 900;
+    font-size: 13px;
 }
 
 .small-text {
     color: #94a3b8 !important;
-    font-size: 13px;
+    font-size: 11px;
 }
 
 .section-card {
     background-color: #111827;
     border: 1px solid #334155;
-    border-radius: 18px;
-    padding: 16px 18px;
-    margin-bottom: 10px;
+    border-radius: 10px;
+    padding: 8px 10px;
+    margin-bottom: 6px;
 }
 
 hr {
     border-color: #334155;
 }
 
-.stSelectbox div {
+/* 드롭다운 선택 박스 */
+[data-baseweb="select"] * {
     color: #111827 !important;
+}
+
+/* 드롭다운 펼친 메뉴 */
+[data-baseweb="popover"] * {
+    color: #111827 !important;
+    background-color: #ffffff !important;
+}
+
+/* 선택 라벨은 흰색 */
+.stSelectbox label {
+    color: #f8fafc !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -151,9 +166,9 @@ if df.empty:
     st.error("수집된 데이터가 없습니다.")
     st.stop()
 
-# 예전 CSV 구조 대응
 if "period" not in df.columns:
-    df["period"] = "전체"
+    df["period"] = "주간"
+
 if "platform" not in df.columns:
     df["platform"] = "전체"
 
@@ -184,16 +199,27 @@ bad_titles = [
 
 df = df[~df["title"].isin(bad_titles)]
 
-period_options = ["일간", "주간", "월간"]
-platform_options = ["전체", "넷플릭스", "티빙", "쿠팡플레이", "웨이브", "디즈니+", "왓챠", "박스오피스"]
+period_options = sorted(df["period"].dropna().unique().tolist())
+platform_options = sorted(df["platform"].dropna().unique().tolist())
+
+default_period = period_options.index("주간") if "주간" in period_options else 0
+default_platform = platform_options.index("전체") if "전체" in platform_options else 0
 
 col_filter1, col_filter2 = st.columns(2)
 
 with col_filter1:
-    selected_period = st.selectbox("기간 선택", period_options, index=1)
+    selected_period = st.selectbox(
+        "기간 선택",
+        period_options,
+        index=default_period
+    )
 
 with col_filter2:
-    selected_platform = st.selectbox("OTT 선택", platform_options, index=0)
+    selected_platform = st.selectbox(
+        "OTT 선택",
+        platform_options,
+        index=default_platform
+    )
 
 filtered = df[
     (df["period"] == selected_period) &
@@ -201,7 +227,7 @@ filtered = df[
 ].copy()
 
 if filtered.empty:
-    st.warning("선택한 조건의 데이터가 없습니다. GitHub Actions를 다시 실행해보세요.")
+    st.warning("선택한 조건의 데이터가 없습니다.")
     st.stop()
 
 dates = sorted(filtered["date"].unique(), reverse=True)
@@ -219,8 +245,8 @@ if len(dates) < 2:
     ).strftime("%Y-%m-%d")
 
     demo_titles = this_week["title"].tolist()
-    demo_titles = demo_titles[8:40] + demo_titles[0:8] + demo_titles[40:85]
-    demo_titles = demo_titles[:85]
+    demo_titles = demo_titles[8:45] + demo_titles[0:8] + demo_titles[45:90]
+    demo_titles = demo_titles[:90]
 
     last_week = pd.DataFrame({
         "date": [demo_date] * len(demo_titles),
@@ -271,16 +297,16 @@ col1, col2, col3, col4 = st.columns(4)
 with col1:
     st.markdown(f"""
     <div class="metric-card">
-        <div class="card-title">주간 신규 진입</div>
+        <div class="card-title">TOP100 신규 진입</div>
         <div class="big-number">{len(new_df)}</div>
-        <div class="card-sub">TOP100 기준</div>
+        <div class="card-sub">{selected_platform} / {selected_period}</div>
     </div>
     """, unsafe_allow_html=True)
 
 with col2:
     st.markdown(f"""
     <div class="metric-card">
-        <div class="card-title">급상승 작품</div>
+        <div class="card-title">상승 작품</div>
         <div class="big-number">{len(up_df)}</div>
         <div class="card-sub">전주 대비 순위 상승</div>
     </div>
@@ -289,7 +315,7 @@ with col2:
 with col3:
     st.markdown(f"""
     <div class="metric-card">
-        <div class="card-title">급하락 작품</div>
+        <div class="card-title">하락 작품</div>
         <div class="big-number">{len(down_df)}</div>
         <div class="card-sub">전주 대비 순위 하락</div>
     </div>
@@ -312,7 +338,7 @@ if demo_mode:
 
 st.markdown("---")
 
-left, right = st.columns([1.2, 1])
+left, right = st.columns([1.25, 1])
 
 with left:
     st.subheader(f"🏆 {selected_platform} {selected_period} TOP100 | {this_date}")
@@ -321,26 +347,27 @@ with left:
         title = row["title"]
         rank = int(row["rank"])
 
-        prev = merged[merged["title"] == title]["rank_last"].values
-        change = merged[merged["title"] == title]["change"].values
+        matched = merged[merged["title"] == title]
 
-        badge = ""
+        badge = '<span class="badge-new">NEW</span>'
         sub = "지난주 순위 없음"
 
-        if len(prev) > 0 and pd.notna(prev[0]):
-            prev_rank = int(prev[0])
-            chg = int(change[0])
+        if not matched.empty:
+            prev_rank = matched.iloc[0]["rank_last"]
+            change = matched.iloc[0]["change"]
 
-            if chg > 0:
-                badge = f'<span class="badge-up">▲{chg}</span>'
-            elif chg < 0:
-                badge = f'<span class="badge-down">▼{abs(chg)}</span>'
-            else:
-                badge = '<span class="small-text">-</span>'
+            if pd.notna(prev_rank):
+                prev_rank = int(prev_rank)
+                change = int(change)
 
-            sub = f"지난주 #{prev_rank}"
-        else:
-            badge = '<span class="badge-new">NEW</span>'
+                if change > 0:
+                    badge = f'<span class="badge-up">▲{change}</span>'
+                elif change < 0:
+                    badge = f'<span class="badge-down">▼{abs(change)}</span>'
+                else:
+                    badge = '<span class="small-text">-</span>'
+
+                sub = f"지난주 #{prev_rank}"
 
         st.markdown(f"""
         <div class="rank-card">
@@ -356,7 +383,7 @@ with left:
         """, unsafe_allow_html=True)
 
 with right:
-    st.subheader("🔥 TOP100 신규 진입 작품")
+    st.subheader("🔥 TOP100 신규 진입")
 
     if len(new_df) > 0:
         for _, row in new_df.sort_values("rank_this").head(30).iterrows():

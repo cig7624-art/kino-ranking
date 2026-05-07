@@ -11,55 +11,97 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-.main {
+.stApp {
     background-color: #0f172a;
+    color: #ffffff;
 }
+
 .block-container {
     padding-top: 2rem;
+    padding-bottom: 3rem;
 }
-h1, h2, h3, p, div {
-    color: #f8fafc;
+
+h1, h2, h3, p, label, div {
+    color: #f8fafc !important;
 }
+
+h1 {
+    font-size: 42px !important;
+    font-weight: 900 !important;
+    margin-bottom: 4px !important;
+}
+
+.subtitle {
+    color: #cbd5e1 !important;
+    font-size: 16px;
+    margin-bottom: 24px;
+}
+
 .metric-card {
     background: linear-gradient(135deg, #1e293b, #334155);
     padding: 24px;
     border-radius: 20px;
     border: 1px solid #475569;
     box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    margin-bottom: 12px;
 }
-.big-number {
-    font-size: 36px;
-    font-weight: 800;
-    color: #38bdf8;
-}
+
 .card-title {
-    font-size: 16px;
-    color: #cbd5e1;
+    font-size: 17px;
+    color: #cbd5e1 !important;
+    margin-bottom: 12px;
 }
+
+.big-number {
+    font-size: 42px;
+    font-weight: 900;
+    color: #38bdf8 !important;
+}
+
 .section-card {
     background-color: #111827;
-    padding: 20px;
+    padding: 18px 20px;
     border-radius: 18px;
     border: 1px solid #374151;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
 }
+
 .new-badge {
-    color: #f97316;
-    font-weight: 800;
+    color: #f97316 !important;
+    font-weight: 900;
 }
+
 .up-badge {
-    color: #22c55e;
-    font-weight: 800;
+    color: #22c55e !important;
+    font-weight: 900;
 }
+
 .down-badge {
-    color: #ef4444;
-    font-weight: 800;
+    color: #ef4444 !important;
+    font-weight: 900;
+}
+
+[data-testid="stDataFrame"] {
+    background-color: white;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.stAlert {
+    border-radius: 14px;
+}
+
+hr {
+    border-color: #334155;
 }
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🎬 키노라이츠 주간 랭킹 대시보드")
-st.caption("매주 월요일 기준 키노라이츠 랭킹 변화 모니터링")
+st.markdown("<h1>🎬 키노라이츠 주간 랭킹 대시보드</h1>", unsafe_allow_html=True)
+st.markdown(
+    '<div class="subtitle">매주 월요일 기준 키노라이츠 랭킹 변화 모니터링</div>',
+    unsafe_allow_html=True
+)
 
 file = Path("ranking_history.csv")
 
@@ -69,7 +111,7 @@ if not file.exists():
 
 df = pd.read_csv(file)
 
-if df.empty or len(df) == 0:
+if df.empty:
     st.error("수집된 데이터가 없습니다.")
     st.stop()
 
@@ -77,10 +119,23 @@ df["date"] = df["date"].astype(str)
 df["rank"] = pd.to_numeric(df["rank"], errors="coerce")
 df = df.dropna(subset=["rank", "title"])
 df["rank"] = df["rank"].astype(int)
+df["title"] = df["title"].astype(str)
+
+# 이상한 안내문 제거
+bad_titles = [
+    "성별과 연령을 선택하고",
+    "꼭 맞는 랭킹을 확인해 보세요",
+    "트렌드 랭킹",
+    "일간",
+    "주간",
+    "월간",
+    "전체"
+]
+
+df = df[~df["title"].isin(bad_titles)]
 
 dates = sorted(df["date"].unique(), reverse=True)
 
-# 테스트용: 데이터가 1주치뿐이면 가짜 지난주 데이터 자동 생성
 demo_mode = False
 
 if len(dates) < 2:
@@ -95,10 +150,8 @@ if len(dates) < 2:
 
     demo_titles = this_week["title"].tolist()
 
-    # 테스트용 순위 섞기
+    # 테스트용 지난주 랭킹 생성
     demo_titles = demo_titles[3:10] + demo_titles[0:3] + demo_titles[10:15]
-
-    # 일부 작품 제거해서 NEW 발생시키기
     demo_titles = demo_titles[:15]
 
     last_week = pd.DataFrame({
@@ -116,8 +169,8 @@ else:
     this_week = df[df["date"] == this_date].copy()
     last_week = df[df["date"] == last_date].copy()
 
-this_week = this_week.sort_values("rank")
-last_week = last_week.sort_values("rank")
+this_week = this_week.sort_values("rank").head(20)
+last_week = last_week.sort_values("rank").head(20)
 
 merged = this_week.merge(
     last_week[["title", "rank"]],
@@ -136,16 +189,17 @@ up_df = up_df.sort_values("change", ascending=False)
 down_df = merged[merged["change"] < 0].copy()
 down_df = down_df.sort_values("change")
 
-maintain_df = merged[merged["change"] == 0].copy()
-
 top10_this = set(this_week[this_week["rank"] <= 10]["title"])
 top10_last = set(last_week[last_week["rank"] <= 10]["title"])
-top10_keep_rate = round(len(top10_this & top10_last) / 10 * 100, 1)
 
+top10_keep_rate = round(len(top10_this & top10_last) / 10 * 100, 1)
 new_rate = round(len(new_df) / len(this_week) * 100, 1)
 
 if demo_mode:
-    st.warning("현재는 1주치 데이터만 있어서 테스트용 지난주 데이터를 자동 생성했습니다. 다음주부터 실제 비교로 바뀝니다.")
+    st.warning(
+        "현재는 1주치 데이터만 있어서 테스트용 지난주 데이터를 자동 생성했습니다. "
+        "다음주부터 실제 비교로 바뀝니다."
+    )
 
 col1, col2, col3, col4 = st.columns(4)
 
@@ -189,7 +243,10 @@ with left:
     st.subheader(f"🏆 이번주 TOP20 | {this_date}")
 
     show_top = this_week[["rank", "title"]].rename(
-        columns={"rank": "순위", "title": "작품명"}
+        columns={
+            "rank": "순위",
+            "title": "작품명"
+        }
     )
 
     st.dataframe(
@@ -229,7 +286,7 @@ with col_up:
             <div class="section-card">
                 <span class="up-badge">▲{int(row['상승폭'])}</span>
                 &nbsp; <b>{row['title']}</b><br>
-                <span style="color:#cbd5e1;">
+                <span style="color:#cbd5e1 !important;">
                     지난주 #{int(row['rank_last'])} → 이번주 #{int(row['rank_this'])}
                 </span>
             </div>
@@ -249,7 +306,7 @@ with col_down:
             <div class="section-card">
                 <span class="down-badge">▼{int(row['하락폭'])}</span>
                 &nbsp; <b>{row['title']}</b><br>
-                <span style="color:#cbd5e1;">
+                <span style="color:#cbd5e1 !important;">
                     지난주 #{int(row['rank_last'])} → 이번주 #{int(row['rank_this'])}
                 </span>
             </div>

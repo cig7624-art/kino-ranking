@@ -199,8 +199,24 @@ bad_titles = [
 
 df = df[~df["title"].isin(bad_titles)]
 
-period_options = sorted(df["period"].dropna().unique().tolist())
-platform_options = sorted(df["platform"].dropna().unique().tolist())
+period_order = ["일간", "주간", "월간"]
+platform_order = ["전체", "넷플릭스", "티빙", "쿠팡플레이", "웨이브", "디즈니+", "왓챠", "박스오피스"]
+
+period_options = [
+    x for x in period_order
+    if x in df["period"].dropna().unique().tolist()
+]
+
+platform_options = [
+    x for x in platform_order
+    if x in df["platform"].dropna().unique().tolist()
+]
+
+if len(period_options) == 0:
+    period_options = ["주간"]
+
+if len(platform_options) == 0:
+    platform_options = ["전체"]
 
 default_period = period_options.index("주간") if "주간" in period_options else 0
 default_platform = platform_options.index("전체") if "전체" in platform_options else 0
@@ -227,7 +243,7 @@ filtered = df[
 ].copy()
 
 if filtered.empty:
-    st.warning("선택한 조건의 데이터가 없습니다.")
+    st.warning("선택한 조건의 데이터가 없습니다. Actions에서 Update Ranking을 다시 실행해보세요.")
     st.stop()
 
 dates = sorted(filtered["date"].unique(), reverse=True)

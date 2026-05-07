@@ -6,16 +6,19 @@ import re
 
 URL = "https://m.kinolights.com/ranking/kino"
 
-EXCLUDE = {
-    "트렌드 랭킹", "일간", "주간", "월간", "전체",
-    "넷플릭스", "티빙", "쿠팡플레이", "웨이브", "디즈니+", "왓챠", "박스오피스",
-    "성별 · 연령 전체", "홈", "랭킹", "탐색", "혜택", "마이페이지"
-}
+PERIODS = ["일간", "주간", "월간"]
+PLATFORMS = ["전체", "넷플릭스", "티빙", "쿠팡플레이", "웨이브", "디즈니+", "왓챠", "박스오피스"]
+
+EXCLUDE = set(PERIODS + PLATFORMS + [
+    "트렌드 랭킹",
+    "성별 · 연령 전체",
+    "성별과 연령을 선택하고",
+    "꼭 맞는 랭킹을 확인해 보세요",
+    "홈", "랭킹", "탐색", "혜택", "마이페이지"
+])
 
 def is_title(line):
-    if not line:
-        return False
-    if line in EXCLUDE:
+    if not line or line in EXCLUDE:
         return False
     if re.fullmatch(r"\d{1,3}", line):
         return False
@@ -29,43 +32,78 @@ def is_title(line):
         return False
     return True
 
+def extract_titles(page):
+    text = page.locator("body").inner_text()
+    lines = [x.strip() for x in text.split("\n") if x.strip()]
+
+    titles = []
+    for line in lines:
+        if is_title(line) and line not in titles:
+            titles.append(line)
+
+    return titles[:100]
+
+today = datetime.today().strftime("%Y-%m-%d")
+rows = []
+
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=True)
+
     page = browser.new_page(
-        viewport={"width": 390, "height": 1200},
+        viewport={"width": 430, "height": 1600},
         user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)"
     )
 
     page.goto(URL, wait_until="networkidle", timeout=60000)
-    page.wait_for_timeout(5000)
+    page.wait_for_timeout(3000)
 
-    text = page.locator("body").inner_text()
+    for period in PERIODS:
+        try:
+            page.get_by_text(period).first.click()
+            page.wait_for_timeout(1500)
+        except:
+            pass
+
+        for platform in PLATFORMS:
+            try:
+                page.get_by_text(platform).first.click()
+                page.wait_for_timeout(1500)
+            except:
+                pass
+
+            titles = extract_titles(page)
+
+            for idx, title in enumerate(titles, start=1):
+                rows.append({
+                    "date": today,
+                    "period": period,
+                    "platform": platform,
+                    "rank": idx,
+                    "title": title
+                })
+
     browser.close()
 
-lines = [x.strip() for x in text.split("\n") if x.strip()]
-
-titles = []
-for line in lines:
-    if is_title(line) and line not in titles:
-        titles.append(line)
-
-titles = titles[:20]
-
-today = datetime.today().strftime("%Y-%m-%d")
-
-df = pd.DataFrame({
-    "date": [today] * len(titles),
-    "rank": range(1, len(titles) + 1),
-    "title": titles
-})
+new_df = pd.DataFrame(rows)
 
 csv_path = Path("ranking_history.csv")
 
 if csv_path.exists():
     old = pd.read_csv(csv_path)
-    df = pd.concat([old, df], ignore_index=True)
-    df = df.drop_duplicates(subset=["date", "title"], keep="last")
+
+    # 예전 CSV 구조 대응
+    for col in ["period", "platform"]:
+        if col not in old.columns:
+            old[col] = "전체"
+
+    df = pd.concat([old, new_df], ignore_index=True)
+    df = df.drop_duplicates(
+        subset=["date", "period", "platform", "title"],
+        keep="last"
+    )
+else:
+    df = new_df
 
 df.to_csv(csv_path, index=False, encoding="utf-8-sig")
 
-print(df.tail(20))
+print(df.tail(30))

@@ -26,17 +26,36 @@ def is_title(line):
         return False
     if re.fullmatch(r"\d+(\.\d+)?%", line):
         return False
-    if re.search(r"(드라마|영화|예능|애니메이션|다큐멘터리)\s*·\s*\d{4}", line):
+    if re.search(r"(드라마|영화|예능|애니메이션|다큐멘터리|시사교양)\s*·\s*\d{4}", line):
         return False
     if "기준" in line:
         return False
     return True
 
+def click_text(page, text):
+    try:
+        page.get_by_text(text, exact=True).first.click(force=True)
+        page.wait_for_timeout(1800)
+        return True
+    except Exception:
+        return False
+
+def scroll_load(page):
+    page.evaluate("window.scrollTo(0, 0)")
+    page.wait_for_timeout(500)
+
+    for _ in range(8):
+        page.mouse.wheel(0, 1800)
+        page.wait_for_timeout(600)
+
 def extract_titles(page):
+    scroll_load(page)
+
     text = page.locator("body").inner_text()
     lines = [x.strip() for x in text.split("\n") if x.strip()]
 
     titles = []
+
     for line in lines:
         if is_title(line) and line not in titles:
             titles.append(line)
@@ -50,28 +69,22 @@ with sync_playwright() as p:
     browser = p.chromium.launch(headless=True)
 
     page = browser.new_page(
-        viewport={"width": 430, "height": 1600},
+        viewport={"width": 430, "height": 1800},
         user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)"
     )
 
     page.goto(URL, wait_until="networkidle", timeout=60000)
-    page.wait_for_timeout(3000)
+    page.wait_for_timeout(4000)
 
     for period in PERIODS:
-        try:
-            page.get_by_text(period).first.click()
-            page.wait_for_timeout(1500)
-        except:
-            pass
+        click_text(page, period)
 
         for platform in PLATFORMS:
-            try:
-                page.get_by_text(platform).first.click()
-                page.wait_for_timeout(1500)
-            except:
-                pass
+            click_text(page, platform)
 
             titles = extract_titles(page)
+
+            print(f"{period} / {platform} / {len(titles)}개 수집")
 
             for idx, title in enumerate(titles, start=1):
                 rows.append({
@@ -91,14 +104,14 @@ csv_path = Path("ranking_history.csv")
 if csv_path.exists():
     old = pd.read_csv(csv_path)
 
-    # 예전 CSV 구조 대응
     for col in ["period", "platform"]:
         if col not in old.columns:
             old[col] = "전체"
 
     df = pd.concat([old, new_df], ignore_index=True)
+
     df = df.drop_duplicates(
-        subset=["date", "period", "platform", "title"],
+        subset=["date", "period", "platform", "rank"],
         keep="last"
     )
 else:
@@ -106,4 +119,4 @@ else:
 
 df.to_csv(csv_path, index=False, encoding="utf-8-sig")
 
-print(df.tail(30))
+print(df.tail(50))

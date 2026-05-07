@@ -7,7 +7,7 @@ import re
 URL = "https://m.kinolights.com/ranking/kino"
 
 PERIODS = ["일간", "주간", "월간"]
-PLATFORMS = ["전체", "넷플릭스", "티빙", "쿠팡플레이", "웨이브", "디즈니+", "왓챠", "박스오피스"]
+PLATFORMS = ["전체"]
 
 EXCLUDE = set(PERIODS + PLATFORMS + [
     "트렌드 랭킹",

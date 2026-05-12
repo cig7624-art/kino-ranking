@@ -91,12 +91,6 @@ OTT_NAMES = [
     "라프텔"
 ]
 
-@st.cache_resource
-def install_playwright_browser():
-    subprocess.run(
-        [sys.executable, "-m", "playwright", "install", "chromium"],
-        check=False
-    )
 
 def search_kino_contents(keyword):
     query = """
@@ -137,7 +131,6 @@ def search_kino_contents(keyword):
     return data["data"]["contents"]
 
 def get_subscription_providers_from_page(content_id):
-    install_playwright_browser()
 
     urls = [
         f"https://m.kinolights.com/title/{content_id}",
@@ -148,7 +141,10 @@ def get_subscription_providers_from_page(content_id):
     providers = []
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
+browser = p.chromium.launch(
+    headless=True,
+    executable_path="/usr/bin/chromium"
+)
 
         page = browser.new_page(
             viewport={"width": 430, "height": 1600},

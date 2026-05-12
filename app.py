@@ -82,6 +82,17 @@ with tab2:
         titleKr
         openYear
         genres
+      }
+    }
+    """
+
+    DETAIL_QUERY = """
+    query ContentDetail($id: ID!) {
+      content(id: $id) {
+        id
+        titleKr
+        openYear
+        genres
         vodOfferItems {
           providerId
           isActive
@@ -91,16 +102,16 @@ with tab2:
     """
 
     if keyword:
-        payload = {
-            "operationName": "SearchContents",
-            "variables": {"keyword": keyword},
-            "query": SEARCH_QUERY,
-        }
-
         try:
-            res = requests.post(
+            search_payload = {
+                "operationName": "SearchContents",
+                "variables": {"keyword": keyword},
+                "query": SEARCH_QUERY,
+            }
+
+            search_res = requests.post(
                 "https://gateway.kinolights.com/graphql",
-                json=payload,
+                json=search_payload,
                 headers={
                     "Content-Type": "application/json",
                     "User-Agent": "Mozilla/5.0",
@@ -108,44 +119,72 @@ with tab2:
                 timeout=20,
             )
 
-            data = res.json()
+            search_data = search_res.json()
 
-            if "errors" in data:
-                st.error(data["errors"])
+            if "errors" in search_data:
+                st.error(search_data["errors"])
                 st.stop()
 
-            items = data["data"]["contents"]
+            items = search_data["data"]["contents"]
 
             if len(items) == 0:
                 st.warning("검색 결과 없음")
-            else:
-                for node in items:
-                    provider_ids = []
+                st.stop()
 
-                    for offer in node.get("vodOfferItems", []):
-                        if offer.get("isActive"):
-                            provider_ids.append(str(offer.get("providerId")))
+            for item in items:
+                content_id = item["id"]
 
-                    otts = []
+                detail_payload = {
+                    "operationName": "ContentDetail",
+                    "variables": {"id": content_id},
+                    "query": DETAIL_QUERY,
+                }
 
-                    for pid in provider_ids:
-                        if pid in PROVIDER_MAP:
-                            otts.append(PROVIDER_MAP[pid])
+                detail_res = requests.post(
+                    "https://gateway.kinolights.com/graphql",
+                    json=detail_payload,
+                    headers={
+                        "Content-Type": "application/json",
+                        "User-Agent": "Mozilla/5.0",
+                    },
+                    timeout=20,
+                )
 
-                    otts = sorted(set(otts))
+                detail_data = detail_res.json()
 
-                    providers = ", ".join(otts) if otts else "OTT 정보 없음"
-                    genres = ", ".join(node.get("genres") or [])
+                if "errors" in detail_data:
+                    node = item
+                    offers = []
+                else:
+                    node = detail_data["data"]["content"]
+                    offers = node.get("vodOfferItems", [])
 
-                    st.markdown(f"""
-                    <div class="card">
-                        <b>{node.get('titleKr')}</b><br>
-                        <span class="small">
-                            제공 OTT: {providers}<br>
-                            장르: {genres} · 연도: {node.get('openYear')}
-                        </span>
-                    </div>
-                    """, unsafe_allow_html=True)
+                provider_ids = []
+
+                for offer in offers:
+                    if offer.get("isActive"):
+                        provider_ids.append(str(offer.get("providerId")))
+
+                otts = []
+
+                for pid in provider_ids:
+                    if pid in PROVIDER_MAP:
+                        otts.append(PROVIDER_MAP[pid])
+
+                otts = sorted(set(otts))
+
+                providers = ", ".join(otts) if otts else "OTT 정보 없음"
+                genres = ", ".join(node.get("genres") or [])
+
+                st.markdown(f"""
+                <div class="card">
+                    <b>{node.get('titleKr')}</b><br>
+                    <span class="small">
+                        제공 OTT: {providers}<br>
+                        장르: {genres} · 연도: {node.get('openYear')}
+                    </span>
+                </div>
+                """, unsafe_allow_html=True)
 
         except Exception as e:
             st.error(str(e))

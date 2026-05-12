@@ -1,12 +1,10 @@
-name: Update Ranking
+name: Find API
 
 on:
-  schedule:
-    - cron: '0 0 * * 1'
   workflow_dispatch:
 
 jobs:
-  update-ranking:
+  find-api:
     runs-on: ubuntu-latest
 
     steps:
@@ -20,16 +18,14 @@ jobs:
 
       - name: Install packages
         run: |
-          pip install -r requirements.txt
+          pip install playwright
           playwright install chromium
 
-      - name: Run scraper
-        run: python scrape.py
+      - name: Find API
+        run: python find_api.py
 
-      - name: Commit CSV
-        run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git add ranking_history.csv
-          git commit -m "Update ranking" || echo "No changes"
-          git push
+      - name: Upload result
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-candidates
+          path: api_candidates.json

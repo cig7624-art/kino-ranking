@@ -28,4 +28,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: api-candidates
-          path: api_candidates.json
+          path: graphql_calls.json

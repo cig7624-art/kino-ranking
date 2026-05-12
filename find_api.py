@@ -3,18 +3,6 @@ import json
 
 URL = "https://m.kinolights.com/ranking/kino"
 
-KEYWORDS = [
-    "ranking",
-    "rank",
-    "kino",
-    "contents",
-    "content",
-    "ott",
-    "search",
-    "discover",
-    "explore"
-]
-
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=True)
 
@@ -26,24 +14,22 @@ with sync_playwright() as p:
         )
     )
 
-    found = []
+    graphql_calls = []
 
     def handle_response(response):
         url = response.url
-        lower_url = url.lower()
 
-        if any(k in lower_url for k in KEYWORDS):
+        if "graphql" in url:
             try:
-                content_type = response.headers.get("content-type", "")
-                status = response.status
+                req = response.request
 
                 item = {
-                    "status": status,
-                    "content_type": content_type,
-                    "url": url
+                    "url": url,
+                    "method": req.method,
+                    "post_data": req.post_data
                 }
 
-                found.append(item)
+                graphql_calls.append(item)
 
             except Exception:
                 pass
@@ -53,19 +39,18 @@ with sync_playwright() as p:
     page.goto(URL, wait_until="networkidle", timeout=60000)
     page.wait_for_timeout(5000)
 
-    # 기간/OTT 버튼을 실제로 눌러보면서 네트워크 요청 잡기
     buttons = [
         "일간", "주간", "월간",
-        "전체", "넷플릭스", "티빙", "쿠팡플레이",
-        "웨이브", "디즈니+", "왓챠", "박스오피스"
+        "전체", "넷플릭스", "티빙",
+        "쿠팡플레이", "웨이브",
+        "디즈니+", "왓챠", "박스오피스"
     ]
 
     for text in buttons:
         try:
             loc = page.get_by_text(text, exact=True)
-            count = loc.count()
 
-            for i in range(count):
+            for i in range(loc.count()):
                 item = loc.nth(i)
 
                 if item.is_visible():
@@ -73,28 +58,12 @@ with sync_playwright() as p:
                     page.wait_for_timeout(2500)
                     break
 
-        except Exception as e:
-            print(f"CLICK FAIL: {text} / {e}")
+        except Exception:
+            pass
 
     browser.close()
 
-    # 중복 제거
-    unique = []
-    seen = set()
+    with open("graphql_calls.json", "w", encoding="utf-8") as f:
+        json.dump(graphql_calls, f, ensure_ascii=False, indent=2)
 
-    for item in found:
-        url = item["url"]
-
-        if url not in seen:
-            seen.add(url)
-            unique.append(item)
-
-    print("\n=== POSSIBLE API URLS ===\n")
-
-    for item in unique:
-        print(f"[{item['status']}] {item['content_type']}")
-        print(item["url"])
-        print("-" * 80)
-
-    with open("api_candidates.json", "w", encoding="utf-8") as f:
-        json.dump(unique, f, ensure_ascii=False, indent=2)
+    print("DONE")

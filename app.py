@@ -75,22 +75,16 @@ with tab2:
     SEARCH_QUERY = """
     query SearchContents($keyword: String!) {
       contents(
-        filter: {
-          keyword: $keyword
-        }
-        first: 10
+        keyword: $keyword
+        limit: 10
       ) {
-        edges {
-          node {
-            id
-            titleKr
-            openYear
-            genres
-            vodOfferItems {
-              providerId
-              isActive
-            }
-          }
+        id
+        titleKr
+        openYear
+        genres
+        vodOfferItems {
+          providerId
+          isActive
         }
       }
     }
@@ -120,14 +114,12 @@ with tab2:
                 st.error(data["errors"])
                 st.stop()
 
-            items = data["data"]["contents"]["edges"]
+            items = data["data"]["contents"]
 
             if len(items) == 0:
                 st.warning("검색 결과 없음")
             else:
-                for item in items:
-                    node = item["node"]
-
+                for node in items:
                     provider_ids = []
 
                     for offer in node.get("vodOfferItems", []):

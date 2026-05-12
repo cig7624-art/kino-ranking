@@ -64,164 +64,6 @@ PROVIDER_MAP = {
 
 tab1, tab2 = st.tabs(["📈 랭킹 대시보드", "🔎 OTT 제공처 검색"])
 
-with tab1:
-    file = Path("ranking_history.csv")
-
-    if not file.exists():
-        st.error("ranking_history.csv가 없습니다. 먼저 Actions에서 수집을 실행하세요.")
-        st.stop()
-
-    df = pd.read_csv(file)
-
-    if df.empty:
-        st.error("수집된 데이터가 없습니다.")
-        st.stop()
-
-    if "is_theater" not in df.columns:
-        df["is_theater"] = False
-
-    df["date"] = df["date"].astype(str)
-    df["period"] = df["period"].astype(str)
-    df["title"] = df["title"].astype(str)
-    df["providers"] = df["providers"].fillna("").astype(str)
-    df["rank"] = pd.to_numeric(df["rank"], errors="coerce")
-    df["delta"] = pd.to_numeric(df["delta"], errors="coerce").fillna(0)
-    df["is_new"] = df["is_new"].astype(str).str.lower().isin(["true", "1"])
-    df["is_theater"] = df["is_theater"].astype(str).str.lower().isin(["true", "1"])
-
-    latest_date = sorted(df["date"].unique(), reverse=True)[0]
-    latest = df[df["date"] == latest_date].copy()
-
-    period_order = ["일간", "주간", "월간"]
-
-    c1, c2 = st.columns(2)
-
-    with c1:
-        selected_period = st.selectbox("기간 선택", period_order, index=1)
-
-    with c2:
-        ott_options = [
-            "전체",
-            "넷플릭스",
-            "티빙",
-            "웨이브",
-            "디즈니+",
-            "쿠팡플레이",
-            "왓챠",
-            "애플TV+",
-            "라프텔",
-            "극장상영",
-        ]
-        selected_ott = st.selectbox("OTT 선택", ott_options, index=0)
-
-    base = latest[latest["period"] == selected_period].copy()
-
-    if selected_ott == "극장상영":
-        base = base[base["is_theater"] == True].copy()
-    elif selected_ott != "전체":
-        base = base[base["providers"].str.contains(selected_ott, na=False)].copy()
-
-    base = base.sort_values("rank")
-    new_df = base[base["is_new"] == True].copy()
-    up_df = base[base["delta"] > 0].copy().sort_values("delta", ascending=False)
-
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        st.markdown(f"""
-        <div class="metric">
-            <div>신규 진입 콘텐츠</div>
-            <div class="metric-num">{len(new_df)}</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with col2:
-        st.markdown(f"""
-        <div class="metric">
-            <div>급상승 콘텐츠</div>
-            <div class="metric-num">{len(up_df)}</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with col3:
-        st.markdown(f"""
-        <div class="metric">
-            <div>표시 기준</div>
-            <div class="metric-num">{selected_period}</div>
-            <div class="small">{selected_ott}</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    st.markdown("---")
-
-    left, right = st.columns([1.25, 1])
-
-    with left:
-        st.subheader(f"🏆 {selected_ott} {selected_period} TOP100")
-
-        if base.empty:
-            st.warning("선택한 조건의 랭킹 데이터가 없습니다.")
-        else:
-            for _, row in base.head(100).iterrows():
-                if row["is_new"]:
-                    badge = '<span class="new">NEW</span>'
-                elif row["delta"] > 0:
-                    badge = f'<span class="up">▲{int(row["delta"])}</span>'
-                elif row["delta"] < 0:
-                    badge = f'<span class="down">▼{abs(int(row["delta"]))}</span>'
-                else:
-                    badge = '<span class="small">-</span>'
-
-                providers = row["providers"] if row["providers"] else "OTT 없음"
-                theater_badge = " · 🎬 극장상영" if row["is_theater"] else ""
-
-                st.markdown(f"""
-                <div class="card">
-                    <span class="rank">#{int(row['rank'])}</span>
-                    &nbsp; <b>{row['title']}</b>
-                    &nbsp; {badge}<br>
-                    <span class="small">{providers}{theater_badge}</span>
-                </div>
-                """, unsafe_allow_html=True)
-
-    with right:
-        st.subheader("🔥 신규 진입 콘텐츠")
-
-        if new_df.empty:
-            st.info("신규 진입 콘텐츠 없음")
-        else:
-            for _, row in new_df.head(30).iterrows():
-                providers = row["providers"] if row["providers"] else "OTT 없음"
-                theater_badge = " · 🎬 극장상영" if row["is_theater"] else ""
-
-                st.markdown(f"""
-                <div class="card">
-                    <span class="new">NEW</span>
-                    &nbsp; #{int(row['rank'])} &nbsp;
-                    <b>{row['title']}</b><br>
-                    <span class="small">{providers}{theater_badge}</span>
-                </div>
-                """, unsafe_allow_html=True)
-
-        st.markdown("---")
-
-        st.subheader("🚀 급상승 콘텐츠")
-
-        if up_df.empty:
-            st.info("급상승 콘텐츠 없음")
-        else:
-            for _, row in up_df.head(30).iterrows():
-                providers = row["providers"] if row["providers"] else "OTT 없음"
-                theater_badge = " · 🎬 극장상영" if row["is_theater"] else ""
-
-                st.markdown(f"""
-                <div class="card">
-                    <span class="up">▲{int(row['delta'])}</span>
-                    &nbsp; <b>{row['title']}</b><br>
-                    <span class="small">#{int(row['rank'])} · {providers}{theater_badge}</span>
-                </div>
-                """, unsafe_allow_html=True)
-
 with tab2:
     st.subheader("🔎 타이틀로 OTT 제공처 검색")
 
@@ -232,7 +74,12 @@ with tab2:
 
     SEARCH_QUERY = """
     query SearchContents($keyword: String!) {
-      searchContents(keyword: $keyword) {
+      contents(
+        filter: {
+          keyword: $keyword
+        }
+        first: 10
+      ) {
         edges {
           node {
             id
@@ -267,10 +114,46 @@ with tab2:
                 timeout=20,
             )
 
-            st.write("STATUS:", res.status_code)
-            st.write("RAW RESPONSE:")
-            st.code(res.text)
-            st.stop()
+            data = res.json()
+
+            if "errors" in data:
+                st.error(data["errors"])
+                st.stop()
+
+            items = data["data"]["contents"]["edges"]
+
+            if len(items) == 0:
+                st.warning("검색 결과 없음")
+            else:
+                for item in items:
+                    node = item["node"]
+
+                    provider_ids = []
+
+                    for offer in node.get("vodOfferItems", []):
+                        if offer.get("isActive"):
+                            provider_ids.append(str(offer.get("providerId")))
+
+                    otts = []
+
+                    for pid in provider_ids:
+                        if pid in PROVIDER_MAP:
+                            otts.append(PROVIDER_MAP[pid])
+
+                    otts = sorted(set(otts))
+
+                    providers = ", ".join(otts) if otts else "OTT 정보 없음"
+                    genres = ", ".join(node.get("genres") or [])
+
+                    st.markdown(f"""
+                    <div class="card">
+                        <b>{node.get('titleKr')}</b><br>
+                        <span class="small">
+                            제공 OTT: {providers}<br>
+                            장르: {genres} · 연도: {node.get('openYear')}
+                        </span>
+                    </div>
+                    """, unsafe_allow_html=True)
 
         except Exception as e:
             st.error(str(e))

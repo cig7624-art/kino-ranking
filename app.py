@@ -33,6 +33,10 @@ h1,h2,h3,p,label,div,span { color:#f8fafc !important; }
     color:#22c55e !important;
     font-weight:900;
 }
+.down {
+    color:#ef4444 !important;
+    font-weight:900;
+}
 .small {
     color:#94a3b8 !important;
     font-size:12px;
@@ -71,6 +75,9 @@ if df.empty:
     st.error("수집된 데이터가 없습니다.")
     st.stop()
 
+if "is_theater" not in df.columns:
+    df["is_theater"] = False
+
 df["date"] = df["date"].astype(str)
 df["period"] = df["period"].astype(str)
 df["title"] = df["title"].astype(str)
@@ -78,6 +85,7 @@ df["providers"] = df["providers"].fillna("").astype(str)
 df["rank"] = pd.to_numeric(df["rank"], errors="coerce")
 df["delta"] = pd.to_numeric(df["delta"], errors="coerce").fillna(0)
 df["is_new"] = df["is_new"].astype(str).str.lower().isin(["true", "1"])
+df["is_theater"] = df["is_theater"].astype(str).str.lower().isin(["true", "1"])
 
 latest_date = sorted(df["date"].unique(), reverse=True)[0]
 latest = df[df["date"] == latest_date].copy()
@@ -104,7 +112,10 @@ with tab1:
             "웨이브",
             "디즈니+",
             "쿠팡플레이",
-            "왓챠"
+            "왓챠",
+            "애플TV+",
+            "라프텔",
+            "극장상영"
         ]
 
         selected_ott = st.selectbox(
@@ -115,7 +126,9 @@ with tab1:
 
     base = latest[latest["period"] == selected_period].copy()
 
-    if selected_ott != "전체":
+    if selected_ott == "극장상영":
+        base = base[base["is_theater"] == True].copy()
+    elif selected_ott != "전체":
         base = base[
             base["providers"].str.contains(selected_ott, na=False)
         ].copy()
@@ -172,18 +185,19 @@ with tab1:
                 elif row["delta"] > 0:
                     badge = f'<span class="up">▲{int(row["delta"])}</span>'
                 elif row["delta"] < 0:
-                    badge = f'<span class="small">▼{abs(int(row["delta"]))}</span>'
+                    badge = f'<span class="down">▼{abs(int(row["delta"]))}</span>'
                 else:
                     badge = '<span class="small">-</span>'
 
-                providers = row["providers"] if row["providers"] else "제공처 정보 없음"
+                providers = row["providers"] if row["providers"] else "OTT 없음"
+                theater_badge = " · 🎬 극장상영" if row["is_theater"] else ""
 
                 st.markdown(f"""
                 <div class="card">
                     <span class="rank">#{int(row['rank'])}</span>
                     &nbsp; <b>{row['title']}</b>
                     &nbsp; {badge}<br>
-                    <span class="small">{providers}</span>
+                    <span class="small">{providers}{theater_badge}</span>
                 </div>
                 """, unsafe_allow_html=True)
 
@@ -194,12 +208,15 @@ with tab1:
             st.info("신규 진입 콘텐츠 없음")
         else:
             for _, row in new_df.head(30).iterrows():
+                providers = row["providers"] if row["providers"] else "OTT 없음"
+                theater_badge = " · 🎬 극장상영" if row["is_theater"] else ""
+
                 st.markdown(f"""
                 <div class="card">
                     <span class="new">NEW</span>
                     &nbsp; #{int(row['rank'])} &nbsp;
                     <b>{row['title']}</b><br>
-                    <span class="small">{row['providers']}</span>
+                    <span class="small">{providers}{theater_badge}</span>
                 </div>
                 """, unsafe_allow_html=True)
 
@@ -211,11 +228,14 @@ with tab1:
             st.info("급상승 콘텐츠 없음")
         else:
             for _, row in up_df.head(30).iterrows():
+                providers = row["providers"] if row["providers"] else "OTT 없음"
+                theater_badge = " · 🎬 극장상영" if row["is_theater"] else ""
+
                 st.markdown(f"""
                 <div class="card">
                     <span class="up">▲{int(row['delta'])}</span>
                     &nbsp; <b>{row['title']}</b><br>
-                    <span class="small">#{int(row['rank'])} · {row['providers']}</span>
+                    <span class="small">#{int(row['rank'])} · {providers}{theater_badge}</span>
                 </div>
                 """, unsafe_allow_html=True)
 
@@ -234,19 +254,20 @@ with tab2:
 
         if result.empty:
             st.warning("현재 수집된 랭킹 데이터 안에서는 검색 결과가 없습니다.")
-            st.caption("※ 전체 탐색 DB 검색은 별도 Search GraphQL 쿼리를 추가로 찾아야 완성됩니다.")
+            st.caption("※ 전체 키노라이츠 탐색 DB 검색은 별도 Search GraphQL 쿼리 연결이 필요합니다.")
         else:
             result = result.sort_values(["date", "period", "rank"], ascending=[False, True, True])
             result = result.drop_duplicates(subset=["title"])
 
             for _, row in result.iterrows():
-                providers = row["providers"] if row["providers"] else "제공처 정보 없음"
+                providers = row["providers"] if row["providers"] else "OTT 없음"
+                theater_badge = " · 🎬 극장상영" if row["is_theater"] else ""
 
                 st.markdown(f"""
                 <div class="card">
                     <b>{row['title']}</b><br>
                     <span class="small">
-                        제공 OTT: {providers}<br>
+                        제공 OTT: {providers}{theater_badge}<br>
                         장르: {row.get('genres', '')} · 연도: {row.get('open_year', '')}
                     </span>
                 </div>

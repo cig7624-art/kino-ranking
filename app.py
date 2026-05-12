@@ -1,7 +1,11 @@
 import streamlit as st
 import pandas as pd
 import requests
+import subprocess
+import sys
+import re
 from pathlib import Path
+from playwright.sync_api import sync_playwright
 
 st.set_page_config(
     page_title="키노라이츠 랭킹/OTT 검색",

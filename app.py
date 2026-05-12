@@ -240,6 +240,8 @@ with tab1:
                 """, unsafe_allow_html=True)
 
 with tab2:
+    import requests
+
     st.subheader("🔎 타이틀로 OTT 제공처 검색")
 
     keyword = st.text_input(
@@ -247,28 +249,96 @@ with tab2:
         placeholder="예: 멋진 신세계"
     )
 
+    SEARCH_QUERY = """
+    query SearchContents($keyword: String!) {
+      searchContents(keyword: $keyword) {
+        edges {
+          node {
+            id
+            titleKr
+            openYear
+            genres
+            vodOfferItems {
+              providerId
+              isActive
+            }
+          }
+        }
+      }
+    }
+    """
+
+    PROVIDER_MAP = {
+        "8": "넷플릭스",
+        "119": "티빙",
+        "356": "웨이브",
+        "337": "디즈니+",
+        "128": "쿠팡플레이",
+        "97": "왓챠",
+        "350": "애플TV+",
+        "21": "라프텔"
+    }
+
     if keyword:
-        result = df[
-            df["title"].str.contains(keyword, case=False, na=False)
-        ].copy()
+        payload = {
+            "operationName": "SearchContents",
+            "variables": {
+                "keyword": keyword
+            },
+            "query": SEARCH_QUERY
+        }
 
-        if result.empty:
-            st.warning("현재 수집된 랭킹 데이터 안에서는 검색 결과가 없습니다.")
-            st.caption("※ 전체 키노라이츠 탐색 DB 검색은 별도 Search GraphQL 쿼리 연결이 필요합니다.")
-        else:
-            result = result.sort_values(["date", "period", "rank"], ascending=[False, True, True])
-            result = result.drop_duplicates(subset=["title"])
+        try:
+            res = requests.post(
+                "https://gateway.kinolights.com/graphql",
+                json=payload,
+                headers={"Content-Type": "application/json"},
+                timeout=20
+            )
 
-            for _, row in result.iterrows():
-                providers = row["providers"] if row["providers"] else "OTT 없음"
-                theater_badge = " · 🎬 극장상영" if row["is_theater"] else ""
+            data = res.json()
 
-                st.markdown(f"""
-                <div class="card">
-                    <b>{row['title']}</b><br>
-                    <span class="small">
-                        제공 OTT: {providers}{theater_badge}<br>
-                        장르: {row.get('genres', '')} · 연도: {row.get('open_year', '')}
-                    </span>
-                </div>
-                """, unsafe_allow_html=True)
+            items = data["data"]["searchContents"]["edges"]
+
+            if len(items) == 0:
+                st.warning("검색 결과 없음")
+
+            else:
+                for item in items[:10]:
+                    node = item["node"]
+
+                    provider_ids = []
+
+                    for offer in node.get("vodOfferItems", []):
+                        if offer.get("isActive"):
+                            provider_ids.append(
+                                str(offer.get("providerId"))
+                            )
+
+                    otts = []
+
+                    for pid in provider_ids:
+                        if pid in PROVIDER_MAP:
+                            otts.append(PROVIDER_MAP[pid])
+
+                    otts = sorted(set(otts))
+
+                    providers = ", ".join(otts)
+
+                    if not providers:
+                        providers = "OTT 정보 없음"
+
+                    genres = ", ".join(node.get("genres") or [])
+
+                    st.markdown(f"""
+                    <div class="card">
+                        <b>{node.get('titleKr')}</b><br>
+                        <span class="small">
+                            제공 OTT: {providers}<br>
+                            장르: {genres} · 연도: {node.get('openYear')}
+                        </span>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+        except Exception as e:
+            st.error(str(e))

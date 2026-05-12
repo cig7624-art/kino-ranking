@@ -1,153 +1,103 @@
-from playwright.sync_api import sync_playwright
+import requests
 import pandas as pd
 from datetime import datetime
 from pathlib import Path
-import re
 
-URL = "https://m.kinolights.com/ranking/kino"
+API_URL = "https://gateway.kinolights.com/graphql"
 
-PERIODS = ["일간", "주간", "월간"]
-PLATFORMS = ["전체"]
+PERIODS = {
+    "일간": "DAILY",
+    "주간": "WEEKLY",
+    "월간": "MONTHLY"
+}
 
-EXCLUDE = set(PERIODS + PLATFORMS + [
-    "트렌드 랭킹",
-    "성별 · 연령 전체",
-    "성별과 연령을 선택하고",
-    "꼭 맞는 랭킹을 확인해 보세요",
-    "홈", "랭킹", "탐색", "혜택", "마이페이지",
-    "집계 기준"
-])
+PROVIDER_MAP = {
+    "8": "넷플릭스",
+    "119": "티빙",
+    "356": "웨이브",
+    "337": "디즈니+",
+    "128": "쿠팡플레이",
+    "97": "왓챠"
+}
 
-def is_title(line):
-    if not line or line in EXCLUDE:
-        return False
-    if re.fullmatch(r"\d{1,3}", line):
-        return False
-    if re.fullmatch(r"\d+[▲▼]?", line):
-        return False
-    if re.fullmatch(r"\d+(\.\d+)?%", line):
-        return False
-    if re.search(r"(드라마|영화|예능|애니메이션|다큐멘터리|시사교양)\s*·\s*\d{4}", line):
-        return False
-    if "기준" in line:
-        return False
-    if "업데이트" in line:
-        return False
-    return True
+QUERY = """
+query QueryRanking($rankingType: ContentRankingType!, $limit: Int = 100) {
+  contentRankings(rankingType: $rankingType, limit: $limit) {
+    content {
+      id
+      titleKr
+      genres
+      openYear
+      vodOfferItems {
+        providerId
+        isActive
+      }
+    }
+    delta
+    isNew
+  }
+}
+"""
 
-def extract_titles(page):
-    page.evaluate("window.scrollTo(0, 0)")
-    page.wait_for_timeout(600)
-
-    for _ in range(10):
-        page.mouse.wheel(0, 1600)
-        page.wait_for_timeout(400)
-
-    text = page.locator("body").inner_text()
-    lines = [x.strip() for x in text.split("\n") if x.strip()]
-
-    titles = []
-
-    for line in lines:
-        if is_title(line) and line not in titles:
-            titles.append(line)
-
-    return titles[:100]
-
-def click_visible_text(page, text):
-    loc = page.get_by_text(text, exact=True)
-    count = loc.count()
-
-    for i in range(count):
-        item = loc.nth(i)
-
-        try:
-            if item.is_visible():
-                item.scroll_into_view_if_needed()
-                page.wait_for_timeout(300)
-                item.click(force=True)
-                page.wait_for_timeout(2000)
-                return True
-        except Exception:
-            pass
-
-    return False
-
-def collect_current(page, period, platform):
-    titles = extract_titles(page)
-
-    rows = []
-    for idx, title in enumerate(titles, start=1):
-        rows.append({
-            "date": today,
-            "period": period,
-            "platform": platform,
-            "rank": idx,
-            "title": title
-        })
-
-    print(f"{period} / {platform} / {len(titles)}개 수집 / 1위: {titles[0] if titles else '-'}")
-    return rows
+headers = {
+    "Content-Type": "application/json",
+    "User-Agent": "Mozilla/5.0"
+}
 
 today = datetime.today().strftime("%Y-%m-%d")
 rows = []
 
-with sync_playwright() as p:
-    browser = p.chromium.launch(headless=True)
+for period_kr, period_api in PERIODS.items():
+    payload = {
+        "operationName": "QueryRanking",
+        "variables": {
+            "limit": 100,
+            "rankingType": period_api
+        },
+        "query": QUERY
+    }
 
-    page = browser.new_page(
-        viewport={"width": 430, "height": 1600},
-        user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148"
-    )
+    res = requests.post(API_URL, json=payload, headers=headers, timeout=30)
+    res.raise_for_status()
 
-    page.goto(URL, wait_until="networkidle", timeout=60000)
-    page.wait_for_timeout(5000)
+    data = res.json()
+    items = data["data"]["contentRankings"]
 
-    for period in PERIODS:
-        clicked_period = click_visible_text(page, period)
-        print(f"기간 클릭: {period} / {clicked_period}")
+    for idx, item in enumerate(items, start=1):
+        content = item["content"]
 
-        for platform in PLATFORMS:
-            clicked_platform = click_visible_text(page, platform)
-            print(f"OTT 클릭: {platform} / {clicked_platform}")
+        provider_ids = []
+        for offer in content.get("vodOfferItems", []):
+            if offer.get("isActive"):
+                provider_ids.append(str(offer.get("providerId")))
 
-            titles = extract_titles(page)
+        providers = [
+            PROVIDER_MAP.get(pid, f"provider_{pid}")
+            for pid in provider_ids
+        ]
 
-            if len(titles) == 0:
-                print(f"스킵: {period} / {platform} / 데이터 없음")
-                continue
-
-            for idx, title in enumerate(titles, start=1):
-                rows.append({
-                    "date": today,
-                    "period": period,
-                    "platform": platform,
-                    "rank": idx,
-                    "title": title
-                })
-
-            print(f"저장: {period} / {platform} / {len(titles)}개 / 1위: {titles[0]}")
-
-    browser.close()
+        rows.append({
+            "date": today,
+            "period": period_kr,
+            "rank": idx,
+            "title": content.get("titleKr"),
+            "content_id": content.get("id"),
+            "genres": ",".join(content.get("genres") or []),
+            "open_year": content.get("openYear"),
+            "is_new": item.get("isNew"),
+            "delta": item.get("delta"),
+            "providers": ",".join(sorted(set(providers)))
+        })
 
 new_df = pd.DataFrame(rows)
-
-if new_df.empty:
-    raise Exception("수집된 데이터가 없습니다. 키노라이츠 페이지 구조가 바뀌었거나 클릭이 실패했습니다.")
 
 csv_path = Path("ranking_history.csv")
 
 if csv_path.exists():
     old = pd.read_csv(csv_path)
-
-    for col in ["period", "platform"]:
-        if col not in old.columns:
-            old[col] = "전체"
-
     df = pd.concat([old, new_df], ignore_index=True)
-
     df = df.drop_duplicates(
-        subset=["date", "period", "platform", "rank"],
+        subset=["date", "period", "rank"],
         keep="last"
     )
 else:
@@ -155,5 +105,4 @@ else:
 
 df.to_csv(csv_path, index=False, encoding="utf-8-sig")
 
-print("완료")
-print(new_df.groupby(["period", "platform"])["title"].first())
+print(new_df.head(30))

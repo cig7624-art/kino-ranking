@@ -140,16 +140,16 @@ def get_subscription_providers_from_page(content_id):
 
     providers = []
 
-    with sync_playwright() as p:
-browser = p.chromium.launch(
-    headless=True,
-    executable_path="/usr/bin/chromium"
-)
+  with sync_playwright() as p:
+    browser = p.chromium.launch(
+        headless=True,
+        executable_path="/usr/bin/chromium"
+    )
 
-        page = browser.new_page(
-            viewport={"width": 430, "height": 1600},
-            user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)"
-        )
+    page = browser.new_page(
+        viewport={"width": 430, "height": 1600},
+        user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)"
+    )
 
         for url in urls:
             try:

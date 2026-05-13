@@ -27,6 +27,7 @@ query QueryRanking($rankingType: ContentRankingType!, $limit: Int = 100) {
   contentRankings(rankingType: $rankingType, limit: $limit) {
     content {
       titleKr
+      mediaType
       genres
       openYear
       vodOfferItems {
@@ -66,13 +67,17 @@ for period_kr, period_api in PERIODS.items():
         timeout=30
     )
 
+    print("PERIOD:", period_kr)
+    print("STATUS:", res.status_code)
+    print("TEXT HEAD:", res.text[:300])
+
     if res.status_code != 200 or not res.text.strip().startswith("{"):
         continue
 
     data = res.json()
 
     if "errors" in data:
-        print(data["errors"])
+        print("GRAPHQL ERRORS:", data["errors"])
         continue
 
     items = data["data"]["contentRankings"]
@@ -92,6 +97,7 @@ for period_kr, period_api in PERIODS.items():
             "period": period_kr,
             "rank": idx,
             "title": content.get("titleKr"),
+            "media_type": content.get("mediaType"),
             "genres": ",".join(content.get("genres") or []),
             "open_year": content.get("openYear"),
             "is_new": item.get("isNew"),
@@ -103,11 +109,17 @@ if not rows:
     raise Exception("랭킹 데이터를 수집하지 못했습니다.")
 
 new_df = pd.DataFrame(rows)
+
 csv_path = Path("ranking_history.csv")
 
 if csv_path.exists():
     old = pd.read_csv(csv_path)
+
+    if "media_type" not in old.columns:
+        old["media_type"] = ""
+
     df = pd.concat([old, new_df], ignore_index=True)
+
     df = df.drop_duplicates(
         subset=["date", "period", "rank"],
         keep="last"
@@ -116,4 +128,5 @@ else:
     df = new_df
 
 df.to_csv(csv_path, index=False, encoding="utf-8-sig")
-print(new_df.head(20))
+
+print(new_df.head(30))

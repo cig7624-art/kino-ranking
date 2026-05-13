@@ -11,6 +11,17 @@ PERIODS = {
     "월간": "MONTHLY"
 }
 
+PROVIDER_MAP = {
+    "8": "넷플릭스",
+    "119": "티빙",
+    "356": "웨이브",
+    "337": "디즈니+",
+    "128": "쿠팡플레이",
+    "97": "왓챠",
+    "350": "애플TV+",
+    "21": "라프텔"
+}
+
 QUERY = """
 query QueryRanking($rankingType: ContentRankingType!, $limit: Int = 100) {
   contentRankings(rankingType: $rankingType, limit: $limit) {
@@ -18,6 +29,11 @@ query QueryRanking($rankingType: ContentRankingType!, $limit: Int = 100) {
       titleKr
       genres
       openYear
+      posterImage
+      vodOfferItems {
+        providerId
+        isActive
+      }
     }
     delta
     isNew
@@ -51,23 +67,26 @@ for period_kr, period_api in PERIODS.items():
         timeout=30
     )
 
-    print("PERIOD:", period_kr)
-    print("STATUS:", res.status_code)
-    print("TEXT HEAD:", res.text[:300])
-
     if res.status_code != 200 or not res.text.strip().startswith("{"):
         continue
 
     data = res.json()
 
     if "errors" in data:
-        print("GRAPHQL ERRORS:", data["errors"])
+        print(data["errors"])
         continue
 
     items = data["data"]["contentRankings"]
 
     for idx, item in enumerate(items, start=1):
         content = item["content"]
+
+        providers = []
+        for offer in content.get("vodOfferItems", []):
+            if offer.get("isActive"):
+                pid = str(offer.get("providerId"))
+                if pid in PROVIDER_MAP:
+                    providers.append(PROVIDER_MAP[pid])
 
         rows.append({
             "date": today,
@@ -76,15 +95,16 @@ for period_kr, period_api in PERIODS.items():
             "title": content.get("titleKr"),
             "genres": ",".join(content.get("genres") or []),
             "open_year": content.get("openYear"),
+            "poster_url": content.get("posterImage"),
             "is_new": item.get("isNew"),
-            "delta": item.get("delta")
+            "delta": item.get("delta"),
+            "providers": ",".join(sorted(set(providers)))
         })
 
 if not rows:
     raise Exception("랭킹 데이터를 수집하지 못했습니다.")
 
 new_df = pd.DataFrame(rows)
-
 csv_path = Path("ranking_history.csv")
 
 if csv_path.exists():
@@ -98,5 +118,4 @@ else:
     df = new_df
 
 df.to_csv(csv_path, index=False, encoding="utf-8-sig")
-
-print(new_df.head(30))
+print(new_df.head(20))

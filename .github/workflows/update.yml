@@ -1,10 +1,12 @@
-name: Find Detail API
+name: Update Ranking
 
 on:
+  schedule:
+    - cron: '0 0 * * 1'
   workflow_dispatch:
 
 jobs:
-  find-detail-api:
+  update-ranking:
     runs-on: ubuntu-latest
 
     steps:
@@ -18,14 +20,15 @@ jobs:
 
       - name: Install packages
         run: |
-          pip install playwright
-          playwright install chromium
+          pip install -r requirements.txt
 
-      - name: Find Detail API
-        run: python find_detail_api.py
+      - name: Run scraper
+        run: python scrape.py
 
-      - name: Upload result
-        uses: actions/upload-artifact@v4
-        with:
-          name: detail-graphql-calls
-          path: detail_graphql_calls.json
+      - name: Commit CSV
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add ranking_history.csv
+          git commit -m "Update ranking" || echo "No changes"
+          git push

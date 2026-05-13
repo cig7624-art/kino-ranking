@@ -12,103 +12,150 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-.stApp { background:#090d1a; }
-h1,h2,h3,p,label,div,span { color:#f8fafc !important; }
-.block-container { padding-top:1.3rem; }
+.stApp {
+    background:#090d1a;
+}
+
+h1,h2,h3,p,label,div,span {
+    color:#f8fafc !important;
+}
+
+.block-container {
+    padding-top:1.2rem;
+    max-width:1800px;
+}
 
 .metric {
     background:#111827;
-    border:1px solid #263244;
-    border-radius:16px;
-    padding:14px 16px;
-    min-height:72px;
+    border:1px solid #1e293b;
+    border-radius:14px;
+    padding:14px 18px;
+    min-height:74px;
 }
+
 .metric-title {
     color:#94a3b8 !important;
     font-size:13px;
     margin-bottom:6px;
 }
-.metric-num {
-    color:#38bdf8 !important;
-    font-size:26px;
-    font-weight:900;
-}
+
 .metric-text {
-    color:#f8fafc !important;
     font-size:18px;
-    font-weight:800;
+    font-weight:900;
 }
 
 .rank-card {
     background:#0f172a;
     border:1px solid #1e293b;
     border-radius:12px;
-    padding:8px 10px;
-    margin-bottom:7px;
+    padding:10px 12px;
+    margin-bottom:8px;
     display:flex;
-    align-items:center;
     justify-content:space-between;
+    align-items:center;
 }
+
 .rank-left {
     display:flex;
     align-items:center;
-    gap:10px;
+    gap:12px;
 }
+
 .rank-num {
-    font-size:17px;
+    font-size:18px;
     font-weight:900;
-    color:#f8fafc !important;
-    min-width:30px;
-    text-align:right;
     font-style:italic;
+    width:28px;
+    text-align:right;
 }
+
 .title {
     font-size:15px;
     font-weight:800;
+    line-height:1.2;
 }
+
 .meta {
     color:#64748b !important;
     font-size:12px;
-    margin-top:3px;
+    margin-top:4px;
 }
-.badge-new { color:#f97316 !important; font-weight:900; font-size:13px; }
-.badge-up { color:#22c55e !important; font-weight:900; font-size:13px; }
-.badge-down { color:#ef4444 !important; font-weight:900; font-size:13px; }
+
+.badge-new {
+    color:#f97316 !important;
+    font-weight:900;
+}
+
+.badge-up {
+    color:#22c55e !important;
+    font-weight:900;
+}
+
+.badge-down {
+    color:#ef4444 !important;
+    font-weight:900;
+}
 
 .side-card {
     background:#0f172a;
     border:1px solid #1e293b;
     border-radius:12px;
-    padding:9px 11px;
-    margin-bottom:8px;
+    padding:10px 12px;
+    margin-bottom:9px;
 }
-.small { color:#94a3b8 !important; font-size:12px; }
+
+.small {
+    color:#94a3b8 !important;
+    font-size:12px;
+}
+
+.section-wrap {
+    border-left:1px solid #1e293b;
+    padding-left:18px;
+    min-height:1200px;
+}
 
 .ott-badge{
     display:inline-block;
     background:#1e293b;
-    border:1px solid #475569;
+    border:1px solid #334155;
     border-radius:999px;
     padding:5px 10px;
     margin-right:6px;
     margin-top:6px;
+    font-size:13px;
     font-weight:700;
 }
 
-[data-baseweb="select"] * { color:#111827 !important; }
+[data-baseweb="select"] * {
+    color:#111827 !important;
+}
+
 [data-baseweb="popover"] * {
     color:#111827 !important;
     background:#ffffff !important;
 }
-input { color:#111827 !important; }
+
+input {
+    color:#111827 !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown("<h1>🎬 키노라이츠 랭킹 / OTT 편성 검색</h1>", unsafe_allow_html=True)
+st.markdown(
+    "<h1>🎬 키노라이츠 랭킹 / OTT 편성 검색</h1>",
+    unsafe_allow_html=True
+)
 
 OTT_NAMES = [
-    "넷플릭스", "티빙", "웨이브", "디즈니+",
-    "쿠팡플레이", "왓챠", "애플TV+", "라프텔"
+    "넷플릭스",
+    "티빙",
+    "웨이브",
+    "디즈니+",
+    "쿠팡플레이",
+    "왓챠",
+    "애플TV+",
+    "라프텔"
 ]
 
 def search_contents(keyword):
@@ -161,13 +208,18 @@ def get_ott_providers(content_id):
         )
 
         page = browser.new_page(
-            viewport={"width": 430, "height": 1600},
+            viewport={"width":430,"height":1600},
             user_agent="Mozilla/5.0"
         )
 
         for url in urls:
             try:
-                page.goto(url, wait_until="domcontentloaded", timeout=20000)
+                page.goto(
+                    url,
+                    wait_until="domcontentloaded",
+                    timeout=20000
+                )
+
                 page.wait_for_timeout(1200)
 
                 text = page.locator("body").inner_text()
@@ -175,10 +227,13 @@ def get_ott_providers(content_id):
                 if "보러가기" not in text:
                     continue
 
-                section = text.split("보러가기", 1)[1]
+                section = text.split("보러가기",1)[1]
 
                 if "시청 주의 가이드" in section:
-                    section = section.split("시청 주의 가이드", 1)[0]
+                    section = section.split(
+                        "시청 주의 가이드",
+                        1
+                    )[0]
 
                 for ott in OTT_NAMES:
                     if ott in section:
@@ -187,24 +242,39 @@ def get_ott_providers(content_id):
                 if found:
                     break
 
-            except Exception:
-                continue
+            except:
+                pass
 
         browser.close()
 
     return sorted(set(found))
 
 def make_meta(row):
-    media_type = str(row.get("media_type", "")).upper()
-    genres = str(row.get("genres", "")).replace(",", "/")
-    open_year = str(row.get("open_year", ""))
+    media_type = str(
+        row.get("media_type","")
+    ).upper()
+
+    genres = str(
+        row.get("genres","")
+    ).replace(",", "/")
+
+    open_year = str(
+        row.get("open_year","")
+    )
 
     type_text = ""
 
     if media_type == "MOVIE":
         type_text = "영화"
-    elif media_type in ["TV", "SHOW", "SERIES", "DRAMA"]:
+
+    elif media_type in [
+        "TV",
+        "SHOW",
+        "SERIES",
+        "DRAMA"
+    ]:
         type_text = "드라마"
+
     elif media_type == "ANIMATION":
         type_text = "애니메이션"
 
@@ -221,22 +291,31 @@ def make_meta(row):
 
     return " · ".join(parts)
 
-tab1, tab2 = st.tabs(["📈 랭킹 대시보드", "🔎 OTT 제공처 검색"])
+tab1, tab2 = st.tabs([
+    "📈 랭킹 대시보드",
+    "🔎 OTT 제공처 검색"
+])
 
 with tab1:
+
     file = Path("ranking_history.csv")
 
     if not file.exists():
-        st.error("ranking_history.csv가 없습니다. Actions에서 수집을 먼저 실행하세요.")
+        st.error("ranking_history.csv 없음")
         st.stop()
 
     df = pd.read_csv(file)
 
     if df.empty:
-        st.error("수집된 랭킹 데이터가 없습니다.")
+        st.error("데이터 없음")
         st.stop()
 
-    for col in ["providers", "genres", "open_year", "media_type"]:
+    for col in [
+        "providers",
+        "genres",
+        "open_year",
+        "media_type"
+    ]:
         if col not in df.columns:
             df[col] = ""
 
@@ -247,19 +326,39 @@ with tab1:
     df["genres"] = df["genres"].fillna("").astype(str)
     df["open_year"] = df["open_year"].fillna("").astype(str)
     df["media_type"] = df["media_type"].fillna("").astype(str)
-    df["rank"] = pd.to_numeric(df["rank"], errors="coerce")
-    df["delta"] = pd.to_numeric(df["delta"], errors="coerce").fillna(0)
-    df["is_new"] = df["is_new"].astype(str).str.lower().isin(["true", "1"])
 
-    latest_date = sorted(df["date"].unique(), reverse=True)[0]
-    latest = df[df["date"] == latest_date].copy()
+    df["rank"] = pd.to_numeric(
+        df["rank"],
+        errors="coerce"
+    )
 
-    top1, top2, top3 = st.columns([1, 1, 1])
+    df["delta"] = pd.to_numeric(
+        df["delta"],
+        errors="coerce"
+    ).fillna(0)
+
+    df["is_new"] = (
+        df["is_new"]
+        .astype(str)
+        .str.lower()
+        .isin(["true","1"])
+    )
+
+    latest_date = sorted(
+        df["date"].unique(),
+        reverse=True
+    )[0]
+
+    latest = df[
+        df["date"] == latest_date
+    ].copy()
+
+    top1, top2, top3 = st.columns([1,1,1])
 
     with top1:
         selected_period = st.selectbox(
             "기간 선택",
-            ["일간", "주간", "월간"],
+            ["일간","주간","월간"],
             index=1
         )
 
@@ -273,37 +372,64 @@ with tab1:
     with top3:
         st.markdown(f"""
         <div class="metric">
-            <div class="metric-title">기준일</div>
-            <div class="metric-text">{latest_date}</div>
+            <div class="metric-title">
+                기준일
+            </div>
+
+            <div class="metric-text">
+                {latest_date}
+            </div>
         </div>
         """, unsafe_allow_html=True)
 
-    base = latest[latest["period"] == selected_period].copy()
+    base = latest[
+        latest["period"] == selected_period
+    ].copy()
 
     if selected_ott != "전체":
-        base = base[base["providers"].str.contains(selected_ott, na=False)].copy()
+        base = base[
+            base["providers"]
+            .str.contains(selected_ott, na=False)
+        ].copy()
 
     base = base.sort_values("rank")
-    new_df = base[base["is_new"] == True].copy()
-    up_df = base[base["delta"] > 0].copy().sort_values("delta", ascending=False)
+
+    new_df = base[
+        base["is_new"] == True
+    ].copy()
+
+    up_df = (
+        base[base["delta"] > 0]
+        .copy()
+        .sort_values("delta", ascending=False)
+    )
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    col1, col2, col3 = st.columns([1.15, 1, 1])
+    col1, col2, col3 = st.columns([1.15,1,1])
 
+    # 전체 TOP100
     with col1:
-        st.subheader(f"🏆 {selected_ott} {selected_period} TOP100")
+
+        st.subheader(
+            f"🏆 전체 {selected_period} TOP100"
+        )
 
         if base.empty:
             st.warning("데이터 없음")
+
         else:
             for _, row in base.head(100).iterrows():
+
                 if row["is_new"]:
                     badge = '<span class="badge-new">NEW</span>'
+
                 elif row["delta"] > 0:
                     badge = f'<span class="badge-up">▲{int(row["delta"])}</span>'
+
                 elif row["delta"] < 0:
                     badge = f'<span class="badge-down">▼{abs(int(row["delta"]))}</span>'
+
                 else:
                     badge = ""
 
@@ -311,57 +437,127 @@ with tab1:
 
                 st.markdown(f"""
                 <div class="rank-card">
+
                     <div class="rank-left">
-                        <div class="rank-num">{int(row['rank'])}</div>
-                        <div>
-                            <div class="title">{row['title']}</div>
-                            <div class="meta">{meta}</div>
+
+                        <div class="rank-num">
+                            {int(row['rank'])}
                         </div>
+
+                        <div>
+                            <div class="title">
+                                {row['title']}
+                            </div>
+
+                            <div class="meta">
+                                {meta}
+                            </div>
+                        </div>
+
                     </div>
-                    <div>{badge}</div>
+
+                    <div>
+                        {badge}
+                    </div>
+
                 </div>
                 """, unsafe_allow_html=True)
 
+    # 급상승
     with col2:
+
+        st.markdown(
+            '<div class="section-wrap">',
+            unsafe_allow_html=True
+        )
+
         st.subheader("🚀 급상승 콘텐츠")
 
         if up_df.empty:
             st.info("급상승 콘텐츠 없음")
+
         else:
             for _, row in up_df.head(30).iterrows():
+
                 meta = make_meta(row)
 
                 st.markdown(f"""
                 <div class="side-card">
-                    <span class="badge-up">▲{int(row['delta'])}</span>
+
+                    <span class="badge-up">
+                        ▲{int(row['delta'])}
+                    </span>
+
                     &nbsp;
-                    <b>{row['title']}</b><br>
-                    <span class="small">#{int(row['rank'])} · {meta}</span>
+
+                    <b>
+                        {row['title']}
+                    </b>
+
+                    <br>
+
+                    <span class="small">
+                        #{int(row['rank'])}
+                        ·
+                        {meta}
+                    </span>
+
                 </div>
                 """, unsafe_allow_html=True)
 
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    # 신규 진입
     with col3:
+
+        st.markdown(
+            '<div class="section-wrap">',
+            unsafe_allow_html=True
+        )
+
         st.subheader("🔥 신규 진입 콘텐츠")
 
         if new_df.empty:
-            st.info("신규 진입 콘텐츠 없음")
+            st.info("신규 콘텐츠 없음")
+
         else:
             for _, row in new_df.head(30).iterrows():
+
                 meta = make_meta(row)
 
                 st.markdown(f"""
                 <div class="side-card">
-                    <span class="badge-new">NEW</span>
+
+                    <span class="badge-new">
+                        NEW
+                    </span>
+
                     &nbsp;
+
                     #{int(row['rank'])}
+
                     &nbsp;
-                    <b>{row['title']}</b><br>
-                    <span class="small">{meta}</span>
+
+                    <b>
+                        {row['title']}
+                    </b>
+
+                    <br>
+
+                    <span class="small">
+                        {meta}
+                    </span>
+
                 </div>
                 """, unsafe_allow_html=True)
 
+        st.markdown("</div>", unsafe_allow_html=True)
+
 with tab2:
-    st.subheader("🔎 타이틀로 OTT 제공처 검색")
+
+    st.subheader(
+        "🔎 타이틀로 OTT 제공처 검색"
+    )
 
     keyword = st.text_input(
         "작품명을 입력하세요",
@@ -369,7 +565,11 @@ with tab2:
     )
 
     if keyword:
-        with st.spinner("키노라이츠에서 정액제 제공처 확인 중..."):
+
+        with st.spinner(
+            "키노라이츠에서 정액제 제공처 확인 중..."
+        ):
+
             results = search_contents(keyword)
 
             if not results:
@@ -377,6 +577,7 @@ with tab2:
                 st.stop()
 
             item = results[0]
+
             title = item.get("titleKr")
             open_year = item.get("openYear")
             content_id = item.get("id")
@@ -384,22 +585,41 @@ with tab2:
             providers = get_ott_providers(content_id)
 
             if providers:
-                provider_html = "".join(
-                    [f'<span class="ott-badge">{p}</span>' for p in providers]
-                )
+
+                provider_html = "".join([
+                    f'<span class="ott-badge">{p}</span>'
+                    for p in providers
+                ])
+
             else:
-                provider_html = '<span class="small">정액제 OTT 없음</span>'
+                provider_html = '''
+                <span class="small">
+                    정액제 OTT 없음
+                </span>
+                '''
 
             st.markdown(f"""
             <div class="side-card">
-                <h3>{title}</h3>
-                <div class="small">연도: {open_year}</div>
-                <div style="margin-top:10px;">{provider_html}</div>
+
+                <h3>
+                    {title}
+                </h3>
+
+                <div class="small">
+                    연도: {open_year}
+                </div>
+
+                <div style="margin-top:10px;">
+                    {provider_html}
+                </div>
+
             </div>
             """, unsafe_allow_html=True)
 
             with st.expander("다른 검색 후보 보기"):
+
                 for other in results[1:]:
+
                     st.markdown(
                         f"- {other.get('titleKr')} ({other.get('openYear')})"
                     )

@@ -26,7 +26,6 @@ QUERY = """
 query QueryRanking($rankingType: ContentRankingType!, $limit: Int = 100) {
   contentRankings(rankingType: $rankingType, limit: $limit) {
     content {
-      id
       titleKr
       mediaType
       genres
@@ -98,7 +97,6 @@ rows.append({
     "period": period_kr,
     "rank": idx,
     "title": content.get("titleKr"),
-    "content_id": content.get("id"),
     "media_type": content.get("mediaType"),
     "genres": ",".join(content.get("genres") or []),
     "open_year": content.get("openYear"),

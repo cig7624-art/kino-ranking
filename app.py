@@ -253,76 +253,92 @@ with tab1:
     df["genres"] = df["genres"].fillna("").astype(str)
     df["open_year"] = df["open_year"].fillna("").astype(str)
     df["media_type"] = df["media_type"].fillna("").astype(str)
-    df["rank"] = pd.to_numeric(df["rank"], errors="coerce")
-    df["delta"] = pd.to_numeric(df["delta"], errors="coerce").fillna(0)
-    df["is_new"] = df["is_new"].astype(str).str.lower().isin(["true", "1"])
 
-    latest_date = sorted(df["date"].unique(), reverse=True)[0]
-    latest = df[df["date"] == latest_date].copy()
+    df["rank"] = pd.to_numeric(
+        df["rank"],
+        errors="coerce"
+    )
 
-    c1, c2 = st.columns(2)
+    df["delta"] = pd.to_numeric(
+        df["delta"],
+        errors="coerce"
+    ).fillna(0)
 
-    with c1:
+    df["is_new"] = (
+        df["is_new"]
+        .astype(str)
+        .str.lower()
+        .isin(["true", "1"])
+    )
+
+    latest_date = sorted(
+        df["date"].unique(),
+        reverse=True
+    )[0]
+
+    latest = df[
+        df["date"] == latest_date
+    ].copy()
+
+    top1, top2, top3 = st.columns([1,1,1])
+
+    with top1:
         selected_period = st.selectbox(
             "기간 선택",
             ["일간", "주간", "월간"],
             index=1
         )
 
-    with c2:
+    with top2:
         selected_ott = st.selectbox(
             "OTT 선택",
             ["전체"] + OTT_NAMES,
             index=0
         )
 
-    base = latest[latest["period"] == selected_period].copy()
+    with top3:
+        st.markdown(f"""
+        <div class="metric">
+            <div class="metric-title">기준일</div>
+            <div class="metric-text">{latest_date}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    base = latest[
+        latest["period"] == selected_period
+    ].copy()
 
     if selected_ott != "전체":
-        base = base[base["providers"].str.contains(selected_ott, na=False)].copy()
+        base = base[
+            base["providers"]
+            .str.contains(selected_ott, na=False)
+        ].copy()
 
     base = base.sort_values("rank")
-    new_df = base[base["is_new"] == True].copy()
-    up_df = base[base["delta"] > 0].copy().sort_values("delta", ascending=False)
 
-    col1, col2, col3 = st.columns(3)
+    new_df = base[
+        base["is_new"] == True
+    ].copy()
 
+    up_df = (
+        base[base["delta"] > 0]
+        .copy()
+        .sort_values("delta", ascending=False)
+    )
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    col1, col2, col3 = st.columns([1.2, 1, 1])
+
+    # 전체 랭킹
     with col1:
-        st.markdown(f"""
-        <div class="metric">
-            <div class="metric-title">신규 진입 콘텐츠</div>
-            <div class="metric-num">{len(new_df)}</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with col2:
-        st.markdown(f"""
-        <div class="metric">
-            <div class="metric-title">급상승 콘텐츠</div>
-            <div class="metric-num">{len(up_df)}</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with col3:
-        st.markdown(f"""
-        <div class="metric">
-            <div class="metric-title">표시 기준</div>
-            <div class="metric-text">{selected_period} · {selected_ott}</div>
-            <div class="small">{latest_date}</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    st.markdown("---")
-
-    left, right = st.columns([1.25, 1])
-
-    with left:
         st.subheader(f"🏆 {selected_ott} {selected_period} TOP100")
 
         if base.empty:
-            st.warning("선택한 조건의 랭킹 데이터가 없습니다.")
+            st.warning("데이터 없음")
         else:
             for _, row in base.head(100).iterrows():
+
                 if row["is_new"]:
                     badge = '<span class="badge-new">NEW</span>'
                 elif row["delta"] > 0:
@@ -337,50 +353,84 @@ with tab1:
                 st.markdown(f"""
                 <div class="rank-card">
                     <div class="rank-left">
-                        <div class="rank-num">{int(row['rank'])}</div>
-                        <div class="poster-placeholder"></div>
+                        <div class="rank-num">
+                            {int(row['rank'])}
+                        </div>
+
                         <div>
-                            <div class="title">{row['title']}</div>
-                            <div class="meta">{meta}</div>
+                            <div class="title">
+                                {row['title']}
+                            </div>
+
+                            <div class="meta">
+                                {meta}
+                            </div>
                         </div>
                     </div>
+
                     <div>{badge}</div>
                 </div>
                 """, unsafe_allow_html=True)
 
-    with right:
-        st.subheader("🔥 신규 진입 콘텐츠")
+    # 신규 진입
+    with col2:
+        st.subheader("🔥 신규 진입")
 
         if new_df.empty:
-            st.info("신규 진입 콘텐츠 없음")
+            st.info("신규 콘텐츠 없음")
         else:
             for _, row in new_df.head(30).iterrows():
+
                 meta = make_meta(row)
 
                 st.markdown(f"""
                 <div class="side-card">
-                    <span class="badge-new">NEW</span>
-                    &nbsp; #{int(row['rank'])} &nbsp;
+
+                    <span class="badge-new">
+                        NEW
+                    </span>
+
+                    &nbsp;
+                    #{int(row['rank'])}
+                    &nbsp;
+
                     <b>{row['title']}</b><br>
-                    <span class="small">{meta}</span>
+
+                    <span class="small">
+                        {meta}
+                    </span>
+
                 </div>
                 """, unsafe_allow_html=True)
 
-        st.markdown("---")
-
-        st.subheader("🚀 급상승 콘텐츠")
+    # 급상승
+    with col3:
+        st.subheader("🚀 급상승")
 
         if up_df.empty:
             st.info("급상승 콘텐츠 없음")
         else:
             for _, row in up_df.head(30).iterrows():
+
                 meta = make_meta(row)
 
                 st.markdown(f"""
                 <div class="side-card">
-                    <span class="badge-up">▲{int(row['delta'])}</span>
-                    &nbsp; <b>{row['title']}</b><br>
-                    <span class="small">#{int(row['rank'])} · {meta}</span>
+
+                    <span class="badge-up">
+                        ▲{int(row['delta'])}
+                    </span>
+
+                    &nbsp;
+
+                    <b>{row['title']}</b><br>
+
+                    <span class="small">
+                        #{int(row['rank'])}
+                        ·
+                        {meta}
+                    </span>
+
                 </div>
                 """, unsafe_allow_html=True)
 

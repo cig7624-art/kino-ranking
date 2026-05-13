@@ -54,10 +54,9 @@ h1,h2,h3,p,label,div,span { color:#f8fafc !important; }
     align-items:center;
     gap:12px;
 }
-.poster {
+.poster-placeholder {
     width:46px;
     height:66px;
-    object-fit:cover;
     border-radius:8px;
     background:#1e293b;
 }
@@ -88,16 +87,6 @@ h1,h2,h3,p,label,div,span { color:#f8fafc !important; }
     border-radius:12px;
     padding:8px 10px;
     margin-bottom:8px;
-    display:flex;
-    gap:10px;
-    align-items:center;
-}
-.side-poster {
-    width:38px;
-    height:54px;
-    object-fit:cover;
-    border-radius:7px;
-    background:#1e293b;
 }
 .small { color:#94a3b8 !important; font-size:12px; }
 
@@ -156,6 +145,7 @@ def search_contents(keyword):
     )
 
     data = res.json()
+
     if "errors" in data:
         return []
 
@@ -183,8 +173,8 @@ def get_ott_providers(content_id):
 
         for url in urls:
             try:
-                page.goto(url, wait_until="networkidle", timeout=25000)
-                page.wait_for_timeout(1800)
+                page.goto(url, wait_until="domcontentloaded", timeout=20000)
+                page.wait_for_timeout(1200)
 
                 text = page.locator("body").inner_text()
 
@@ -211,21 +201,31 @@ def get_ott_providers(content_id):
     return sorted(set(found))
 
 def make_meta(row):
+    media_type = str(row.get("media_type", "")).upper()
     genres = str(row.get("genres", "")).replace(",", "/")
     open_year = str(row.get("open_year", ""))
 
-    if genres and open_year and open_year != "nan":
-        return f"{genres} · {open_year}"
-    if genres:
-        return genres
-    if open_year and open_year != "nan":
-        return open_year
-    return ""
+    type_text = ""
 
-def poster_img(url, cls):
-    if pd.isna(url) or not str(url).strip():
-        return f'<div class="{cls}"></div>'
-    return f'<img class="{cls}" src="{url}"/>'
+    if media_type == "MOVIE":
+        type_text = "영화"
+    elif media_type in ["TV", "SHOW", "SERIES", "DRAMA"]:
+        type_text = "드라마"
+    elif media_type in ["ANIMATION"]:
+        type_text = "애니메이션"
+
+    parts = []
+
+    if type_text:
+        parts.append(type_text)
+
+    if genres:
+        parts.append(genres)
+
+    if open_year and open_year != "nan":
+        parts.append(open_year)
+
+    return " · ".join(parts)
 
 tab1, tab2 = st.tabs(["📈 랭킹 대시보드", "🔎 OTT 제공처 검색"])
 
@@ -242,7 +242,7 @@ with tab1:
         st.error("수집된 랭킹 데이터가 없습니다.")
         st.stop()
 
-    for col in ["poster_url", "providers", "genres", "open_year"]:
+    for col in ["providers", "genres", "open_year", "media_type"]:
         if col not in df.columns:
             df[col] = ""
 
@@ -252,6 +252,7 @@ with tab1:
     df["providers"] = df["providers"].fillna("").astype(str)
     df["genres"] = df["genres"].fillna("").astype(str)
     df["open_year"] = df["open_year"].fillna("").astype(str)
+    df["media_type"] = df["media_type"].fillna("").astype(str)
     df["rank"] = pd.to_numeric(df["rank"], errors="coerce")
     df["delta"] = pd.to_numeric(df["delta"], errors="coerce").fillna(0)
     df["is_new"] = df["is_new"].astype(str).str.lower().isin(["true", "1"])
@@ -332,13 +333,12 @@ with tab1:
                     badge = ""
 
                 meta = make_meta(row)
-                poster = poster_img(row.get("poster_url", ""), "poster")
 
                 st.markdown(f"""
                 <div class="rank-card">
                     <div class="rank-left">
                         <div class="rank-num">{int(row['rank'])}</div>
-                        {poster}
+                        <div class="poster-placeholder"></div>
                         <div>
                             <div class="title">{row['title']}</div>
                             <div class="meta">{meta}</div>
@@ -356,17 +356,13 @@ with tab1:
         else:
             for _, row in new_df.head(30).iterrows():
                 meta = make_meta(row)
-                poster = poster_img(row.get("poster_url", ""), "side-poster")
 
                 st.markdown(f"""
                 <div class="side-card">
-                    {poster}
-                    <div>
-                        <span class="badge-new">NEW</span>
-                        &nbsp; #{int(row['rank'])} &nbsp;
-                        <b>{row['title']}</b><br>
-                        <span class="small">{meta}</span>
-                    </div>
+                    <span class="badge-new">NEW</span>
+                    &nbsp; #{int(row['rank'])} &nbsp;
+                    <b>{row['title']}</b><br>
+                    <span class="small">{meta}</span>
                 </div>
                 """, unsafe_allow_html=True)
 
@@ -379,16 +375,12 @@ with tab1:
         else:
             for _, row in up_df.head(30).iterrows():
                 meta = make_meta(row)
-                poster = poster_img(row.get("poster_url", ""), "side-poster")
 
                 st.markdown(f"""
                 <div class="side-card">
-                    {poster}
-                    <div>
-                        <span class="badge-up">▲{int(row['delta'])}</span>
-                        &nbsp; <b>{row['title']}</b><br>
-                        <span class="small">#{int(row['rank'])} · {meta}</span>
-                    </div>
+                    <span class="badge-up">▲{int(row['delta'])}</span>
+                    &nbsp; <b>{row['title']}</b><br>
+                    <span class="small">#{int(row['rank'])} · {meta}</span>
                 </div>
                 """, unsafe_allow_html=True)
 
@@ -424,11 +416,9 @@ with tab2:
 
             st.markdown(f"""
             <div class="side-card">
-                <div>
-                    <h3>{title}</h3>
-                    <div class="small">연도: {open_year}</div>
-                    <div style="margin-top:10px;">{provider_html}</div>
-                </div>
+                <h3>{title}</h3>
+                <div class="small">연도: {open_year}</div>
+                <div style="margin-top:10px;">{provider_html}</div>
             </div>
             """, unsafe_allow_html=True)
 

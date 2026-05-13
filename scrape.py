@@ -11,26 +11,13 @@ PERIODS = {
     "월간": "MONTHLY"
 }
 
-PROVIDER_MAP = {
-    "8": "넷플릭스",
-    "119": "티빙",
-    "356": "웨이브",
-    "337": "디즈니+",
-    "128": "쿠팡플레이",
-    "97": "왓챠",
-    "350": "애플TV+",
-    "21": "라프텔"
-}
-
 QUERY = """
 query QueryRanking($rankingType: ContentRankingType!, $limit: Int = 100) {
   contentRankings(rankingType: $rankingType, limit: $limit) {
     content {
       titleKr
-      vodOfferItems {
-        providerId
-        isActive
-      }
+      genres
+      openYear
     }
     delta
     isNew
@@ -66,10 +53,9 @@ for period_kr, period_api in PERIODS.items():
 
     print("PERIOD:", period_kr)
     print("STATUS:", res.status_code)
-    print("TEXT HEAD:", res.text[:500])
+    print("TEXT HEAD:", res.text[:300])
 
     if res.status_code != 200 or not res.text.strip().startswith("{"):
-        print("SKIP:", period_kr)
         continue
 
     data = res.json()
@@ -83,28 +69,19 @@ for period_kr, period_api in PERIODS.items():
     for idx, item in enumerate(items, start=1):
         content = item["content"]
 
-        provider_ids = []
-        for offer in content.get("vodOfferItems", []):
-            if offer.get("isActive"):
-                provider_ids.append(str(offer.get("providerId")))
-
-        providers = []
-        for pid in provider_ids:
-            if pid in PROVIDER_MAP:
-                providers.append(PROVIDER_MAP[pid])
-
         rows.append({
             "date": today,
             "period": period_kr,
             "rank": idx,
             "title": content.get("titleKr"),
+            "genres": ",".join(content.get("genres") or []),
+            "open_year": content.get("openYear"),
             "is_new": item.get("isNew"),
-            "delta": item.get("delta"),
-            "providers": ",".join(sorted(set(providers)))
+            "delta": item.get("delta")
         })
 
 if not rows:
-    raise Exception("랭킹 데이터를 수집하지 못했습니다. 로그의 STATUS/TEXT HEAD를 확인하세요.")
+    raise Exception("랭킹 데이터를 수집하지 못했습니다.")
 
 new_df = pd.DataFrame(rows)
 

@@ -29,7 +29,6 @@ query QueryRanking($rankingType: ContentRankingType!, $limit: Int = 100) {
       titleKr
       genres
       openYear
-      posterImage
       vodOfferItems {
         providerId
         isActive
@@ -95,7 +94,6 @@ for period_kr, period_api in PERIODS.items():
             "title": content.get("titleKr"),
             "genres": ",".join(content.get("genres") or []),
             "open_year": content.get("openYear"),
-            "poster_url": content.get("posterImage"),
             "is_new": item.get("isNew"),
             "delta": item.get("delta"),
             "providers": ",".join(sorted(set(providers)))

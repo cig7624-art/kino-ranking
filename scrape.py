@@ -26,6 +26,7 @@ QUERY = """
 query QueryRanking($rankingType: ContentRankingType!, $limit: Int = 100) {
   contentRankings(rankingType: $rankingType, limit: $limit) {
     content {
+      id
       titleKr
       mediaType
       genres
@@ -92,18 +93,19 @@ for period_kr, period_api in PERIODS.items():
                 if pid in PROVIDER_MAP:
                     providers.append(PROVIDER_MAP[pid])
 
-        rows.append({
-            "date": today,
-            "period": period_kr,
-            "rank": idx,
-            "title": content.get("titleKr"),
-            "media_type": content.get("mediaType"),
-            "genres": ",".join(content.get("genres") or []),
-            "open_year": content.get("openYear"),
-            "is_new": item.get("isNew"),
-            "delta": item.get("delta"),
-            "providers": ",".join(sorted(set(providers)))
-        })
+rows.append({
+    "date": today,
+    "period": period_kr,
+    "rank": idx,
+    "title": content.get("titleKr"),
+    "content_id": content.get("id"),
+    "media_type": content.get("mediaType"),
+    "genres": ",".join(content.get("genres") or []),
+    "open_year": content.get("openYear"),
+    "is_new": item.get("isNew"),
+    "delta": item.get("delta"),
+    "providers": ",".join(sorted(set(providers)))
+})
 
 if not rows:
     raise Exception("랭킹 데이터를 수집하지 못했습니다.")

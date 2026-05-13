@@ -12,93 +12,94 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-.stApp {
-    background:#090d1a;
-}
+.stApp { background:#090d1a; }
+h1,h2,h3,p,label,div,span { color:#f8fafc !important; }
+.block-container { padding-top:1.3rem; }
 
-h1,h2,h3,p,label,div,span {
+.metric {
+    background:#111827;
+    border:1px solid #263244;
+    border-radius:16px;
+    padding:14px 16px;
+    min-height:92px;
+}
+.metric-title {
+    color:#94a3b8 !important;
+    font-size:13px;
+    margin-bottom:6px;
+}
+.metric-num {
+    color:#38bdf8 !important;
+    font-size:28px;
+    font-weight:900;
+}
+.metric-text {
     color:#f8fafc !important;
-}
-
-.block-container {
-    padding-top:1.3rem;
+    font-size:20px;
+    font-weight:800;
 }
 
 .rank-card {
     background:#0f172a;
     border:1px solid #1e293b;
     border-radius:14px;
-    padding:10px 14px;
+    padding:8px 12px;
     margin-bottom:8px;
     display:flex;
     align-items:center;
     justify-content:space-between;
 }
-
 .rank-left {
     display:flex;
     align-items:center;
-    gap:14px;
+    gap:12px;
 }
-
+.poster {
+    width:46px;
+    height:66px;
+    object-fit:cover;
+    border-radius:8px;
+    background:#1e293b;
+}
 .rank-num {
-    font-size:20px;
+    font-size:18px;
     font-weight:900;
     color:#f8fafc !important;
-    min-width:38px;
+    min-width:32px;
     text-align:right;
     font-style:italic;
 }
-
 .title {
-    font-size:17px;
+    font-size:16px;
     font-weight:800;
 }
-
 .meta {
     color:#64748b !important;
-    font-size:13px;
+    font-size:12px;
     margin-top:3px;
 }
-
-.badge-new {
-    color:#f97316 !important;
-    font-weight:900;
-    font-size:13px;
-}
-
-.badge-up {
-    color:#22c55e !important;
-    font-weight:900;
-    font-size:13px;
-}
-
-.badge-down {
-    color:#ef4444 !important;
-    font-weight:900;
-    font-size:13px;
-}
-
-.metric {
-    background:#111827;
-    border:1px solid #263244;
-    border-radius:16px;
-    padding:16px;
-}
-
-.metric-num {
-    color:#38bdf8 !important;
-    font-size:32px;
-    font-weight:900;
-}
+.badge-new { color:#f97316 !important; font-weight:900; font-size:13px; }
+.badge-up { color:#22c55e !important; font-weight:900; font-size:13px; }
+.badge-down { color:#ef4444 !important; font-weight:900; font-size:13px; }
 
 .side-card {
     background:#0f172a;
     border:1px solid #1e293b;
     border-radius:12px;
-    padding:10px 12px;
+    padding:8px 10px;
     margin-bottom:8px;
+    display:flex;
+    gap:10px;
+    align-items:center;
 }
+.side-poster {
+    width:38px;
+    height:54px;
+    object-fit:cover;
+    border-radius:7px;
+    background:#1e293b;
+}
+.small { color:#94a3b8 !important; font-size:12px; }
 
 .ott-badge{
     display:inline-block;
@@ -111,46 +112,26 @@ h1,h2,h3,p,label,div,span {
     font-weight:700;
 }
 
-.small {
-    color:#94a3b8 !important;
-    font-size:12px;
-}
-
-[data-baseweb="select"] * {
-    color:#111827 !important;
-}
-
+[data-baseweb="select"] * { color:#111827 !important; }
 [data-baseweb="popover"] * {
     color:#111827 !important;
     background:#ffffff !important;
 }
-
-input {
-    color:#111827 !important;
-}
+input { color:#111827 !important; }
 </style>
 """, unsafe_allow_html=True)
 
 st.markdown("<h1>🎬 키노라이츠 랭킹 / OTT 편성 검색</h1>", unsafe_allow_html=True)
 
 OTT_NAMES = [
-    "넷플릭스",
-    "티빙",
-    "웨이브",
-    "디즈니+",
-    "쿠팡플레이",
-    "왓챠",
-    "애플TV+",
-    "라프텔"
+    "넷플릭스", "티빙", "웨이브", "디즈니+",
+    "쿠팡플레이", "왓챠", "애플TV+", "라프텔"
 ]
 
 def search_contents(keyword):
     query = """
     query SearchContents($keyword: String!) {
-      contents(
-        keyword: $keyword
-        limit: 5
-      ) {
+      contents(keyword: $keyword, limit: 5) {
         id
         titleKr
         openYear
@@ -175,7 +156,6 @@ def search_contents(keyword):
     )
 
     data = res.json()
-
     if "errors" in data:
         return []
 
@@ -232,16 +212,20 @@ def get_ott_providers(content_id):
 
 def make_meta(row):
     genres = str(row.get("genres", "")).replace(",", "/")
-    open_year = row.get("open_year", "")
+    open_year = str(row.get("open_year", ""))
 
-    if genres and str(open_year) != "nan":
+    if genres and open_year and open_year != "nan":
         return f"{genres} · {open_year}"
-    elif genres:
+    if genres:
         return genres
-    elif str(open_year) != "nan":
-        return str(open_year)
-    else:
-        return ""
+    if open_year and open_year != "nan":
+        return open_year
+    return ""
+
+def poster_img(url, cls):
+    if pd.isna(url) or not str(url).strip():
+        return f'<div class="{cls}"></div>'
+    return f'<img class="{cls}" src="{url}"/>'
 
 tab1, tab2 = st.tabs(["📈 랭킹 대시보드", "🔎 OTT 제공처 검색"])
 
@@ -258,9 +242,14 @@ with tab1:
         st.error("수집된 랭킹 데이터가 없습니다.")
         st.stop()
 
+    for col in ["poster_url", "providers", "genres", "open_year"]:
+        if col not in df.columns:
+            df[col] = ""
+
     df["date"] = df["date"].astype(str)
     df["period"] = df["period"].astype(str)
     df["title"] = df["title"].astype(str)
+    df["providers"] = df["providers"].fillna("").astype(str)
     df["genres"] = df["genres"].fillna("").astype(str)
     df["open_year"] = df["open_year"].fillna("").astype(str)
     df["rank"] = pd.to_numeric(df["rank"], errors="coerce")
@@ -270,15 +259,28 @@ with tab1:
     latest_date = sorted(df["date"].unique(), reverse=True)[0]
     latest = df[df["date"] == latest_date].copy()
 
-    selected_period = st.selectbox(
-        "기간 선택",
-        ["일간", "주간", "월간"],
-        index=1
-    )
+    c1, c2 = st.columns(2)
+
+    with c1:
+        selected_period = st.selectbox(
+            "기간 선택",
+            ["일간", "주간", "월간"],
+            index=1
+        )
+
+    with c2:
+        selected_ott = st.selectbox(
+            "OTT 선택",
+            ["전체"] + OTT_NAMES,
+            index=0
+        )
 
     base = latest[latest["period"] == selected_period].copy()
-    base = base.sort_values("rank")
 
+    if selected_ott != "전체":
+        base = base[base["providers"].str.contains(selected_ott, na=False)].copy()
+
+    base = base.sort_values("rank")
     new_df = base[base["is_new"] == True].copy()
     up_df = base[base["delta"] > 0].copy().sort_values("delta", ascending=False)
 
@@ -287,7 +289,7 @@ with tab1:
     with col1:
         st.markdown(f"""
         <div class="metric">
-            <div>신규 진입 콘텐츠</div>
+            <div class="metric-title">신규 진입 콘텐츠</div>
             <div class="metric-num">{len(new_df)}</div>
         </div>
         """, unsafe_allow_html=True)
@@ -295,7 +297,7 @@ with tab1:
     with col2:
         st.markdown(f"""
         <div class="metric">
-            <div>급상승 콘텐츠</div>
+            <div class="metric-title">급상승 콘텐츠</div>
             <div class="metric-num">{len(up_df)}</div>
         </div>
         """, unsafe_allow_html=True)
@@ -303,8 +305,8 @@ with tab1:
     with col3:
         st.markdown(f"""
         <div class="metric">
-            <div>표시 기준</div>
-            <div class="metric-num">{selected_period}</div>
+            <div class="metric-title">표시 기준</div>
+            <div class="metric-text">{selected_period} · {selected_ott}</div>
             <div class="small">{latest_date}</div>
         </div>
         """, unsafe_allow_html=True)
@@ -314,7 +316,7 @@ with tab1:
     left, right = st.columns([1.25, 1])
 
     with left:
-        st.subheader(f"🏆 전체 {selected_period} TOP100")
+        st.subheader(f"🏆 {selected_ott} {selected_period} TOP100")
 
         if base.empty:
             st.warning("선택한 조건의 랭킹 데이터가 없습니다.")
@@ -330,11 +332,13 @@ with tab1:
                     badge = ""
 
                 meta = make_meta(row)
+                poster = poster_img(row.get("poster_url", ""), "poster")
 
                 st.markdown(f"""
                 <div class="rank-card">
                     <div class="rank-left">
                         <div class="rank-num">{int(row['rank'])}</div>
+                        {poster}
                         <div>
                             <div class="title">{row['title']}</div>
                             <div class="meta">{meta}</div>
@@ -352,13 +356,17 @@ with tab1:
         else:
             for _, row in new_df.head(30).iterrows():
                 meta = make_meta(row)
+                poster = poster_img(row.get("poster_url", ""), "side-poster")
 
                 st.markdown(f"""
                 <div class="side-card">
-                    <span class="badge-new">NEW</span>
-                    &nbsp; #{int(row['rank'])} &nbsp;
-                    <b>{row['title']}</b><br>
-                    <span class="small">{meta}</span>
+                    {poster}
+                    <div>
+                        <span class="badge-new">NEW</span>
+                        &nbsp; #{int(row['rank'])} &nbsp;
+                        <b>{row['title']}</b><br>
+                        <span class="small">{meta}</span>
+                    </div>
                 </div>
                 """, unsafe_allow_html=True)
 
@@ -371,12 +379,16 @@ with tab1:
         else:
             for _, row in up_df.head(30).iterrows():
                 meta = make_meta(row)
+                poster = poster_img(row.get("poster_url", ""), "side-poster")
 
                 st.markdown(f"""
                 <div class="side-card">
-                    <span class="badge-up">▲{int(row['delta'])}</span>
-                    &nbsp; <b>{row['title']}</b><br>
-                    <span class="small">#{int(row['rank'])} · {meta}</span>
+                    {poster}
+                    <div>
+                        <span class="badge-up">▲{int(row['delta'])}</span>
+                        &nbsp; <b>{row['title']}</b><br>
+                        <span class="small">#{int(row['rank'])} · {meta}</span>
+                    </div>
                 </div>
                 """, unsafe_allow_html=True)
 
@@ -397,7 +409,6 @@ with tab2:
                 st.stop()
 
             item = results[0]
-
             title = item.get("titleKr")
             open_year = item.get("openYear")
             content_id = item.get("id")
@@ -413,10 +424,10 @@ with tab2:
 
             st.markdown(f"""
             <div class="side-card">
-                <h3>{title}</h3>
-                <div class="small">연도: {open_year}</div>
-                <div style="margin-top:10px;">
-                    {provider_html}
+                <div>
+                    <h3>{title}</h3>
+                    <div class="small">연도: {open_year}</div>
+                    <div style="margin-top:10px;">{provider_html}</div>
                 </div>
             </div>
             """, unsafe_allow_html=True)

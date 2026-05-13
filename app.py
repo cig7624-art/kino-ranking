@@ -42,50 +42,25 @@ h1,h2,h3,p,label,div,span { color:#f8fafc !important; }
 .rank-card {
     background:#0f172a;
     border:1px solid #1e293b;
-    border-radius:14px;
-    padding:8px 12px;
-    margin-bottom:8px;
+    border-radius:12px;
+    padding:8px 10px;
+    margin-bottom:7px;
     display:flex;
     align-items:center;
     justify-content:space-between;
 }
+
 .rank-left {
     display:flex;
     align-items:center;
-    gap:12px;
+    gap:10px;
 }
-.poster-placeholder {
-    width:46px;
-    height:66px;
-    border-radius:8px;
-    background:#1e293b;
-}
-.rank-num {
-    font-size:18px;
-    font-weight:900;
-    color:#f8fafc !important;
-    min-width:32px;
-    text-align:right;
-    font-style:italic;
-}
-.title {
-    font-size:16px;
-    font-weight:800;
-}
-.meta {
-    color:#64748b !important;
-    font-size:12px;
-    margin-top:3px;
-}
-.badge-new { color:#f97316 !important; font-weight:900; font-size:13px; }
-.badge-up { color:#22c55e !important; font-weight:900; font-size:13px; }
-.badge-down { color:#ef4444 !important; font-weight:900; font-size:13px; }
 
 .side-card {
     background:#0f172a;
     border:1px solid #1e293b;
     border-radius:12px;
-    padding:8px 10px;
+    padding:9px 11px;
     margin-bottom:8px;
 }
 .small { color:#94a3b8 !important; font-size:12px; }
@@ -328,111 +303,79 @@ with tab1:
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    col1, col2, col3 = st.columns([1.2, 1, 1])
+   col1, col2, col3 = st.columns([1.15, 1, 1])
 
-    # 전체 랭킹
-    with col1:
-        st.subheader(f"🏆 {selected_ott} {selected_period} TOP100")
+# 전체 랭킹
+with col1:
+    st.subheader(f"🏆 전체 {selected_period} TOP100")
 
-        if base.empty:
-            st.warning("데이터 없음")
-        else:
-            for _, row in base.head(100).iterrows():
+    if base.empty:
+        st.warning("데이터 없음")
+    else:
+        for _, row in base.head(100).iterrows():
+            if row["is_new"]:
+                badge = '<span class="badge-new">NEW</span>'
+            elif row["delta"] > 0:
+                badge = f'<span class="badge-up">▲{int(row["delta"])}</span>'
+            elif row["delta"] < 0:
+                badge = f'<span class="badge-down">▼{abs(int(row["delta"]))}</span>'
+            else:
+                badge = ""
 
-                if row["is_new"]:
-                    badge = '<span class="badge-new">NEW</span>'
-                elif row["delta"] > 0:
-                    badge = f'<span class="badge-up">▲{int(row["delta"])}</span>'
-                elif row["delta"] < 0:
-                    badge = f'<span class="badge-down">▼{abs(int(row["delta"]))}</span>'
-                else:
-                    badge = ""
+            meta = make_meta(row)
 
-                meta = make_meta(row)
-
-                st.markdown(f"""
-                <div class="rank-card">
-                    <div class="rank-left">
-                        <div class="rank-num">
-                            {int(row['rank'])}
-                        </div>
-
-                        <div>
-                            <div class="title">
-                                {row['title']}
-                            </div>
-
-                            <div class="meta">
-                                {meta}
-                            </div>
-                        </div>
+            st.markdown(f"""
+            <div class="rank-card">
+                <div class="rank-left">
+                    <div class="rank-num">{int(row['rank'])}</div>
+                    <div>
+                        <div class="title">{row['title']}</div>
+                        <div class="meta">{meta}</div>
                     </div>
-
-                    <div>{badge}</div>
                 </div>
-                """, unsafe_allow_html=True)
+                <div>{badge}</div>
+            </div>
+            """, unsafe_allow_html=True)
 
-    # 신규 진입
-    with col2:
-        st.subheader("🔥 신규 진입")
+# 급상승 콘텐츠
+with col2:
+    st.subheader("🚀 급상승 콘텐츠")
 
-        if new_df.empty:
-            st.info("신규 콘텐츠 없음")
-        else:
-            for _, row in new_df.head(30).iterrows():
+    if up_df.empty:
+        st.info("급상승 콘텐츠 없음")
+    else:
+        for _, row in up_df.head(30).iterrows():
+            meta = make_meta(row)
 
-                meta = make_meta(row)
+            st.markdown(f"""
+            <div class="side-card">
+                <span class="badge-up">▲{int(row['delta'])}</span>
+                &nbsp;
+                <b>{row['title']}</b><br>
+                <span class="small">#{int(row['rank'])} · {meta}</span>
+            </div>
+            """, unsafe_allow_html=True)
 
-                st.markdown(f"""
-                <div class="side-card">
+# 신규 진입 콘텐츠
+with col3:
+    st.subheader("🔥 신규 진입 콘텐츠")
 
-                    <span class="badge-new">
-                        NEW
-                    </span>
+    if new_df.empty:
+        st.info("신규 진입 콘텐츠 없음")
+    else:
+        for _, row in new_df.head(30).iterrows():
+            meta = make_meta(row)
 
-                    &nbsp;
-                    #{int(row['rank'])}
-                    &nbsp;
-
-                    <b>{row['title']}</b><br>
-
-                    <span class="small">
-                        {meta}
-                    </span>
-
-                </div>
-                """, unsafe_allow_html=True)
-
-    # 급상승
-    with col3:
-        st.subheader("🚀 급상승")
-
-        if up_df.empty:
-            st.info("급상승 콘텐츠 없음")
-        else:
-            for _, row in up_df.head(30).iterrows():
-
-                meta = make_meta(row)
-
-                st.markdown(f"""
-                <div class="side-card">
-
-                    <span class="badge-up">
-                        ▲{int(row['delta'])}
-                    </span>
-
-                    &nbsp;
-
-                    <b>{row['title']}</b><br>
-
-                    <span class="small">
-                        #{int(row['rank'])}
-                        ·
-                        {meta}
-                    </span>
-
-                </div>
-                """, unsafe_allow_html=True)
+            st.markdown(f"""
+            <div class="side-card">
+                <span class="badge-new">NEW</span>
+                &nbsp;
+                #{int(row['rank'])}
+                &nbsp;
+                <b>{row['title']}</b><br>
+                <span class="small">{meta}</span>
+            </div>
+            """, unsafe_allow_html=True)
 
 with tab2:
     st.subheader("🔎 타이틀로 OTT 제공처 검색")

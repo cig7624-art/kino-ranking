@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import requests
 import re
+import difflib
 from pathlib import Path
 from urllib.parse import quote
 from playwright.sync_api import sync_playwright
@@ -127,8 +128,14 @@ SHEET_ID = "13_ULv4lXt2UPugaom5daL9ycV8COG7tD7bzmDT3WIwA"
 
 
 def normalize_title(title):
-    if pd.isna(title):
+    if title is None:
         return ""
+
+    try:
+        if pd.isna(title):
+            return ""
+    except Exception:
+        pass
 
     title = str(title).strip().lower()
     title = re.sub(r"\s+", "", title)
@@ -137,43 +144,67 @@ def normalize_title(title):
     return title
 
 
-def is_valid_btv_date(value):
-    if pd.isna(value):
+def safe_cell_value(value):
+    if isinstance(value, pd.Series):
+        for v in value.tolist():
+            if str(v).strip() not in ["", "nan", "NaN", "None"]:
+                return v
+        return ""
+
+    if isinstance(value, list):
+        for v in value:
+            if str(v).strip() not in ["", "nan", "NaN", "None"]:
+                return v
+        return ""
+
+    return value
+
+
+def is_date_like(value):
+    value = safe_cell_value(value)
+
+    if value is None:
         return False
 
-    value = str(value).strip()
+    try:
+        if pd.isna(value):
+            return False
+    except Exception:
+        pass
 
-    if value == "":
+    text = str(value).strip()
+
+    if text == "":
         return False
 
-    if value.upper() == "X":
+    if text.upper() in ["X", "O"]:
         return False
 
-    if value in ["-", "없음", "미정", "nan", "NaN", "None"]:
+    if text in ["-", "없음", "미정", "nan", "NaN", "None"]:
+        return False
+
+    # 엑셀 시리얼 날짜 대응
+    if re.fullmatch(r"\d{5}", text):
+        return True
+
+    # 2025-05-01 / 2025.05.01 / 2025/05/01 / 25.5.1 / 5월 1일 등
+    date_patterns = [
+        r"\d{4}[-./]\d{1,2}[-./]\d{1,2}",
+        r"\d{2}[-./]\d{1,2}[-./]\d{1,2}",
+        r"\d{1,2}월\s*\d{1,2}일",
+        r"\d{4}년\s*\d{1,2}월\s*\d{1,2}일",
+    ]
+
+    for pattern in date_patterns:
+        if re.search(pattern, text):
+            return True
+
+    parsed = pd.to_datetime(text, errors="coerce")
+
+    if pd.isna(parsed):
         return False
 
     return True
-
-
-def find_column(df, candidates):
-    for col in df.columns:
-        col_str = str(col).strip()
-
-        for candidate in candidates:
-            if col_str == candidate:
-                return col
-
-    normalized_map = {
-        str(c).replace(" ", "").strip(): c
-        for c in df.columns
-    }
-
-    for candidate in candidates:
-        key = candidate.replace(" ", "").strip()
-        if key in normalized_map:
-            return normalized_map[key]
-
-    return None
 
 
 @st.cache_data(ttl=3600)
@@ -187,175 +218,138 @@ def load_google_sheet_raw(sheet_name):
     return pd.read_csv(url, header=None, dtype=str).fillna("")
 
 
-def clean_google_sheet(raw_df):
-    """
-    구글시트의 실제 헤더가 첫 줄이 아닐 수 있어서
-    '타이틀명/콘텐츠명/제목'이 있는 행을 헤더로 자동 인식.
-    """
-    title_header_candidates = [
-        "타이틀명",
-        "콘텐츠명",
-        "제목",
-        "타이틀",
-        "title",
-        "Title",
-    ]
-
-    header_idx = None
-
-    for idx, row in raw_df.iterrows():
-        values = [str(v).replace(" ", "").strip() for v in row.tolist()]
-
-        for candidate in title_header_candidates:
-            key = candidate.replace(" ", "").strip()
-            if key in values:
-                header_idx = idx
-                break
-
-        if header_idx is not None:
-            break
-
-    if header_idx is None:
-        return pd.DataFrame()
-
-    headers = raw_df.iloc[header_idx].tolist()
-    data = raw_df.iloc[header_idx + 1:].copy()
-    data.columns = headers
-
-    # 완전 공백 컬럼 제거
-    data = data.loc[:, [str(c).strip() != "" for c in data.columns]]
-
-    # 컬럼명 공백 정리
-    data.columns = [str(c).strip() for c in data.columns]
-
-    # 완전 공백 행 제거
-    data = data.replace("", pd.NA).dropna(how="all").fillna("")
-
-    return data
+def get_col_value(row, col_index):
+    try:
+        return safe_cell_value(row.iloc[col_index])
+    except Exception:
+        return ""
 
 
-@st.cache_data(ttl=3600)
-def load_google_sheet(sheet_name):
-    raw_df = load_google_sheet_raw(sheet_name)
-    return clean_google_sheet(raw_df)
+def add_btv_title(rows, title, category, source_sheet, btv_date=""):
+    title = safe_cell_value(title)
+    title_text = str(title).strip()
+
+    if title_text == "":
+        return
+
+    title_norm = normalize_title(title_text)
+
+    if title_norm == "":
+        return
+
+    rows.append({
+        "title_norm": title_norm,
+        "btv_title": title_text,
+        "btv_plus_category": category,
+        "btv_genre": category,
+        "btv_plus_date": str(btv_date).strip(),
+        "btv_source_sheet": source_sheet,
+    })
 
 
 @st.cache_data(ttl=3600)
 def load_btv_plus_titles():
     rows = []
 
-    base_sheets = [
-        "영화",
-        "해외드라마",
-        "애니메이션 (25'1~)",
-        "애니메이션",
-        "키즈",
-    ]
-
-    title_candidates = [
-        "타이틀명",
-        "콘텐츠명",
-        "제목",
-        "타이틀",
-        "title",
-        "Title",
-    ]
-
-    genre_candidates = [
-        "장르",
-        "카테고리",
-        "구분",
-        "genre",
-    ]
-
-    # 영화 / 해외드라마 / 애니메이션 / 키즈는 시트에 있으면 B tv+ 편성작으로 인정
-    for sheet_name in base_sheets:
-        try:
-            sheet_df = load_google_sheet(sheet_name)
-        except Exception:
-            continue
-
-        if sheet_df.empty:
-            continue
-
-        title_col = find_column(sheet_df, title_candidates)
-        genre_col = find_column(sheet_df, genre_candidates)
-
-        if title_col is None:
-            continue
-
-        for _, item in sheet_df.iterrows():
-            title = item.get(title_col, "")
-
-            if pd.isna(title) or str(title).strip() == "":
-                continue
-
-            genre = item.get(genre_col, "") if genre_col else sheet_name
-
-            rows.append({
-                "title_norm": normalize_title(title),
-                "btv_title": str(title).strip(),
-                "btv_plus_category": sheet_name,
-                "btv_genre": str(genre).strip(),
-                "btv_plus_date": "",
-                "btv_source_sheet": sheet_name,
-            })
-
-    # 콘텐츠 라인업은 B tv+ 편성일자가 있는 것만 B tv+ 인정
+    # 1) 콘텐츠라인업: D열 타이틀, F열 날짜
+    # D열 index = 3, F열 index = 5
     lineup_sheet_candidates = [
-        "콘텐츠 라인업",
         "콘텐츠라인업",
+        "콘텐츠 라인업",
         "콘텐츠 Line-up",
         "라인업",
     ]
 
-    for lineup_sheet_name in lineup_sheet_candidates:
+    for sheet_name in lineup_sheet_candidates:
         try:
-            lineup = load_google_sheet(lineup_sheet_name)
+            raw = load_google_sheet_raw(sheet_name)
         except Exception:
             continue
 
-        if lineup.empty:
+        if raw.empty:
             continue
 
-        title_col = find_column(lineup, title_candidates)
-        genre_col = find_column(lineup, genre_candidates)
+        for _, row in raw.iterrows():
+            title = get_col_value(row, 3)
+            btv_date = get_col_value(row, 5)
 
-        btv_date_col = find_column(
-            lineup,
-            [
-                "B tv+ 편성일자",
-                "B tv+편성일자",
-                "Btv+ 편성일자",
-                "Btv+편성일자",
-                "비티비플러스 편성일자",
-                "비플 편성일자",
-            ]
-        )
+            if str(title).strip() == "":
+                continue
 
-        if title_col is None or btv_date_col is None:
+            if not is_date_like(btv_date):
+                continue
+
+            add_btv_title(
+                rows=rows,
+                title=title,
+                category="콘텐츠라인업",
+                source_sheet=sheet_name,
+                btv_date=btv_date
+            )
+
+        break
+
+    # 2) 영화 / 해외드라마 / 애니메이션(25'1~): C열 타이틀
+    # C열 index = 2
+    c_col_sheets = [
+        ("영화", "영화"),
+        ("해외드라마", "해외드라마"),
+        ("애니메이션(25'1~)", "애니메이션"),
+        ("애니메이션 (25'1~)", "애니메이션"),
+    ]
+
+    for sheet_name, category in c_col_sheets:
+        try:
+            raw = load_google_sheet_raw(sheet_name)
+        except Exception:
             continue
 
-        for _, item in lineup.iterrows():
-            title = item.get(title_col, "")
-            btv_date = item.get(btv_date_col, "")
+        if raw.empty:
+            continue
 
-            if pd.isna(title) or str(title).strip() == "":
+        for _, row in raw.iterrows():
+            title = get_col_value(row, 2)
+
+            if str(title).strip() == "":
                 continue
 
-            if not is_valid_btv_date(btv_date):
+            add_btv_title(
+                rows=rows,
+                title=title,
+                category=category,
+                source_sheet=sheet_name,
+                btv_date=""
+            )
+
+    # 3) 키즈: F열 타이틀
+    # F열 index = 5
+    kids_sheet_candidates = [
+        "키즈",
+        "Kids",
+    ]
+
+    for sheet_name in kids_sheet_candidates:
+        try:
+            raw = load_google_sheet_raw(sheet_name)
+        except Exception:
+            continue
+
+        if raw.empty:
+            continue
+
+        for _, row in raw.iterrows():
+            title = get_col_value(row, 5)
+
+            if str(title).strip() == "":
                 continue
 
-            genre = item.get(genre_col, "") if genre_col else ""
-
-            rows.append({
-                "title_norm": normalize_title(title),
-                "btv_title": str(title).strip(),
-                "btv_plus_category": "콘텐츠 라인업",
-                "btv_genre": str(genre).strip(),
-                "btv_plus_date": str(btv_date).strip(),
-                "btv_source_sheet": lineup_sheet_name,
-            })
+            add_btv_title(
+                rows=rows,
+                title=title,
+                category="키즈",
+                source_sheet=sheet_name,
+                btv_date=""
+            )
 
         break
 
@@ -374,6 +368,20 @@ def load_btv_plus_titles():
     btv_df = pd.DataFrame(rows).fillna("")
     btv_df = btv_df[btv_df["title_norm"] != ""].copy()
 
+    # 헤더나 안내문 같은 값 제거
+    remove_words = [
+        "타이틀명",
+        "콘텐츠명",
+        "제목",
+        "title",
+        "방송명",
+        "프로그램명",
+    ]
+
+    btv_df = btv_df[
+        ~btv_df["title_norm"].isin([normalize_title(w) for w in remove_words])
+    ].copy()
+
     btv_df["has_btv_date"] = btv_df["btv_plus_date"].astype(str).str.strip() != ""
 
     btv_df = (
@@ -386,38 +394,142 @@ def load_btv_plus_titles():
     return btv_df
 
 
-def attach_btv_plus_flag(df):
-    btv_df = load_btv_plus_titles()
+def find_btv_match_info(kino_title, btv_df):
+    kino_norm = normalize_title(kino_title)
 
+    if kino_norm == "" or btv_df.empty:
+        return {
+            "is_btv_plus": False,
+            "btv_title": "",
+            "btv_plus_category": "",
+            "btv_genre": "",
+            "btv_plus_date": "",
+            "btv_source_sheet": "",
+            "btv_match_score": 0.0,
+            "btv_match_type": "",
+        }
+
+    # 1차: 완전일치
+    exact = btv_df[btv_df["title_norm"] == kino_norm]
+
+    if not exact.empty:
+        row = exact.iloc[0]
+
+        return {
+            "is_btv_plus": True,
+            "btv_title": row.get("btv_title", ""),
+            "btv_plus_category": row.get("btv_plus_category", ""),
+            "btv_genre": row.get("btv_genre", ""),
+            "btv_plus_date": row.get("btv_plus_date", ""),
+            "btv_source_sheet": row.get("btv_source_sheet", ""),
+            "btv_match_score": 1.0,
+            "btv_match_type": "exact",
+        }
+
+    best_row = None
+    best_score = 0.0
+    best_type = ""
+
+    # 2차: 포함관계
+    for _, row in btv_df.iterrows():
+        btv_norm = str(row.get("title_norm", ""))
+
+        if len(kino_norm) < 4 or len(btv_norm) < 4:
+            continue
+
+        if kino_norm in btv_norm or btv_norm in kino_norm:
+            shorter = min(len(kino_norm), len(btv_norm))
+            longer = max(len(kino_norm), len(btv_norm))
+            score = shorter / longer
+
+            if score > best_score:
+                best_score = score
+                best_row = row
+                best_type = "contains"
+
+    if best_row is not None and best_score >= 0.62:
+        return {
+            "is_btv_plus": True,
+            "btv_title": best_row.get("btv_title", ""),
+            "btv_plus_category": best_row.get("btv_plus_category", ""),
+            "btv_genre": best_row.get("btv_genre", ""),
+            "btv_plus_date": best_row.get("btv_plus_date", ""),
+            "btv_source_sheet": best_row.get("btv_source_sheet", ""),
+            "btv_match_score": round(best_score, 3),
+            "btv_match_type": best_type,
+        }
+
+    # 3차: 유사도 매칭
+    for _, row in btv_df.iterrows():
+        btv_norm = str(row.get("title_norm", ""))
+
+        if len(kino_norm) < 4 or len(btv_norm) < 4:
+            continue
+
+        score = difflib.SequenceMatcher(None, kino_norm, btv_norm).ratio()
+
+        if score > best_score:
+            best_score = score
+            best_row = row
+            best_type = "similar"
+
+    if best_row is not None and best_score >= 0.86:
+        return {
+            "is_btv_plus": True,
+            "btv_title": best_row.get("btv_title", ""),
+            "btv_plus_category": best_row.get("btv_plus_category", ""),
+            "btv_genre": best_row.get("btv_genre", ""),
+            "btv_plus_date": best_row.get("btv_plus_date", ""),
+            "btv_source_sheet": best_row.get("btv_source_sheet", ""),
+            "btv_match_score": round(best_score, 3),
+            "btv_match_type": best_type,
+        }
+
+    return {
+        "is_btv_plus": False,
+        "btv_title": "",
+        "btv_plus_category": "",
+        "btv_genre": "",
+        "btv_plus_date": "",
+        "btv_source_sheet": "",
+        "btv_match_score": round(best_score, 3),
+        "btv_match_type": "",
+    }
+
+
+def attach_btv_plus_flag(df):
     df = df.copy()
 
-    if df.empty:
+    try:
+        btv_df = load_btv_plus_titles()
+    except Exception as e:
+        st.warning(f"B tv+ 편성작 구글시트 로드 실패: {e}")
         df["is_btv_plus"] = False
         return df
 
-    title_candidates = [
-        "title",
-        "타이틀명",
-        "콘텐츠명",
-        "제목",
-        "name",
-    ]
+    if df.empty or btv_df.empty:
+        df["is_btv_plus"] = False
+        df["btv_title"] = ""
+        df["btv_plus_category"] = ""
+        df["btv_genre"] = ""
+        df["btv_plus_date"] = ""
+        df["btv_source_sheet"] = ""
+        df["btv_match_score"] = 0.0
+        df["btv_match_type"] = ""
+        return df
 
-    title_col = find_column(df, title_candidates)
-
-    if title_col is None:
+    if "title" not in df.columns:
         df["is_btv_plus"] = False
         return df
 
-    df["title_norm"] = df[title_col].apply(normalize_title)
+    match_rows = []
 
-    df = df.merge(
-        btv_df,
-        on="title_norm",
-        how="left"
-    )
+    for _, row in df.iterrows():
+        match_rows.append(find_btv_match_info(row.get("title", ""), btv_df))
 
-    df["is_btv_plus"] = df["btv_title"].notna()
+    match_df = pd.DataFrame(match_rows)
+
+    df = pd.concat([df.reset_index(drop=True), match_df.reset_index(drop=True)], axis=1)
 
     return df
 
@@ -603,7 +715,7 @@ with tab1:
     total_count = len(base)
 
     only_btv_plus = st.checkbox(
-        f"B tv+ 편성작만 보기",
+        "B tv+ 편성작만 보기",
         value=False
     )
 

@@ -97,6 +97,13 @@ h1,h2,h3,p,label,div,span { color:#f8fafc !important; }
     font-weight:700;
 }
 
+.filter-note {
+    color:#94a3b8 !important;
+    font-size:12px;
+    margin-top:-8px;
+    margin-bottom:10px;
+}
+
 [data-baseweb="select"] * { color:#111827 !important; }
 [data-baseweb="popover"] * {
     color:#111827 !important;
@@ -142,16 +149,19 @@ def is_valid_btv_date(value):
     if value.upper() == "X":
         return False
 
-    if value in ["-", "없음", "미정", "nan", "NaN"]:
+    if value in ["-", "없음", "미정", "nan", "NaN", "None"]:
         return False
 
     return True
 
 
 def find_column(df, candidates):
-    for col in candidates:
-        if col in df.columns:
-            return col
+    for col in df.columns:
+        col_str = str(col).strip()
+
+        for candidate in candidates:
+            if col_str == candidate:
+                return col
 
     normalized_map = {
         str(c).replace(" ", "").strip(): c
@@ -167,21 +177,73 @@ def find_column(df, candidates):
 
 
 @st.cache_data(ttl=3600)
-def load_google_sheet(sheet_name):
+def load_google_sheet_raw(sheet_name):
     encoded_sheet = quote(sheet_name)
     url = (
         f"https://docs.google.com/spreadsheets/d/{SHEET_ID}"
         f"/gviz/tq?tqx=out:csv&sheet={encoded_sheet}"
     )
 
-    return pd.read_csv(url)
+    return pd.read_csv(url, header=None, dtype=str).fillna("")
+
+
+def clean_google_sheet(raw_df):
+    """
+    구글시트의 실제 헤더가 첫 줄이 아닐 수 있어서
+    '타이틀명/콘텐츠명/제목'이 있는 행을 헤더로 자동 인식.
+    """
+    title_header_candidates = [
+        "타이틀명",
+        "콘텐츠명",
+        "제목",
+        "타이틀",
+        "title",
+        "Title",
+    ]
+
+    header_idx = None
+
+    for idx, row in raw_df.iterrows():
+        values = [str(v).replace(" ", "").strip() for v in row.tolist()]
+
+        for candidate in title_header_candidates:
+            key = candidate.replace(" ", "").strip()
+            if key in values:
+                header_idx = idx
+                break
+
+        if header_idx is not None:
+            break
+
+    if header_idx is None:
+        return pd.DataFrame()
+
+    headers = raw_df.iloc[header_idx].tolist()
+    data = raw_df.iloc[header_idx + 1:].copy()
+    data.columns = headers
+
+    # 완전 공백 컬럼 제거
+    data = data.loc[:, [str(c).strip() != "" for c in data.columns]]
+
+    # 컬럼명 공백 정리
+    data.columns = [str(c).strip() for c in data.columns]
+
+    # 완전 공백 행 제거
+    data = data.replace("", pd.NA).dropna(how="all").fillna("")
+
+    return data
+
+
+@st.cache_data(ttl=3600)
+def load_google_sheet(sheet_name):
+    raw_df = load_google_sheet_raw(sheet_name)
+    return clean_google_sheet(raw_df)
 
 
 @st.cache_data(ttl=3600)
 def load_btv_plus_titles():
     rows = []
 
-    # 이 시트들은 시트에 있으면 B tv+ 편성작으로 인정
     base_sheets = [
         "영화",
         "해외드라마",
@@ -206,10 +268,14 @@ def load_btv_plus_titles():
         "genre",
     ]
 
+    # 영화 / 해외드라마 / 애니메이션 / 키즈는 시트에 있으면 B tv+ 편성작으로 인정
     for sheet_name in base_sheets:
         try:
             sheet_df = load_google_sheet(sheet_name)
         except Exception:
+            continue
+
+        if sheet_df.empty:
             continue
 
         title_col = find_column(sheet_df, title_candidates)
@@ -235,7 +301,7 @@ def load_btv_plus_titles():
                 "btv_source_sheet": sheet_name,
             })
 
-    # 방송/드라마/예능 등은 콘텐츠 라인업에서 B tv+ 편성일자가 있는 것만 인정
+    # 콘텐츠 라인업은 B tv+ 편성일자가 있는 것만 B tv+ 인정
     lineup_sheet_candidates = [
         "콘텐츠 라인업",
         "콘텐츠라인업",
@@ -247,6 +313,9 @@ def load_btv_plus_titles():
         try:
             lineup = load_google_sheet(lineup_sheet_name)
         except Exception:
+            continue
+
+        if lineup.empty:
             continue
 
         title_col = find_column(lineup, title_candidates)
@@ -496,13 +565,12 @@ with tab1:
     df["delta"] = pd.to_numeric(df["delta"], errors="coerce").fillna(0)
     df["is_new"] = df["is_new"].astype(str).str.lower().isin(["true", "1"])
 
-    # B tv+ 편성작 여부만 붙임. 화면 배지는 표시하지 않음.
     df = attach_btv_plus_flag(df)
 
     latest_date = sorted(df["date"].unique(), reverse=True)[0]
     latest = df[df["date"] == latest_date].copy()
 
-    top1, top2, top3, top4 = st.columns([1, 1, 1, 1])
+    top1, top2, top3 = st.columns([1, 1, 1])
 
     with top1:
         selected_period = st.selectbox(
@@ -519,12 +587,6 @@ with tab1:
         )
 
     with top3:
-        only_btv_plus = st.checkbox(
-            "B tv+ 편성작만 보기",
-            value=False
-        )
-
-    with top4:
         st.markdown(f"""
         <div class="metric">
             <div class="metric-title">기준일</div>
@@ -536,6 +598,19 @@ with tab1:
 
     if selected_ott != "전체":
         base = base[base["providers"].str.contains(selected_ott, na=False)].copy()
+
+    btv_count = int(base["is_btv_plus"].sum()) if "is_btv_plus" in base.columns else 0
+    total_count = len(base)
+
+    only_btv_plus = st.checkbox(
+        f"B tv+ 편성작만 보기",
+        value=False
+    )
+
+    st.markdown(
+        f'<div class="filter-note">현재 조건 기준 B tv+ 매칭: {btv_count}개 / 전체 {total_count}개</div>',
+        unsafe_allow_html=True
+    )
 
     if only_btv_plus:
         base = base[base["is_btv_plus"] == True].copy()

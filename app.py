@@ -75,6 +75,10 @@ h1,h2,h3,p,label,div,span { color:#f8fafc !important; }
     font-size:12px;
     margin-top:3px;
 }
+.badge-new { color:#f97316 !important; font-weight:900; font-size:13px; }
+.badge-up { color:#22c55e !important; font-weight:900; font-size:13px; }
+.badge-down { color:#ef4444 !important; font-weight:900; font-size:13px; }
+
 .badge-area {
     display:flex;
     align-items:center;
@@ -82,35 +86,49 @@ h1,h2,h3,p,label,div,span { color:#f8fafc !important; }
     gap:6px;
     flex-shrink:0;
     margin-left:8px;
+    min-width:72px;
+    max-width:96px;
 }
-.badge-new { color:#f97316 !important; font-weight:900; font-size:13px; }
-.badge-up { color:#22c55e !important; font-weight:900; font-size:13px; }
-.badge-down { color:#ef4444 !important; font-weight:900; font-size:13px; }
 
 .btv-badge {
-    display:inline-block;
-    background:#2563eb;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:auto !important;
+    min-width:42px;
+    max-width:64px;
+    height:24px;
+    background:#2563eb !important;
     border:1px solid #60a5fa;
     color:#ffffff !important;
     font-size:12px;
     font-weight:900;
-    padding:4px 8px;
+    padding:0 8px;
     border-radius:999px;
     letter-spacing:-0.2px;
-    box-shadow:0 0 12px rgba(37,99,235,0.35);
     white-space:nowrap;
+    box-sizing:border-box;
+    flex-shrink:0;
 }
+
 .btv-badge-small {
-    display:inline-block;
-    background:#1d4ed8;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:auto !important;
+    min-width:38px;
+    max-width:58px;
+    height:21px;
+    background:#1d4ed8 !important;
     border:1px solid #60a5fa;
     color:#ffffff !important;
     font-size:11px;
     font-weight:900;
-    padding:3px 7px;
+    padding:0 7px;
     border-radius:999px;
-    margin-left:6px;
     white-space:nowrap;
+    box-sizing:border-box;
+    flex-shrink:0;
 }
 
 .side-card {
@@ -518,7 +536,6 @@ def make_btv_badge(row, small=False):
         return ""
 
     badge_class = "btv-badge-small" if small else "btv-badge"
-
     return f'<span class="{badge_class}">B tv+</span>'
 
 

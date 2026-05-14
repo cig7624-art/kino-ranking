@@ -31,11 +31,6 @@ h1,h2,h3,p,label,div,span { color:#f8fafc !important; }
     font-size:13px;
     margin-bottom:6px;
 }
-.metric-num {
-    color:#38bdf8 !important;
-    font-size:26px;
-    font-weight:900;
-}
 .metric-text {
     color:#f8fafc !important;
     font-size:18px;
@@ -101,7 +96,7 @@ h1,h2,h3,p,label,div,span { color:#f8fafc !important; }
 .filter-note {
     color:#94a3b8 !important;
     font-size:12px;
-    margin-top:-8px;
+    margin-top:2px;
     margin-bottom:10px;
 }
 
@@ -183,11 +178,10 @@ def is_date_like(value):
     if text in ["-", "없음", "미정", "nan", "NaN", "None"]:
         return False
 
-    # 엑셀 시리얼 날짜 대응
-    if re.fullmatch(r"\d{5}", text):
+    # 엑셀 시리얼 날짜: 45700 또는 45700.0
+    if re.fullmatch(r"\d{5}(\.0)?", text):
         return True
 
-    # 2025-05-01 / 2025.05.01 / 2025/05/01 / 25.5.1 / 5월 1일 등
     date_patterns = [
         r"\d{4}[-./]\d{1,2}[-./]\d{1,2}",
         r"\d{2}[-./]\d{1,2}[-./]\d{1,2}",
@@ -251,7 +245,7 @@ def add_btv_title(rows, title, category, source_sheet, btv_date=""):
 def load_btv_plus_titles():
     rows = []
 
-    # 1) 콘텐츠라인업: D열 타이틀, F열 날짜
+    # 콘텐츠라인업: D열 타이틀, F열 날짜
     # D열 index = 3, F열 index = 5
     lineup_sheet_candidates = [
         "콘텐츠라인업",
@@ -289,7 +283,7 @@ def load_btv_plus_titles():
 
         break
 
-    # 2) 영화 / 해외드라마 / 애니메이션(25'1~): C열 타이틀
+    # 영화 / 해외드라마 / 애니메이션(25'1~): C열 타이틀
     # C열 index = 2
     c_col_sheets = [
         ("영화", "영화"),
@@ -298,7 +292,12 @@ def load_btv_plus_titles():
         ("애니메이션 (25'1~)", "애니메이션"),
     ]
 
+    loaded_c_sheet_names = set()
+
     for sheet_name, category in c_col_sheets:
+        if category in loaded_c_sheet_names and category == "애니메이션":
+            continue
+
         try:
             raw = load_google_sheet_raw(sheet_name)
         except Exception:
@@ -321,7 +320,9 @@ def load_btv_plus_titles():
                 btv_date=""
             )
 
-    # 3) 키즈: F열 타이틀
+        loaded_c_sheet_names.add(category)
+
+    # 키즈: F열 타이틀
     # F열 index = 5
     kids_sheet_candidates = [
         "키즈",
@@ -368,7 +369,6 @@ def load_btv_plus_titles():
     btv_df = pd.DataFrame(rows).fillna("")
     btv_df = btv_df[btv_df["title_norm"] != ""].copy()
 
-    # 헤더나 안내문 같은 값 제거
     remove_words = [
         "타이틀명",
         "콘텐츠명",
@@ -376,6 +376,9 @@ def load_btv_plus_titles():
         "title",
         "방송명",
         "프로그램명",
+        "편성일자",
+        "btv편성일자",
+        "btv편성",
     ]
 
     btv_df = btv_df[
@@ -397,17 +400,19 @@ def load_btv_plus_titles():
 def find_btv_match_info(kino_title, btv_df):
     kino_norm = normalize_title(kino_title)
 
+    default = {
+        "is_btv_plus": False,
+        "btv_title": "",
+        "btv_plus_category": "",
+        "btv_genre": "",
+        "btv_plus_date": "",
+        "btv_source_sheet": "",
+        "btv_match_score": 0.0,
+        "btv_match_type": "",
+    }
+
     if kino_norm == "" or btv_df.empty:
-        return {
-            "is_btv_plus": False,
-            "btv_title": "",
-            "btv_plus_category": "",
-            "btv_genre": "",
-            "btv_plus_date": "",
-            "btv_source_sheet": "",
-            "btv_match_score": 0.0,
-            "btv_match_type": "",
-        }
+        return default
 
     # 1차: 완전일치
     exact = btv_df[btv_df["title_norm"] == kino_norm]
@@ -485,16 +490,7 @@ def find_btv_match_info(kino_title, btv_df):
             "btv_match_type": best_type,
         }
 
-    return {
-        "is_btv_plus": False,
-        "btv_title": "",
-        "btv_plus_category": "",
-        "btv_genre": "",
-        "btv_plus_date": "",
-        "btv_source_sheet": "",
-        "btv_match_score": round(best_score, 3),
-        "btv_match_type": "",
-    }
+    return default
 
 
 def attach_btv_plus_flag(df):
@@ -524,6 +520,7 @@ def attach_btv_plus_flag(df):
 
     match_rows = []
 
+    # 여기서부터는 이미 최신일자/기간/OTT까지 줄인 base에만 적용됨
     for _, row in df.iterrows():
         match_rows.append(find_btv_match_info(row.get("title", ""), btv_df))
 
@@ -677,8 +674,6 @@ with tab1:
     df["delta"] = pd.to_numeric(df["delta"], errors="coerce").fillna(0)
     df["is_new"] = df["is_new"].astype(str).str.lower().isin(["true", "1"])
 
-    df = attach_btv_plus_flag(df)
-
     latest_date = sorted(df["date"].unique(), reverse=True)[0]
     latest = df[df["date"] == latest_date].copy()
 
@@ -710,6 +705,10 @@ with tab1:
 
     if selected_ott != "전체":
         base = base[base["providers"].str.contains(selected_ott, na=False)].copy()
+
+    # 핵심 변경: 전체 df가 아니라 현재 조건 base에만 B tv+ 유사매칭 적용
+    with st.spinner("B tv+ 편성작 매칭 중..."):
+        base = attach_btv_plus_flag(base)
 
     btv_count = int(base["is_btv_plus"].sum()) if "is_btv_plus" in base.columns else 0
     total_count = len(base)

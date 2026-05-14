@@ -50,13 +50,11 @@ h1,h2,h3,p,label,div,span { color:#f8fafc !important; }
     display:flex;
     align-items:center;
     justify-content:space-between;
-    min-height:54px;
 }
 .rank-left {
     display:flex;
     align-items:center;
     gap:10px;
-    min-width:0;
 }
 .rank-num {
     font-size:17px;
@@ -79,73 +77,12 @@ h1,h2,h3,p,label,div,span { color:#f8fafc !important; }
 .badge-up { color:#22c55e !important; font-weight:900; font-size:13px; }
 .badge-down { color:#ef4444 !important; font-weight:900; font-size:13px; }
 
-.badge-area {
-    display:flex;
-    align-items:center;
-    justify-content:flex-end;
-    gap:6px;
-    flex-shrink:0;
-    margin-left:8px;
-    min-width:72px;
-    max-width:96px;
-}
-
-.btv-badge {
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    width:auto !important;
-    min-width:42px;
-    max-width:64px;
-    height:24px;
-    background:#2563eb !important;
-    border:1px solid #60a5fa;
-    color:#ffffff !important;
-    font-size:12px;
-    font-weight:900;
-    padding:0 8px;
-    border-radius:999px;
-    letter-spacing:-0.2px;
-    white-space:nowrap;
-    box-sizing:border-box;
-    flex-shrink:0;
-}
-
-.btv-badge-small {
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    width:auto !important;
-    min-width:38px;
-    max-width:58px;
-    height:21px;
-    background:#1d4ed8 !important;
-    border:1px solid #60a5fa;
-    color:#ffffff !important;
-    font-size:11px;
-    font-weight:900;
-    padding:0 7px;
-    border-radius:999px;
-    white-space:nowrap;
-    box-sizing:border-box;
-    flex-shrink:0;
-}
-
 .side-card {
     background:#0f172a;
     border:1px solid #1e293b;
     border-radius:12px;
     padding:9px 11px;
     margin-bottom:8px;
-}
-.side-card-top {
-    display:flex;
-    justify-content:space-between;
-    align-items:flex-start;
-    gap:8px;
-}
-.side-title-wrap {
-    min-width:0;
 }
 .small { color:#94a3b8 !important; font-size:12px; }
 
@@ -368,8 +305,6 @@ def load_btv_plus_titles():
     btv_df = pd.DataFrame(rows).fillna("")
     btv_df = btv_df[btv_df["title_norm"] != ""].copy()
 
-    # 같은 제목이 여러 시트에 있으면 하나만 사용
-    # 콘텐츠 라인업 편성일자가 있는 건 우선순위가 높게 잡히도록 정렬
     btv_df["has_btv_date"] = btv_df["btv_plus_date"].astype(str).str.strip() != ""
 
     btv_df = (
@@ -531,14 +466,6 @@ def make_meta(row):
     return " · ".join(parts)
 
 
-def make_btv_badge(row, small=False):
-    if not bool(row.get("is_btv_plus", False)):
-        return ""
-
-    badge_class = "btv-badge-small" if small else "btv-badge"
-    return f'<span class="{badge_class}">B tv+</span>'
-
-
 tab1, tab2 = st.tabs(["📈 랭킹 대시보드", "🔎 OTT 제공처 검색"])
 
 with tab1:
@@ -569,6 +496,7 @@ with tab1:
     df["delta"] = pd.to_numeric(df["delta"], errors="coerce").fillna(0)
     df["is_new"] = df["is_new"].astype(str).str.lower().isin(["true", "1"])
 
+    # B tv+ 편성작 여부만 붙임. 화면 배지는 표시하지 않음.
     df = attach_btv_plus_flag(df)
 
     latest_date = sorted(df["date"].unique(), reverse=True)[0]
@@ -613,7 +541,6 @@ with tab1:
         base = base[base["is_btv_plus"] == True].copy()
 
     base = base.sort_values("rank")
-
     new_df = base[base["is_new"] == True].copy()
     up_df = base[base["delta"] > 0].copy().sort_values("delta", ascending=False)
 
@@ -638,7 +565,6 @@ with tab1:
                 else:
                     badge = ""
 
-                btv_badge = make_btv_badge(row)
                 meta = make_meta(row)
 
                 st.markdown(f"""
@@ -650,10 +576,7 @@ with tab1:
                             <div class="meta">{meta}</div>
                         </div>
                     </div>
-                    <div class="badge-area">
-                        {btv_badge}
-                        {badge}
-                    </div>
+                    <div>{badge}</div>
                 </div>
                 """, unsafe_allow_html=True)
 
@@ -666,19 +589,13 @@ with tab1:
         else:
             for _, row in up_df.head(30).iterrows():
                 meta = make_meta(row)
-                btv_badge = make_btv_badge(row, small=True)
 
                 st.markdown(f"""
                 <div class="side-card">
-                    <div class="side-card-top">
-                        <div class="side-title-wrap">
-                            <span class="badge-up">▲{int(row['delta'])}</span>
-                            &nbsp;
-                            <b>{row['title']}</b><br>
-                            <span class="small">#{int(row['rank'])} · {meta}</span>
-                        </div>
-                        <div>{btv_badge}</div>
-                    </div>
+                    <span class="badge-up">▲{int(row['delta'])}</span>
+                    &nbsp;
+                    <b>{row['title']}</b><br>
+                    <span class="small">#{int(row['rank'])} · {meta}</span>
                 </div>
                 """, unsafe_allow_html=True)
 
@@ -691,21 +608,15 @@ with tab1:
         else:
             for _, row in new_df.head(30).iterrows():
                 meta = make_meta(row)
-                btv_badge = make_btv_badge(row, small=True)
 
                 st.markdown(f"""
                 <div class="side-card">
-                    <div class="side-card-top">
-                        <div class="side-title-wrap">
-                            <span class="badge-new">NEW</span>
-                            &nbsp;
-                            #{int(row['rank'])}
-                            &nbsp;
-                            <b>{row['title']}</b><br>
-                            <span class="small">{meta}</span>
-                        </div>
-                        <div>{btv_badge}</div>
-                    </div>
+                    <span class="badge-new">NEW</span>
+                    &nbsp;
+                    #{int(row['rank'])}
+                    &nbsp;
+                    <b>{row['title']}</b><br>
+                    <span class="small">{meta}</span>
                 </div>
                 """, unsafe_allow_html=True)
 

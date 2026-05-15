@@ -14,6 +14,7 @@ URLS = [
     "https://kinolights.com/new?tab=upcoming",
 ]
 
+END_MARKER = "업데이트 정보를 모두 가져왔습니다"
 
 WEEKDAY_MAP = {
     "월요일": 0,
@@ -32,22 +33,45 @@ def normalize_line(text):
 
 def is_count_line(text):
     text = normalize_line(text)
-    return bool(re.fullmatch(r"\d+편\s*공개예정", text))
+
+    patterns = [
+        r"\d+편",
+        r"\d+편\s*공개예정",
+        r"\d+\s*편",
+        r"\d+\s*편\s*공개예정",
+    ]
+
+    return any(re.fullmatch(pattern, text) for pattern in patterns)
 
 
 def is_score_line(text):
     text = normalize_line(text)
 
-    # 17.4, 39.6 같은 점수/비율
     if re.fullmatch(r"\d+\.\d+", text):
         return True
 
-    # 단독 %
     if text == "%":
         return True
 
-    # 17.4% 형태
     if re.fullmatch(r"\d+\.\d+\s*%", text):
+        return True
+
+    return False
+
+
+def is_date_text(text):
+    text = normalize_line(text)
+
+    if text in ["오늘", "내일"]:
+        return True
+
+    if text in WEEKDAY_MAP:
+        return True
+
+    if re.fullmatch(r"\d{1,2}[./월]\s*\d{1,2}일?", text):
+        return True
+
+    if re.fullmatch(r"20\d{2}[./-]\s*\d{1,2}[./-]\s*\d{1,2}", text):
         return True
 
     return False
@@ -76,6 +100,16 @@ def is_noise_line(text):
         "컬렉션",
         "MY",
         "ALL",
+        "넷플릭스",
+        "티빙",
+        "웨이브",
+        "디즈니+",
+        "쿠팡플레이",
+        "왓챠",
+        "애플TV+",
+        "라프텔",
+        "업데이트 정보를 모두 가져왔습니다.",
+        "업데이트 정보를 모두 가져왔습니다",
     }
 
     if text in noise:
@@ -90,13 +124,15 @@ def is_noise_line(text):
     if is_score_line(text):
         return True
 
+    if is_date_text(text):
+        return True
+
     return False
 
 
 def parse_explicit_date(text, base_year):
     text = normalize_line(text)
 
-    # 05.18 / 5.18 / 05/18 / 5월 18일
     m = re.fullmatch(r"(\d{1,2})[./월]\s*(\d{1,2})일?", text)
     if m:
         month = int(m.group(1))
@@ -107,7 +143,6 @@ def parse_explicit_date(text, base_year):
         except ValueError:
             return None
 
-    # 2026.05.18 / 2026-05-18
     m = re.fullmatch(r"(20\d{2})[./-]\s*(\d{1,2})[./-]\s*(\d{1,2})", text)
     if m:
         year = int(m.group(1))
@@ -170,12 +205,8 @@ def looks_like_title(text):
     if is_noise_line(text):
         return False
 
-    # 너무 짧은 한 글자 제거
     if len(text) <= 1:
         return False
-
-    # 순수 숫자만 있는 경우는 작품명일 수도 있음. 예: 731
-    # 그래서 숫자 제목은 허용.
 
     return True
 
@@ -235,29 +266,60 @@ def extract_rows_from_text(body_text):
     return df.to_dict("records")
 
 
-def scroll_to_bottom(page, max_scrolls=35):
-    previous_height = 0
+def scroll_until_end_marker(page, max_scrolls=80):
+    """
+    키노라이츠 공개예정작은 맨 아래에
+    '업데이트 정보를 모두 가져왔습니다.'가 나올 때까지 추가 로딩됨.
+    이 문구가 나올 때까지 스크롤.
+    """
+    last_text_len = 0
     stable_count = 0
+    found_marker = False
 
-    for _ in range(max_scrolls):
-        page.mouse.wheel(0, 1800)
-        page.wait_for_timeout(900)
-
+    for i in range(max_scrolls):
         try:
-            current_height = page.evaluate("document.body.scrollHeight")
+            body_text = page.locator("body").inner_text(timeout=10000)
         except Exception:
+            body_text = ""
+
+        if END_MARKER in body_text:
+            found_marker = True
+            print(f"end marker found at scroll {i}")
             break
 
-        if current_height == previous_height:
+        current_text_len = len(body_text)
+
+        if current_text_len == last_text_len:
             stable_count += 1
         else:
             stable_count = 0
 
-        previous_height = current_height
+        last_text_len = current_text_len
 
-        # 높이가 3번 연속 안 늘어나면 끝까지 간 것으로 판단
-        if stable_count >= 3:
+        # window 스크롤
+        try:
+            page.evaluate("""
+                () => {
+                    window.scrollBy(0, window.innerHeight * 1.3);
+                }
+            """)
+        except Exception:
+            pass
+
+        # wheel 이벤트도 같이 발생
+        try:
+            page.mouse.wheel(0, 1400)
+        except Exception:
+            pass
+
+        page.wait_for_timeout(900)
+
+        # 텍스트가 8번 연속 안 늘고 marker도 없으면 종료
+        if stable_count >= 8:
+            print("text stable too long, stop scrolling")
             break
+
+    return found_marker
 
 
 def scrape_upcoming():
@@ -271,7 +333,7 @@ def scrape_upcoming():
         )
 
         page = browser.new_page(
-            viewport={"width": 430, "height": 2200},
+            viewport={"width": 430, "height": 900},
             user_agent=(
                 "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) "
                 "AppleWebKit/605.1.15 (KHTML, like Gecko) "
@@ -282,18 +344,28 @@ def scrape_upcoming():
         for url in URLS:
             try:
                 page.goto(url, wait_until="domcontentloaded", timeout=40000)
-                page.wait_for_timeout(5000)
+                page.wait_for_timeout(6000)
 
-                scroll_to_bottom(page, max_scrolls=35)
+                # 혹시 상단 탭이 정확히 공개예정작으로 안 잡혔을 때 대비
+                try:
+                    if page.get_by_text("공개예정작").count() > 0:
+                        page.get_by_text("공개예정작").first.click(timeout=3000)
+                        page.wait_for_timeout(2500)
+                except Exception:
+                    pass
+
+                found_marker = scroll_until_end_marker(page, max_scrolls=80)
 
                 body_text = page.locator("body").inner_text(timeout=15000)
 
                 all_texts.append(f"\n\n===== URL: {url} =====\n")
+                all_texts.append(f"FOUND_END_MARKER: {found_marker}\n")
                 all_texts.append(body_text)
 
                 rows = extract_rows_from_text(body_text)
 
                 print(f"{url} text length:", len(body_text))
+                print(f"{url} found marker:", found_marker)
                 print(f"{url} parsed rows:", len(rows))
 
                 if rows:
@@ -330,7 +402,7 @@ def scrape_upcoming():
     print(f"{OUTPUT} 저장 완료: {len(df)}개")
 
     if not df.empty:
-        print(df.head(50).to_string(index=False))
+        print(df.head(100).to_string(index=False))
 
 
 if __name__ == "__main__":

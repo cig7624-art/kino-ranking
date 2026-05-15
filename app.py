@@ -34,6 +34,13 @@ h1,h2,h3,p,label,div,span { color:#f8fafc !important; }
     font-weight:800;
 }
 
+.base-label {
+    color:#94a3b8 !important;
+    font-size:14px;
+    margin-top:8px;
+    margin-bottom:10px;
+}
+
 .rank-card {
     background:#0f172a;
     border:1px solid #1e293b;
@@ -126,6 +133,52 @@ def normalize_period(value):
     }
 
     return mapping.get(value, str(value).strip())
+
+
+def get_kino_base_label(selected_period, latest_date):
+    """
+    키노라이츠 화면 기준일 표기 방식.
+    일간: MM.DD 기준
+    주간: MM.DD~MM.DD 기준
+    월간: YYYY.MM 기준
+    """
+    latest = pd.to_datetime(latest_date)
+
+    if selected_period == "일간":
+        return latest.strftime("%m.%d 기준")
+
+    if selected_period == "주간":
+        # 키노라이츠 주간은 전주 월~일 기준
+        # 예: latest_date=2026-05-13이면 05.04~05.10 기준
+        weekday = latest.weekday()  # 월=0, 일=6
+        this_week_monday = latest - pd.Timedelta(days=weekday)
+        prev_week_monday = this_week_monday - pd.Timedelta(days=7)
+        prev_week_sunday = prev_week_monday + pd.Timedelta(days=6)
+
+        return f"{prev_week_monday.strftime('%m.%d')}~{prev_week_sunday.strftime('%m.%d')} 기준"
+
+    if selected_period == "월간":
+        prev_month = latest - pd.DateOffset(months=1)
+        return prev_month.strftime("%Y.%m 기준")
+
+    return str(latest_date)
+
+
+def get_kino_base_tooltip(selected_period):
+    """
+    키노라이츠 집계기준 설명.
+    마우스 오버 시 노출.
+    """
+    if selected_period == "일간":
+        return "집계 기준: 일간 · 전일 기준, 매일 오후 2시 업데이트"
+
+    if selected_period == "주간":
+        return "집계 기준: 주간 · 전주 월요일~일요일"
+
+    if selected_period == "월간":
+        return "집계 기준: 월간 · 전월 1일~말일"
+
+    return "키노라이츠 트렌드 랭킹 기준"
 
 
 @st.cache_data(ttl=300)
@@ -336,18 +389,38 @@ with tab1:
             index=0
         )
 
+    display_base_label = get_kino_base_label(selected_period, latest_date)
+    base_tooltip = get_kino_base_tooltip(selected_period)
+
     with top3:
         st.markdown(f"""
-        <div class="metric">
+        <div class="metric" title="{base_tooltip}">
             <div class="metric-title">기준일</div>
-            <div class="metric-text">{latest_date}</div>
+            <div class="metric-text">{display_base_label}</div>
         </div>
         """, unsafe_allow_html=True)
+
+    st.markdown(
+        f"""
+        <div class="base-label" title="{base_tooltip}">
+            ⓘ {display_base_label}
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
     base = latest[latest["period"] == selected_period].copy()
 
     if selected_ott != "전체":
         base = base[base["providers"].str.contains(selected_ott, na=False)].copy()
+
+    # 기간 필터값이 안 맞을 때도 화면이 비지 않도록 안전장치
+    if base.empty:
+        st.warning(f"'{selected_period}' 기간 데이터가 없어 최신일자 전체 데이터를 표시합니다.")
+        base = latest.copy()
+
+        if selected_ott != "전체":
+            base = base[base["providers"].str.contains(selected_ott, na=False)].copy()
 
     base = base.sort_values("rank")
     new_df = base[base["is_new"] == True].copy()

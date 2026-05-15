@@ -10,8 +10,8 @@ OUTPUT = Path("upcoming_releases.csv")
 DEBUG_TEXT = Path("debug_upcoming_text.txt")
 
 URLS = [
-    "https://kinolights.com/new?tab=upcoming",
     "https://m.kinolights.com/new?tab=upcoming",
+    "https://kinolights.com/new?tab=upcoming",
 ]
 
 
@@ -66,6 +66,7 @@ def is_noise_line(text):
         "랭킹",
         "탐색",
         "검색",
+        "혜택",
         "마이페이지",
         "로그인",
         "전체",
@@ -73,6 +74,8 @@ def is_noise_line(text):
         "작품",
         "인물",
         "컬렉션",
+        "MY",
+        "ALL",
     }
 
     if text in noise:
@@ -158,6 +161,25 @@ def clean_title(text):
     return text
 
 
+def looks_like_title(text):
+    text = clean_title(text)
+
+    if not text:
+        return False
+
+    if is_noise_line(text):
+        return False
+
+    # 너무 짧은 한 글자 제거
+    if len(text) <= 1:
+        return False
+
+    # 순수 숫자만 있는 경우는 작품명일 수도 있음. 예: 731
+    # 그래서 숫자 제목은 허용.
+
+    return True
+
+
 def extract_rows_from_text(body_text):
     today_dt = datetime.now()
     today = today_dt.date()
@@ -182,17 +204,10 @@ def extract_rows_from_text(body_text):
         if current_date is None:
             continue
 
-        if is_noise_line(line):
+        if not looks_like_title(line):
             continue
 
         title = clean_title(line)
-
-        if not title:
-            continue
-
-        # 너무 짧은 한글/영문 1글자 제거
-        if len(title) <= 1:
-            continue
 
         rows.append({
             "collect_date": collect_date,
@@ -207,19 +222,42 @@ def extract_rows_from_text(body_text):
 
     df = pd.DataFrame(rows)
 
-    # 같은 날짜/제목 중복 제거
     df = df.drop_duplicates(
         subset=["release_date", "title"],
         keep="first"
     )
 
-    # 날짜순 정렬
     df["release_date_dt"] = pd.to_datetime(df["release_date"], errors="coerce")
     df = df[df["release_date_dt"].notna()].copy()
     df = df.sort_values(["release_date_dt", "title"])
     df = df.drop(columns=["release_date_dt"])
 
     return df.to_dict("records")
+
+
+def scroll_to_bottom(page, max_scrolls=35):
+    previous_height = 0
+    stable_count = 0
+
+    for _ in range(max_scrolls):
+        page.mouse.wheel(0, 1800)
+        page.wait_for_timeout(900)
+
+        try:
+            current_height = page.evaluate("document.body.scrollHeight")
+        except Exception:
+            break
+
+        if current_height == previous_height:
+            stable_count += 1
+        else:
+            stable_count = 0
+
+        previous_height = current_height
+
+        # 높이가 3번 연속 안 늘어나면 끝까지 간 것으로 판단
+        if stable_count >= 3:
+            break
 
 
 def scrape_upcoming():
@@ -234,7 +272,11 @@ def scrape_upcoming():
 
         page = browser.new_page(
             viewport={"width": 430, "height": 2200},
-            user_agent="Mozilla/5.0"
+            user_agent=(
+                "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) "
+                "AppleWebKit/605.1.15 (KHTML, like Gecko) "
+                "Version/16.0 Mobile/15E148 Safari/604.1"
+            )
         )
 
         for url in URLS:
@@ -242,19 +284,7 @@ def scrape_upcoming():
                 page.goto(url, wait_until="domcontentloaded", timeout=40000)
                 page.wait_for_timeout(5000)
 
-                # 스크롤해서 lazy load 유도
-previous_height = 0
-
-for _ in range(30):
-    page.mouse.wheel(0, 1600)
-    page.wait_for_timeout(1000)
-
-    current_height = page.evaluate("document.body.scrollHeight")
-
-    if current_height == previous_height:
-        break
-
-    previous_height = current_height
+                scroll_to_bottom(page, max_scrolls=35)
 
                 body_text = page.locator("body").inner_text(timeout=15000)
 
@@ -284,10 +314,12 @@ for _ in range(30):
         )
     else:
         df = pd.DataFrame(all_rows)
+
         df = df.drop_duplicates(
             subset=["release_date", "title"],
             keep="first"
         )
+
         df["release_date_dt"] = pd.to_datetime(df["release_date"], errors="coerce")
         df = df[df["release_date_dt"].notna()].copy()
         df = df.sort_values(["release_date_dt", "title"])
@@ -296,7 +328,9 @@ for _ in range(30):
     df.to_csv(OUTPUT, index=False, encoding="utf-8-sig")
 
     print(f"{OUTPUT} 저장 완료: {len(df)}개")
-    print(df.head(30).to_string(index=False))
+
+    if not df.empty:
+        print(df.head(50).to_string(index=False))
 
 
 if __name__ == "__main__":

@@ -25,6 +25,61 @@ h1,h2,h3,p,label,div,span { color:#f8fafc !important; }
     margin-bottom:10px;
 }
 
+.base-row {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    color:#94a3b8 !important;
+    font-size:14px;
+    margin-top:8px;
+    margin-bottom:10px;
+}
+
+.base-info {
+    color:#94a3b8 !important;
+    font-size:14px;
+}
+
+.btv-check-wrap {
+    position:relative;
+    display:flex;
+    align-items:center;
+    gap:7px;
+    color:#cbd5e1 !important;
+    font-size:14px;
+    font-weight:700;
+    cursor:default;
+    user-select:none;
+}
+
+.btv-check-box {
+    width:15px;
+    height:15px;
+    border:1px solid #94a3b8;
+    border-radius:4px;
+    background:#0f172a;
+    display:inline-block;
+}
+
+.btv-check-wrap:hover::after {
+    content:"현재는 체크박스만 노출됩니다. B tv+ 편성작 필터 기능은 추후 연결 예정입니다.";
+    position:absolute;
+    top:26px;
+    right:0;
+    width:310px;
+    background:#111827;
+    color:#f8fafc;
+    border:1px solid #334155;
+    border-radius:10px;
+    padding:9px 11px;
+    font-size:12px;
+    font-weight:500;
+    line-height:1.4;
+    z-index:9999;
+    box-shadow:0 8px 24px rgba(0,0,0,0.35);
+}
+
 .rank-card {
     background:#0f172a;
     border:1px solid #1e293b;
@@ -35,12 +90,14 @@ h1,h2,h3,p,label,div,span { color:#f8fafc !important; }
     align-items:center;
     justify-content:space-between;
 }
+
 .rank-left {
     display:flex;
     align-items:center;
     gap:10px;
     min-width:0;
 }
+
 .rank-num {
     font-size:17px;
     font-weight:900;
@@ -49,15 +106,18 @@ h1,h2,h3,p,label,div,span { color:#f8fafc !important; }
     text-align:right;
     font-style:italic;
 }
+
 .title {
     font-size:15px;
     font-weight:800;
 }
+
 .meta {
     color:#64748b !important;
     font-size:12px;
     margin-top:3px;
 }
+
 .badge-new { color:#f97316 !important; font-weight:900; font-size:13px; }
 .badge-up { color:#22c55e !important; font-weight:900; font-size:13px; }
 .badge-down { color:#ef4444 !important; font-weight:900; font-size:13px; }
@@ -69,6 +129,7 @@ h1,h2,h3,p,label,div,span { color:#f8fafc !important; }
     padding:9px 11px;
     margin-bottom:8px;
 }
+
 .small { color:#94a3b8 !important; font-size:12px; }
 
 .release-row {
@@ -136,6 +197,7 @@ h1,h2,h3,p,label,div,span { color:#f8fafc !important; }
     background:#1e293b !important;
     color:#f8fafc !important;
 }
+
 .logo-netflix { color:#ef4444 !important; }
 .logo-tving { color:#ef4444 !important; }
 .logo-wavve { color:#60a5fa !important; }
@@ -244,6 +306,10 @@ def is_bad_release_title(title):
         "혜택",
         "마이페이지",
         "주메뉴",
+        "상단으로",
+        "맨 위로",
+        "뒤로가기",
+        "공유",
         "검색",
         "신작",
         "공개예정작",
@@ -266,11 +332,9 @@ def is_bad_release_title(title):
     if title in bad_titles:
         return True
 
-    # 1편, 2편, 3편, 1편공개예정 등 제거
     if re.fullmatch(r"\d+\s*편(\s*공개예정)?", title):
         return True
 
-    # 점수/퍼센트 제거
     if re.fullmatch(r"\d+\.\d+%?", title):
         return True
 
@@ -626,19 +690,19 @@ with tab1:
     base_tooltip = get_kino_base_tooltip(selected_period)
 
     st.markdown(
-    f"""
-    <div class="base-label" title="{base_tooltip}">
-        ⓘ 랭킹 기준: {display_base_label}
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-    btv_plus_only = st.checkbox(
-    "B tv+ 편성작만 보기",
-    value=False,
-    help="현재는 체크박스만 노출됩니다. 필터 기능은 추후 연결 예정입니다."
-)
+        f"""
+        <div class="base-row">
+            <div class="base-info" title="{base_tooltip}">
+                ⓘ 랭킹 기준: {display_base_label}
+            </div>
+            <div class="btv-check-wrap">
+                <span class="btv-check-box"></span>
+                <span>B tv+ 편성작만 보기</span>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
     base = latest[latest["period"] == selected_period].copy()
 
@@ -661,7 +725,6 @@ with tab1:
     if not release_df.empty:
         release_df = release_df[release_df["release_date_dt"].notna()].copy()
 
-        # provider 값이 실제로 있을 때만 OTT 필터 적용
         if selected_release_provider != "전체":
             has_provider = release_df["provider"].astype(str).str.strip() != ""
 

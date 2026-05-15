@@ -16,9 +16,9 @@ st.markdown("""
 <style>
 .stApp {
     background:
-        radial-gradient(circle at 12% 0%, rgba(37,99,235,0.20), transparent 30%),
-        radial-gradient(circle at 90% 0%, rgba(59,130,246,0.13), transparent 28%),
-        linear-gradient(180deg, #071326 0%, #050b18 52%, #050b18 100%);
+        radial-gradient(circle at 12% 0%, rgba(37,99,235,0.22), transparent 30%),
+        radial-gradient(circle at 92% 0%, rgba(59,130,246,0.14), transparent 28%),
+        linear-gradient(180deg, #071326 0%, #050b18 48%, #050b18 100%);
 }
 
 .block-container {
@@ -42,7 +42,7 @@ header, footer {
     align-items:center;
     justify-content:space-between;
     gap:16px;
-    margin-bottom:10px;
+    margin-bottom:12px;
 }
 
 .kino-title {
@@ -67,8 +67,8 @@ header, footer {
     align-items:center;
     gap:7px;
     color:#9fb0ca !important;
-    background:rgba(15,28,50,0.72);
-    border:1px solid rgba(111,139,178,0.20);
+    background:rgba(15,28,50,0.78);
+    border:1px solid rgba(111,139,178,0.24);
     border-radius:999px;
     padding:9px 13px;
     font-size:13px;
@@ -81,7 +81,7 @@ header, footer {
     gap:7px;
     color:#d7e3f7 !important;
     background:#0f1a2b;
-    border:1px solid rgba(115,144,184,0.35);
+    border:1px solid rgba(115,144,184,0.38);
     border-radius:10px;
     padding:9px 14px;
     font-size:13px;
@@ -90,7 +90,7 @@ header, footer {
 
 /* 탭 */
 .stTabs [data-baseweb="tab-list"] {
-    gap:28px;
+    gap:30px;
     border-bottom:1px solid rgba(116,142,180,0.24);
     margin-bottom:14px;
 }
@@ -106,23 +106,16 @@ header, footer {
     border-bottom:3px solid #3b82f6;
 }
 
-/* 상단 필터 영역 */
-.filter-shell {
-    background:rgba(8,18,34,0.78);
-    border:1px solid rgba(111,139,178,0.16);
-    border-radius:16px;
-    padding:15px 17px 13px;
-    margin-bottom:12px;
-    box-shadow:0 14px 28px rgba(0,0,0,0.14);
+/* Streamlit border container를 패널처럼 */
+div[data-testid="stVerticalBlockBorderWrapper"] {
+    background:rgba(10,21,39,0.82) !important;
+    border:1px solid rgba(113,142,181,0.20) !important;
+    border-radius:16px !important;
+    box-shadow:0 12px 28px rgba(0,0,0,0.16);
+    padding:14px 14px 16px 14px !important;
 }
 
-.filter-title {
-    color:#9fb0ca !important;
-    font-size:12px;
-    font-weight:900;
-    margin-bottom:8px;
-}
-
+/* 필터 select */
 div[data-testid="stSelectbox"] label {
     color:#cbd5e1 !important;
     font-weight:850 !important;
@@ -160,10 +153,10 @@ input {
     gap:16px;
     color:#94a3b8 !important;
     font-size:14px;
-    margin-top:8px;
-    margin-bottom:12px;
-    background:rgba(13,26,47,0.82);
-    border:1px solid rgba(112,140,178,0.16);
+    margin-top:10px;
+    margin-bottom:14px;
+    background:rgba(13,26,47,0.84);
+    border:1px solid rgba(112,140,178,0.18);
     border-radius:12px;
     padding:11px 15px;
 }
@@ -214,7 +207,7 @@ input {
 }
 
 /* 컬럼 타이틀 */
-div[data-testid="column"] h3 {
+div[data-testid="stVerticalBlockBorderWrapper"] h3 {
     font-size:20px !important;
     font-weight:950 !important;
     letter-spacing:-0.4px;
@@ -224,7 +217,7 @@ div[data-testid="column"] h3 {
 /* 랭킹 카드 */
 .rank-card {
     background:rgba(13,27,49,0.96);
-    border:1px solid rgba(111,139,178,0.20);
+    border:1px solid rgba(111,139,178,0.22);
     border-radius:12px;
     padding:9px 10px;
     margin-bottom:8px;
@@ -248,10 +241,10 @@ div[data-testid="column"] h3 {
 }
 
 .rank-num {
-    font-size:20px;
+    font-size:21px;
     font-weight:950;
     color:#dce8fb !important;
-    min-width:32px;
+    min-width:34px;
     text-align:center;
     font-style:italic;
 }
@@ -291,10 +284,10 @@ div[data-testid="column"] h3 {
     font-size:13px;
 }
 
-/* 급상승/신규 */
+/* 급상승/신규 카드 */
 .side-card {
     background:rgba(13,27,49,0.96);
-    border:1px solid rgba(111,139,178,0.20);
+    border:1px solid rgba(111,139,178,0.22);
     border-radius:12px;
     padding:10px 12px;
     margin-bottom:8px;
@@ -315,7 +308,7 @@ div[data-testid="column"] h3 {
 /* 공개예정작 */
 .release-row {
     background:rgba(13,27,49,0.96);
-    border:1px solid rgba(111,139,178,0.20);
+    border:1px solid rgba(111,139,178,0.22);
     border-radius:12px;
     padding:8px 9px;
     margin-bottom:8px;
@@ -412,7 +405,7 @@ div[data-testid="column"] h3 {
 
 .release-empty {
     background:rgba(13,27,49,0.96);
-    border:1px solid rgba(111,139,178,0.20);
+    border:1px solid rgba(111,139,178,0.22);
     border-radius:12px;
     padding:12px;
     color:#94a3b8 !important;
@@ -941,32 +934,29 @@ with tab1:
     latest_date = sorted(df["date"].unique(), reverse=True)[0]
     latest = df[df["date"] == latest_date].copy()
 
-    st.markdown('<div class="filter-shell"><div class="filter-title">필터</div>', unsafe_allow_html=True)
+    with st.container(border=True):
+        top1, top2, top3 = st.columns([1, 1, 1])
 
-    top1, top2, top3 = st.columns([1, 1, 1])
+        with top1:
+            selected_period = st.selectbox(
+                "기간 선택",
+                ["일간", "주간", "월간"],
+                index=1
+            )
 
-    with top1:
-        selected_period = st.selectbox(
-            "기간 선택",
-            ["일간", "주간", "월간"],
-            index=1
-        )
+        with top2:
+            selected_ott = st.selectbox(
+                "OTT 선택",
+                ["전체"] + OTT_NAMES,
+                index=0
+            )
 
-    with top2:
-        selected_ott = st.selectbox(
-            "OTT 선택",
-            ["전체"] + OTT_NAMES,
-            index=0
-        )
-
-    with top3:
-        selected_release_provider = st.selectbox(
-            "공개예정작 OTT",
-            RELEASE_PROVIDERS,
-            index=0
-        )
-
-    st.markdown('</div>', unsafe_allow_html=True)
+        with top3:
+            selected_release_provider = st.selectbox(
+                "공개예정작 OTT",
+                RELEASE_PROVIDERS,
+                index=0
+            )
 
     display_base_label = get_kino_base_label(selected_period, latest_date)
     base_tooltip = get_kino_base_tooltip(selected_period)
@@ -1028,70 +1018,74 @@ with tab1:
     col1, col2, col3, col4 = st.columns([1.1, 1, 1, 1])
 
     with col1:
-        st.subheader(f"🏆 {selected_ott} {selected_period} TOP100")
+        with st.container(border=True):
+            st.subheader(f"🏆 {selected_ott} {selected_period} TOP100")
 
-        if base.empty:
-            st.warning("데이터 없음")
-        else:
-            for _, row in base.head(100).iterrows():
-                render_rank_card(row)
+            if base.empty:
+                st.warning("데이터 없음")
+            else:
+                for _, row in base.head(100).iterrows():
+                    render_rank_card(row)
 
     with col2:
-        st.subheader("🚀 급상승 콘텐츠")
+        with st.container(border=True):
+            st.subheader("🚀 급상승 콘텐츠")
 
-        if up_df.empty:
-            st.info("급상승 콘텐츠 없음")
-        else:
-            for _, row in up_df.head(30).iterrows():
-                meta = html.escape(make_meta(row))
+            if up_df.empty:
+                st.info("급상승 콘텐츠 없음")
+            else:
+                for _, row in up_df.head(30).iterrows():
+                    meta = html.escape(make_meta(row))
 
-                try:
-                    rank_text = str(int(row["rank"]))
-                except Exception:
-                    rank_text = "-"
+                    try:
+                        rank_text = str(int(row["rank"]))
+                    except Exception:
+                        rank_text = "-"
 
-                title = html.escape(str(row["title"]))
-                delta = int(row["delta"])
+                    title = html.escape(str(row["title"]))
+                    delta = int(row["delta"])
 
-                st.markdown(f"""
-                <div class="side-card">
-                    <span class="badge-up">▲{delta}</span>
-                    &nbsp;
-                    <b>{title}</b><br>
-                    <span class="small">#{rank_text} · {meta}</span>
-                </div>
-                """, unsafe_allow_html=True)
+                    st.markdown(f"""
+                    <div class="side-card">
+                        <span class="badge-up">▲{delta}</span>
+                        &nbsp;
+                        <b>{title}</b><br>
+                        <span class="small">#{rank_text} · {meta}</span>
+                    </div>
+                    """, unsafe_allow_html=True)
 
     with col3:
-        st.subheader("🔥 신규 진입 콘텐츠")
+        with st.container(border=True):
+            st.subheader("🔥 신규 진입 콘텐츠")
 
-        if new_df.empty:
-            st.info("신규 진입 콘텐츠 없음")
-        else:
-            for _, row in new_df.head(30).iterrows():
-                meta = html.escape(make_meta(row))
+            if new_df.empty:
+                st.info("신규 진입 콘텐츠 없음")
+            else:
+                for _, row in new_df.head(30).iterrows():
+                    meta = html.escape(make_meta(row))
 
-                try:
-                    rank_text = str(int(row["rank"]))
-                except Exception:
-                    rank_text = "-"
+                    try:
+                        rank_text = str(int(row["rank"]))
+                    except Exception:
+                        rank_text = "-"
 
-                title = html.escape(str(row["title"]))
+                    title = html.escape(str(row["title"]))
 
-                st.markdown(f"""
-                <div class="side-card">
-                    <span class="badge-new">NEW</span>
-                    &nbsp;
-                    #{rank_text}
-                    &nbsp;
-                    <b>{title}</b><br>
-                    <span class="small">{meta}</span>
-                </div>
-                """, unsafe_allow_html=True)
+                    st.markdown(f"""
+                    <div class="side-card">
+                        <span class="badge-new">NEW</span>
+                        &nbsp;
+                        #{rank_text}
+                        &nbsp;
+                        <b>{title}</b><br>
+                        <span class="small">{meta}</span>
+                    </div>
+                    """, unsafe_allow_html=True)
 
     with col4:
-        st.subheader("🗓 공개 예정작")
-        render_upcoming_releases(release_df, max_items=80)
+        with st.container(border=True):
+            st.subheader("🗓 공개 예정작")
+            render_upcoming_releases(release_df, max_items=80)
 
 with tab2:
     st.subheader("🔎 타이틀로 OTT 제공처 검색")

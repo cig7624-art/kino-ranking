@@ -91,7 +91,7 @@ h1,h2,h3,p,label,div,span { color:#f8fafc !important; }
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
-    max-width:220px;
+    max-width:260px;
 }
 .release-meta {
     color:#94a3b8 !important;
@@ -226,7 +226,7 @@ def get_kino_base_tooltip(selected_period):
     return "키노라이츠 트렌드 랭킹 기준"
 
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=60)
 def load_ranking_data():
     file = Path("ranking_history.csv")
 
@@ -262,22 +262,23 @@ def load_ranking_data():
     return df
 
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=60)
 def load_upcoming_releases():
     file = Path("upcoming_releases.csv")
 
     if not file.exists():
-        return pd.DataFrame(columns=["release_date", "title", "provider", "genre"])
+        return pd.DataFrame(columns=["collect_date", "release_date", "title", "provider", "genre"])
 
     df = pd.read_csv(file)
 
     if df.empty:
-        return pd.DataFrame(columns=["release_date", "title", "provider", "genre"])
+        return pd.DataFrame(columns=["collect_date", "release_date", "title", "provider", "genre"])
 
-    for col in ["release_date", "title", "provider", "genre"]:
+    for col in ["collect_date", "release_date", "title", "provider", "genre"]:
         if col not in df.columns:
             df[col] = ""
 
+    df["collect_date"] = df["collect_date"].fillna("").astype(str)
     df["release_date"] = df["release_date"].fillna("").astype(str)
     df["title"] = df["title"].fillna("").astype(str)
     df["provider"] = df["provider"].fillna("").astype(str)
@@ -287,6 +288,11 @@ def load_upcoming_releases():
 
     df = df[df["title"].str.strip() != ""].copy()
     df = df[df["release_date_dt"].notna()].copy()
+
+    df = df.drop_duplicates(
+        subset=["release_date", "title"],
+        keep="first"
+    )
 
     df = df.sort_values(
         ["release_date_dt", "title"],
@@ -325,7 +331,10 @@ def make_meta(row):
 
 
 def get_provider_logo(provider):
-    p = str(provider)
+    p = str(provider).strip()
+
+    if p == "":
+        return ""
 
     if "넷플" in p:
         return '<span class="ott-logo logo-netflix">N</span>'
@@ -344,7 +353,7 @@ def get_provider_logo(provider):
     if "라프텔" in p:
         return '<span class="ott-logo logo-laftel">L</span>'
 
-    return '<span class="ott-logo">OTT</span>'
+    return ""
 
 
 def format_release_date(value):
@@ -387,7 +396,7 @@ def render_rank_card(row):
     """, unsafe_allow_html=True)
 
 
-def render_upcoming_releases(release_df, max_items=12):
+def render_upcoming_releases(release_df, max_items=80):
     if release_df.empty:
         st.markdown(
             '<div class="release-empty">공개예정작 데이터가 없습니다.</div>',
@@ -402,20 +411,25 @@ def render_upcoming_releases(release_df, max_items=12):
         date_text = format_release_date(row.get("release_date_dt"))
         logo = get_provider_logo(provider)
 
-        if provider and genre:
-            meta = f"{provider} · {genre}"
-        elif provider:
-            meta = provider
-        elif genre:
-            meta = genre
-        else:
-            meta = "키노라이츠 공개예정작"
+        meta_parts = []
+
+        if provider:
+            meta_parts.append(provider)
+
+        if genre:
+            meta_parts.append(genre)
+
+        meta_html = ""
+
+        if meta_parts:
+            meta_text = " · ".join(meta_parts)
+            meta_html = f'<div class="release-meta">{meta_text}</div>'
 
         st.markdown(f"""
         <div class="release-row">
             <div class="release-left">
                 <div class="release-title">{logo}{title}</div>
-                <div class="release-meta">{meta}</div>
+                {meta_html}
             </div>
             <div class="release-date">{date_text}</div>
         </div>
@@ -575,8 +589,7 @@ with tab1:
     if not release_df.empty:
         release_df = release_df[release_df["release_date_dt"].notna()].copy()
 
-        # provider 값이 비어 있는 현재 상태에서는 OTT 필터를 강제로 적용하면 전체가 사라짐.
-        # provider 값이 하나라도 있을 때만 OTT 필터 적용.
+        # provider 값이 실제로 있을 때만 OTT 필터 적용
         if selected_release_provider != "전체":
             has_provider = release_df["provider"].astype(str).str.strip() != ""
 
@@ -656,7 +669,7 @@ with tab1:
 
     with col4:
         st.subheader("🗓 공개 예정작")
-        render_upcoming_releases(release_df, max_items=12)
+        render_upcoming_releases(release_df, max_items=80)
 
 with tab2:
     st.subheader("🔎 타이틀로 OTT 제공처 검색")

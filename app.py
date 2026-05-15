@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import requests
+import re
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 
@@ -80,10 +81,16 @@ h1,h2,h3,p,label,div,span { color:#f8fafc !important; }
     align-items:center;
     gap:8px;
 }
+
+.release-row * {
+    background:transparent !important;
+}
+
 .release-left {
     min-width:0;
     flex:1;
 }
+
 .release-title {
     font-size:14px;
     font-weight:800;
@@ -93,13 +100,15 @@ h1,h2,h3,p,label,div,span { color:#f8fafc !important; }
     text-overflow:ellipsis;
     max-width:260px;
 }
+
 .release-meta {
     color:#94a3b8 !important;
     font-size:12px;
     margin-top:4px;
 }
+
 .release-date {
-    background:#1e293b;
+    background:#1e293b !important;
     border:1px solid #334155;
     border-radius:9px;
     padding:6px 8px;
@@ -108,6 +117,7 @@ h1,h2,h3,p,label,div,span { color:#f8fafc !important; }
     font-weight:900;
     white-space:nowrap;
 }
+
 .release-empty {
     background:#0f172a;
     border:1px solid #1e293b;
@@ -126,7 +136,7 @@ h1,h2,h3,p,label,div,span { color:#f8fafc !important; }
     margin-right:6px;
     font-size:10px;
     font-weight:900;
-    background:#1e293b;
+    background:#1e293b !important;
     color:#f8fafc !important;
 }
 .logo-netflix { color:#ef4444 !important; }
@@ -226,6 +236,52 @@ def get_kino_base_tooltip(selected_period):
     return "키노라이츠 트렌드 랭킹 기준"
 
 
+def is_bad_release_title(title):
+    title = str(title).strip()
+
+    bad_titles = {
+        "",
+        "홈",
+        "랭킹",
+        "탐색",
+        "혜택",
+        "마이페이지",
+        "검색",
+        "신작",
+        "공개예정작",
+        "종료예정작",
+        "본 작품 제외",
+        "구매/대여 제외",
+        "업데이트 정보를 모두 가져왔습니다",
+        "업데이트 정보를 모두 가져왔습니다.",
+        "전체",
+        "MY",
+        "ALL",
+        "작품",
+        "인물",
+        "컬렉션",
+        "필터",
+        "로그인",
+        "가입",
+    }
+
+    if title in bad_titles:
+        return True
+
+    # 1편, 2편, 3편, 1편공개예정 등 제거
+    if re.fullmatch(r"\d+\s*편(\s*공개예정)?", title):
+        return True
+
+    # 점수/퍼센트 제거
+    if re.fullmatch(r"\d+\.\d+%?", title):
+        return True
+
+    if title == "%":
+        return True
+
+    return False
+
+
 @st.cache_data(ttl=60)
 def load_ranking_data():
     file = Path("ranking_history.csv")
@@ -280,9 +336,12 @@ def load_upcoming_releases():
 
     df["collect_date"] = df["collect_date"].fillna("").astype(str)
     df["release_date"] = df["release_date"].fillna("").astype(str)
-    df["title"] = df["title"].fillna("").astype(str)
-    df["provider"] = df["provider"].fillna("").astype(str)
-    df["genre"] = df["genre"].fillna("").astype(str)
+    df["title"] = df["title"].fillna("").astype(str).str.strip()
+    df["provider"] = df["provider"].fillna("").astype(str).str.strip()
+    df["genre"] = df["genre"].fillna("").astype(str).str.strip()
+
+    # 하단 주메뉴 / 카운트 / 점수 / 노이즈 제거
+    df = df[~df["title"].apply(is_bad_release_title)].copy()
 
     df["release_date_dt"] = pd.to_datetime(df["release_date"], errors="coerce")
 
@@ -406,6 +465,11 @@ def render_upcoming_releases(release_df, max_items=80):
 
     for _, row in release_df.head(max_items).iterrows():
         title = str(row.get("title", "")).strip()
+
+        # 혹시 로드 후에도 남아 있는 노이즈 제거
+        if is_bad_release_title(title):
+            continue
+
         provider = str(row.get("provider", "")).strip()
         genre = str(row.get("genre", "")).strip()
         date_text = format_release_date(row.get("release_date_dt"))

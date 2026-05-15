@@ -626,15 +626,6 @@ with tab1:
     base_tooltip = get_kino_base_tooltip(selected_period)
 
     st.markdown(
-        f"""
-        <div class="base-label" title="{base_tooltip}">
-            ⓘ 랭킹 기준: {display_base_label} &nbsp;&nbsp; | &nbsp;&nbsp; 공개예정작 기준: 키노라이츠 공개예정작
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-    st.markdown(
     f"""
     <div class="base-label" title="{base_tooltip}">
         ⓘ 랭킹 기준: {display_base_label}

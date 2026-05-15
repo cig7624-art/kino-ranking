@@ -138,25 +138,7 @@ def normalize_title(title):
     return title
 
 
-def safe_cell_value(value):
-    if isinstance(value, pd.Series):
-        for v in value.tolist():
-            if str(v).strip() not in ["", "nan", "NaN", "None"]:
-                return v
-        return ""
-
-    if isinstance(value, list):
-        for v in value:
-            if str(v).strip() not in ["", "nan", "NaN", "None"]:
-                return v
-        return ""
-
-    return value
-
-
 def is_date_like(value):
-    value = safe_cell_value(value)
-
     if value is None:
         return False
 
@@ -193,10 +175,7 @@ def is_date_like(value):
 
     parsed = pd.to_datetime(text, errors="coerce")
 
-    if pd.isna(parsed):
-        return False
-
-    return True
+    return not pd.isna(parsed)
 
 
 @st.cache_data(ttl=3600)
@@ -212,13 +191,12 @@ def load_google_sheet_raw(sheet_name):
 
 def get_col_value(row, col_index):
     try:
-        return safe_cell_value(row.iloc[col_index])
+        return row.iloc[col_index]
     except Exception:
         return ""
 
 
 def add_btv_title(rows, title, category, source_sheet, btv_date=""):
-    title = safe_cell_value(title)
     title_text = str(title).strip()
 
     if title_text == "":
@@ -233,7 +211,6 @@ def add_btv_title(rows, title, category, source_sheet, btv_date=""):
         "title_norm": title_norm,
         "btv_title": title_text,
         "btv_plus_category": category,
-        "btv_genre": category,
         "btv_plus_date": str(btv_date).strip(),
         "btv_source_sheet": source_sheet,
     })
@@ -244,14 +221,7 @@ def load_btv_plus_titles():
     rows = []
 
     # 콘텐츠라인업: D열 타이틀, F열 날짜
-    lineup_sheet_candidates = [
-        "콘텐츠라인업",
-        "콘텐츠 라인업",
-        "콘텐츠 Line-up",
-        "라인업",
-    ]
-
-    for sheet_name in lineup_sheet_candidates:
+    for sheet_name in ["콘텐츠라인업", "콘텐츠 라인업", "콘텐츠 Line-up", "라인업"]:
         try:
             raw = load_google_sheet_raw(sheet_name)
         except Exception:
@@ -261,8 +231,8 @@ def load_btv_plus_titles():
             continue
 
         for _, row in raw.iterrows():
-            title = get_col_value(row, 3)      # D열
-            btv_date = get_col_value(row, 5)   # F열
+            title = get_col_value(row, 3)
+            btv_date = get_col_value(row, 5)
 
             if str(title).strip() == "":
                 continue
@@ -271,16 +241,16 @@ def load_btv_plus_titles():
                 continue
 
             add_btv_title(
-                rows=rows,
-                title=title,
-                category="콘텐츠라인업",
-                source_sheet=sheet_name,
-                btv_date=btv_date
+                rows,
+                title,
+                "콘텐츠라인업",
+                sheet_name,
+                btv_date
             )
 
         break
 
-    # 영화 / 해외드라마 / 애니메이션(25'1~): C열 타이틀
+    # 영화 / 해외드라마 / 애니메이션: C열 타이틀
     c_col_sheets = [
         ("영화", "영화"),
         ("해외드라마", "해외드라마"),
@@ -303,29 +273,24 @@ def load_btv_plus_titles():
             continue
 
         for _, row in raw.iterrows():
-            title = get_col_value(row, 2)  # C열
+            title = get_col_value(row, 2)
 
             if str(title).strip() == "":
                 continue
 
             add_btv_title(
-                rows=rows,
-                title=title,
-                category=category,
-                source_sheet=sheet_name,
-                btv_date=""
+                rows,
+                title,
+                category,
+                sheet_name,
+                ""
             )
 
         if category == "애니메이션":
             loaded_animation = True
 
     # 키즈: F열 타이틀
-    kids_sheet_candidates = [
-        "키즈",
-        "Kids",
-    ]
-
-    for sheet_name in kids_sheet_candidates:
+    for sheet_name in ["키즈", "Kids"]:
         try:
             raw = load_google_sheet_raw(sheet_name)
         except Exception:
@@ -335,32 +300,23 @@ def load_btv_plus_titles():
             continue
 
         for _, row in raw.iterrows():
-            title = get_col_value(row, 5)  # F열
+            title = get_col_value(row, 5)
 
             if str(title).strip() == "":
                 continue
 
             add_btv_title(
-                rows=rows,
-                title=title,
-                category="키즈",
-                source_sheet=sheet_name,
-                btv_date=""
+                rows,
+                title,
+                "키즈",
+                sheet_name,
+                ""
             )
 
         break
 
     if not rows:
-        return pd.DataFrame(
-            columns=[
-                "title_norm",
-                "btv_title",
-                "btv_plus_category",
-                "btv_genre",
-                "btv_plus_date",
-                "btv_source_sheet",
-            ]
-        )
+        return pd.DataFrame(columns=["title_norm", "btv_title"])
 
     btv_df = pd.DataFrame(rows).fillna("")
     btv_df = btv_df[btv_df["title_norm"] != ""].copy()
@@ -383,144 +339,86 @@ def load_btv_plus_titles():
         ~btv_df["title_norm"].isin([normalize_title(w) for w in remove_words])
     ].copy()
 
-    btv_df["has_btv_date"] = btv_df["btv_plus_date"].astype(str).str.strip() != ""
-
-    btv_df = (
-        btv_df
-        .sort_values(["title_norm", "has_btv_date"], ascending=[True, False])
-        .drop_duplicates("title_norm", keep="first")
-        .drop(columns=["has_btv_date"])
-    )
+    btv_df = btv_df.drop_duplicates("title_norm", keep="first")
 
     return btv_df
 
 
-def make_empty_match():
-    return {
-        "is_btv_plus": False,
-        "btv_title": "",
-        "btv_plus_category": "",
-        "btv_genre": "",
-        "btv_plus_date": "",
-        "btv_source_sheet": "",
-        "btv_match_score": 0.0,
-        "btv_match_type": "",
-    }
+def attach_btv_plus_flag(base_df):
+    base_df = base_df.copy()
 
-
-def find_btv_match_info(kino_title, btv_map, btv_norm_list):
-    kino_norm = normalize_title(kino_title)
-
-    if kino_norm == "":
-        return make_empty_match()
-
-    # 1차: 공백/특수문자 제거 후 완전일치
-    if kino_norm in btv_map:
-        row = btv_map[kino_norm]
-
-        return {
-            "is_btv_plus": True,
-            "btv_title": row.get("btv_title", ""),
-            "btv_plus_category": row.get("btv_plus_category", ""),
-            "btv_genre": row.get("btv_genre", ""),
-            "btv_plus_date": row.get("btv_plus_date", ""),
-            "btv_source_sheet": row.get("btv_source_sheet", ""),
-            "btv_match_score": 1.0,
-            "btv_match_type": "exact",
-        }
-
-    # 2차: 포함관계 매칭
-    if len(kino_norm) < 4:
-        return make_empty_match()
-
-    best_norm = ""
-    best_score = 0.0
-
-    for btv_norm in btv_norm_list:
-        if len(btv_norm) < 4:
-            continue
-
-        if kino_norm in btv_norm or btv_norm in kino_norm:
-            shorter = min(len(kino_norm), len(btv_norm))
-            longer = max(len(kino_norm), len(btv_norm))
-            score = shorter / longer
-
-            if score > best_score:
-                best_score = score
-                best_norm = btv_norm
-
-    if best_norm and best_score >= 0.7:
-        row = btv_map[best_norm]
-
-        return {
-            "is_btv_plus": True,
-            "btv_title": row.get("btv_title", ""),
-            "btv_plus_category": row.get("btv_plus_category", ""),
-            "btv_genre": row.get("btv_genre", ""),
-            "btv_plus_date": row.get("btv_plus_date", ""),
-            "btv_source_sheet": row.get("btv_source_sheet", ""),
-            "btv_match_score": round(best_score, 3),
-            "btv_match_type": "contains",
-        }
-
-    return make_empty_match()
-
-
-@st.cache_data(ttl=3600)
-def fast_match_titles(title_list):
-    btv_df = load_btv_plus_titles()
-
-    if btv_df.empty:
-        return [make_empty_match() for _ in title_list]
-
-    btv_map = {
-        str(row["title_norm"]): row
-        for _, row in btv_df.iterrows()
-    }
-
-    btv_norm_list = list(btv_map.keys())
-
-    result = []
-
-    for title in title_list:
-        result.append(
-            find_btv_match_info(
-                kino_title=title,
-                btv_map=btv_map,
-                btv_norm_list=btv_norm_list
-            )
-        )
-
-    return result
-
-
-def attach_btv_plus_flag(df):
-    df = df.copy()
-
-    if df.empty:
-        df["is_btv_plus"] = False
-        return df
-
-    if "title" not in df.columns:
-        df["is_btv_plus"] = False
-        return df
+    if base_df.empty:
+        base_df["is_btv_plus"] = False
+        return base_df
 
     try:
-        title_list = df["title"].astype(str).tolist()
-        match_rows = fast_match_titles(title_list)
-        match_df = pd.DataFrame(match_rows)
-
-        df = pd.concat(
-            [df.reset_index(drop=True), match_df.reset_index(drop=True)],
-            axis=1
-        )
-
-        return df
-
+        btv_df = load_btv_plus_titles()
     except Exception as e:
-        st.warning(f"B tv+ 편성작 매칭 실패: {e}")
-        df["is_btv_plus"] = False
-        return df
+        st.warning(f"B tv+ 편성작 구글시트 로드 실패: {e}")
+        base_df["is_btv_plus"] = False
+        return base_df
+
+    if btv_df.empty:
+        base_df["is_btv_plus"] = False
+        return base_df
+
+    btv_set = set(btv_df["title_norm"].astype(str).tolist())
+
+    base_df["title_norm"] = base_df["title"].apply(normalize_title)
+
+    # 1차: 공백/특수문자 제거 후 완전일치
+    base_df["is_btv_plus"] = base_df["title_norm"].isin(btv_set)
+
+    # 2차: 포함관계 매칭은 아직 매칭 안 된 것만 대상으로 최소화
+    unmatched_idx = base_df[base_df["is_btv_plus"] == False].index.tolist()
+    btv_list = list(btv_set)
+
+    for idx in unmatched_idx:
+        kino_norm = str(base_df.at[idx, "title_norm"])
+
+        if len(kino_norm) < 4:
+            continue
+
+        matched = False
+
+        for btv_norm in btv_list:
+            if len(btv_norm) < 4:
+                continue
+
+            if kino_norm in btv_norm or btv_norm in kino_norm:
+                shorter = min(len(kino_norm), len(btv_norm))
+                longer = max(len(kino_norm), len(btv_norm))
+                score = shorter / longer
+
+                if score >= 0.7:
+                    matched = True
+                    break
+
+        if matched:
+            base_df.at[idx, "is_btv_plus"] = True
+
+    return base_df
+
+
+def make_period_key(value):
+    text = str(value).strip().lower()
+
+    mapping = {
+        "일간": "daily",
+        "daily": "daily",
+        "day": "daily",
+        "d": "daily",
+        "주간": "weekly",
+        "weekly": "weekly",
+        "week": "weekly",
+        "w": "weekly",
+        "월간": "monthly",
+        "monthly": "monthly",
+        "month": "monthly",
+        "m": "monthly",
+    }
+
+    return mapping.get(text, text)
 
 
 def search_contents(keyword):
@@ -636,6 +534,39 @@ def make_meta(row):
     return " · ".join(parts)
 
 
+def render_rank_card(row):
+    rank_value = row.get("rank", "")
+
+    try:
+        rank_text = str(int(rank_value))
+    except Exception:
+        rank_text = "-"
+
+    if row.get("is_new", False):
+        badge = '<span class="badge-new">NEW</span>'
+    elif row.get("delta", 0) > 0:
+        badge = f'<span class="badge-up">▲{int(row["delta"])}</span>'
+    elif row.get("delta", 0) < 0:
+        badge = f'<span class="badge-down">▼{abs(int(row["delta"]))}</span>'
+    else:
+        badge = ""
+
+    meta = make_meta(row)
+
+    st.markdown(f"""
+    <div class="rank-card">
+        <div class="rank-left">
+            <div class="rank-num">{rank_text}</div>
+            <div>
+                <div class="title">{row.get('title', '')}</div>
+                <div class="meta">{meta}</div>
+            </div>
+        </div>
+        <div>{badge}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+
 tab1, tab2 = st.tabs(["📈 랭킹 대시보드", "🔎 OTT 제공처 검색"])
 
 with tab1:
@@ -651,12 +582,13 @@ with tab1:
         st.error("수집된 랭킹 데이터가 없습니다.")
         st.stop()
 
-    for col in ["providers", "genres", "open_year", "media_type"]:
+    for col in ["providers", "genres", "open_year", "media_type", "is_new", "delta", "rank"]:
         if col not in df.columns:
             df[col] = ""
 
     df["date"] = df["date"].astype(str)
     df["period"] = df["period"].astype(str)
+    df["period_key"] = df["period"].apply(make_period_key)
     df["title"] = df["title"].astype(str)
     df["providers"] = df["providers"].fillna("").astype(str)
     df["genres"] = df["genres"].fillna("").astype(str)
@@ -693,7 +625,9 @@ with tab1:
         </div>
         """, unsafe_allow_html=True)
 
-    base = latest[latest["period"] == selected_period].copy()
+    selected_period_key = make_period_key(selected_period)
+
+    base = latest[latest["period_key"] == selected_period_key].copy()
 
     if selected_ott != "전체":
         base = base[base["providers"].str.contains(selected_ott, na=False)].copy()
@@ -703,9 +637,6 @@ with tab1:
         value=False
     )
 
-    # 핵심 변경:
-    # 체크 전에는 B tv+ 매칭 자체를 하지 않음.
-    # 체크했을 때만 구글시트 로드 + 매칭 + 필터링.
     if only_btv_plus:
         with st.spinner("B tv+ 편성작만 필터링 중..."):
             base = attach_btv_plus_flag(base)
@@ -741,29 +672,7 @@ with tab1:
             st.warning("데이터 없음")
         else:
             for _, row in base.head(100).iterrows():
-                if row["is_new"]:
-                    badge = '<span class="badge-new">NEW</span>'
-                elif row["delta"] > 0:
-                    badge = f'<span class="badge-up">▲{int(row["delta"])}</span>'
-                elif row["delta"] < 0:
-                    badge = f'<span class="badge-down">▼{abs(int(row["delta"]))}</span>'
-                else:
-                    badge = ""
-
-                meta = make_meta(row)
-
-                st.markdown(f"""
-                <div class="rank-card">
-                    <div class="rank-left">
-                        <div class="rank-num">{int(row['rank'])}</div>
-                        <div>
-                            <div class="title">{row['title']}</div>
-                            <div class="meta">{meta}</div>
-                        </div>
-                    </div>
-                    <div>{badge}</div>
-                </div>
-                """, unsafe_allow_html=True)
+                render_rank_card(row)
 
     with col2:
         title_prefix = "B tv+ " if only_btv_plus else ""
@@ -775,12 +684,17 @@ with tab1:
             for _, row in up_df.head(30).iterrows():
                 meta = make_meta(row)
 
+                try:
+                    rank_text = str(int(row["rank"]))
+                except Exception:
+                    rank_text = "-"
+
                 st.markdown(f"""
                 <div class="side-card">
                     <span class="badge-up">▲{int(row['delta'])}</span>
                     &nbsp;
                     <b>{row['title']}</b><br>
-                    <span class="small">#{int(row['rank'])} · {meta}</span>
+                    <span class="small">#{rank_text} · {meta}</span>
                 </div>
                 """, unsafe_allow_html=True)
 
@@ -794,11 +708,16 @@ with tab1:
             for _, row in new_df.head(30).iterrows():
                 meta = make_meta(row)
 
+                try:
+                    rank_text = str(int(row["rank"]))
+                except Exception:
+                    rank_text = "-"
+
                 st.markdown(f"""
                 <div class="side-card">
                     <span class="badge-new">NEW</span>
                     &nbsp;
-                    #{int(row['rank'])}
+                    #{rank_text}
                     &nbsp;
                     <b>{row['title']}</b><br>
                     <span class="small">{meta}</span>

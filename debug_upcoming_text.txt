@@ -2,6 +2,8 @@
 
 ===== URL: https://m.kinolights.com/new?tab=upcoming =====
 
+FOUND_END_MARKER: True
+
 신작
 공개예정작
 종료예정작

@@ -55,6 +55,7 @@ h1,h2,h3,p,label,div,span { color:#f8fafc !important; }
     display:flex;
     align-items:center;
     gap:10px;
+    min-width:0;
 }
 .rank-num {
     font-size:17px;
@@ -86,6 +87,75 @@ h1,h2,h3,p,label,div,span { color:#f8fafc !important; }
 }
 .small { color:#94a3b8 !important; font-size:12px; }
 
+.release-row {
+    background:#0f172a;
+    border:1px solid #1e293b;
+    border-radius:12px;
+    padding:9px 10px;
+    margin-bottom:8px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px;
+}
+.release-left {
+    min-width:0;
+    flex:1;
+}
+.release-title {
+    font-size:14px;
+    font-weight:800;
+    color:#f8fafc !important;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    max-width:220px;
+}
+.release-meta {
+    color:#94a3b8 !important;
+    font-size:12px;
+    margin-top:4px;
+}
+.release-date {
+    background:#1e293b;
+    border:1px solid #334155;
+    border-radius:9px;
+    padding:6px 8px;
+    color:#f8fafc !important;
+    font-size:12px;
+    font-weight:900;
+    white-space:nowrap;
+}
+.release-empty {
+    background:#0f172a;
+    border:1px solid #1e293b;
+    border-radius:12px;
+    padding:12px;
+    color:#94a3b8 !important;
+    font-size:13px;
+}
+
+.ott-logo {
+    display:inline-block;
+    min-width:22px;
+    text-align:center;
+    border-radius:6px;
+    padding:2px 5px;
+    margin-right:6px;
+    font-size:10px;
+    font-weight:900;
+    background:#1e293b;
+    color:#f8fafc !important;
+}
+.logo-netflix { color:#ef4444 !important; }
+.logo-tving { color:#ef4444 !important; }
+.logo-wavve { color:#60a5fa !important; }
+.logo-disney { color:#93c5fd !important; }
+.logo-watcha { color:#ec4899 !important; }
+.logo-coupang { color:#38bdf8 !important; }
+.logo-apple { color:#f8fafc !important; }
+.logo-laftel { color:#c084fc !important; }
+
 .ott-badge{
     display:inline-block;
     background:#1e293b;
@@ -111,6 +181,11 @@ st.markdown("<h1>🎬 키노라이츠 랭킹 / OTT 편성 검색</h1>", unsafe_a
 OTT_NAMES = [
     "넷플릭스", "티빙", "웨이브", "디즈니+",
     "쿠팡플레이", "왓챠", "애플TV+", "라프텔"
+]
+
+RELEASE_PROVIDERS = [
+    "전체", "넷플릭스", "티빙", "쿠팡플레이",
+    "웨이브", "디즈니+", "왓챠", "애플TV+", "라프텔"
 ]
 
 
@@ -148,8 +223,6 @@ def get_kino_base_label(selected_period, latest_date):
         return latest.strftime("%m.%d 기준")
 
     if selected_period == "주간":
-        # 키노라이츠 주간은 전주 월~일 기준
-        # 예: latest_date=2026-05-13이면 05.04~05.10 기준
         weekday = latest.weekday()  # 월=0, 일=6
         this_week_monday = latest - pd.Timedelta(days=weekday)
         prev_week_monday = this_week_monday - pd.Timedelta(days=7)
@@ -165,10 +238,6 @@ def get_kino_base_label(selected_period, latest_date):
 
 
 def get_kino_base_tooltip(selected_period):
-    """
-    키노라이츠 집계기준 설명.
-    마우스 오버 시 노출.
-    """
     if selected_period == "일간":
         return "집계 기준: 일간 · 전일 기준, 매일 오후 2시 업데이트"
 
@@ -217,6 +286,35 @@ def load_ranking_data():
     return df
 
 
+@st.cache_data(ttl=300)
+def load_upcoming_releases():
+    file = Path("upcoming_releases.csv")
+
+    if not file.exists():
+        return pd.DataFrame(columns=["release_date", "title", "provider", "genre"])
+
+    df = pd.read_csv(file)
+
+    if df.empty:
+        return pd.DataFrame(columns=["release_date", "title", "provider", "genre"])
+
+    for col in ["release_date", "title", "provider", "genre"]:
+        if col not in df.columns:
+            df[col] = ""
+
+    df["release_date"] = df["release_date"].fillna("").astype(str)
+    df["title"] = df["title"].fillna("").astype(str)
+    df["provider"] = df["provider"].fillna("").astype(str)
+    df["genre"] = df["genre"].fillna("").astype(str)
+    df["release_date_dt"] = pd.to_datetime(df["release_date"], errors="coerce")
+
+    df = df[df["title"].str.strip() != ""].copy()
+    df = df[df["release_date_dt"].notna()].copy()
+    df = df.sort_values(["release_date_dt", "title"], ascending=[True, True])
+
+    return df
+
+
 def make_meta(row):
     media_type = str(row.get("media_type", "")).upper()
     genres = str(row.get("genres", "")).replace(",", "/")
@@ -243,6 +341,38 @@ def make_meta(row):
         parts.append(open_year)
 
     return " · ".join(parts)
+
+
+def get_provider_logo(provider):
+    p = str(provider)
+
+    if "넷플" in p:
+        return '<span class="ott-logo logo-netflix">N</span>'
+    if "티빙" in p:
+        return '<span class="ott-logo logo-tving">T</span>'
+    if "웨이브" in p:
+        return '<span class="ott-logo logo-wavve">W</span>'
+    if "디즈니" in p:
+        return '<span class="ott-logo logo-disney">D+</span>'
+    if "왓챠" in p:
+        return '<span class="ott-logo logo-watcha">W</span>'
+    if "쿠팡" in p:
+        return '<span class="ott-logo logo-coupang">▶</span>'
+    if "애플" in p:
+        return '<span class="ott-logo logo-apple"></span>'
+    if "라프텔" in p:
+        return '<span class="ott-logo logo-laftel">L</span>'
+
+    return '<span class="ott-logo">OTT</span>'
+
+
+def format_release_date(value):
+    dt = pd.to_datetime(value, errors="coerce")
+
+    if pd.isna(dt):
+        return "-"
+
+    return f"{dt.month}/{dt.day}"
 
 
 def render_rank_card(row):
@@ -274,6 +404,36 @@ def render_rank_card(row):
         <div>{badge}</div>
     </div>
     """, unsafe_allow_html=True)
+
+
+def render_upcoming_releases(release_df, max_items=8):
+    if release_df.empty:
+        st.markdown(
+            '<div class="release-empty">공개예정작 데이터가 없습니다.</div>',
+            unsafe_allow_html=True
+        )
+        return
+
+    for _, row in release_df.head(max_items).iterrows():
+        title = str(row.get("title", "")).strip()
+        provider = str(row.get("provider", "")).strip()
+        genre = str(row.get("genre", "")).strip()
+        date_text = format_release_date(row.get("release_date_dt"))
+        logo = get_provider_logo(provider)
+
+        meta = provider
+        if genre:
+            meta = f"{provider} · {genre}"
+
+        st.markdown(f"""
+        <div class="release-row">
+            <div class="release-left">
+                <div class="release-title">{logo}{title}</div>
+                <div class="release-meta">{meta}</div>
+            </div>
+            <div class="release-date">{date_text}</div>
+        </div>
+        """, unsafe_allow_html=True)
 
 
 def search_contents(keyword):
@@ -389,21 +549,20 @@ with tab1:
             index=0
         )
 
+    with top3:
+        selected_release_provider = st.selectbox(
+            "공개예정작 OTT",
+            RELEASE_PROVIDERS,
+            index=0
+        )
+
     display_base_label = get_kino_base_label(selected_period, latest_date)
     base_tooltip = get_kino_base_tooltip(selected_period)
-
-    with top3:
-        st.markdown(f"""
-        <div class="metric" title="{base_tooltip}">
-            <div class="metric-title">기준일</div>
-            <div class="metric-text">{display_base_label}</div>
-        </div>
-        """, unsafe_allow_html=True)
 
     st.markdown(
         f"""
         <div class="base-label" title="{base_tooltip}">
-            ⓘ {display_base_label}
+            ⓘ 랭킹 기준: {display_base_label} &nbsp;&nbsp; | &nbsp;&nbsp; 공개예정작 기준: 오늘 이후
         </div>
         """,
         unsafe_allow_html=True
@@ -414,7 +573,6 @@ with tab1:
     if selected_ott != "전체":
         base = base[base["providers"].str.contains(selected_ott, na=False)].copy()
 
-    # 기간 필터값이 안 맞을 때도 화면이 비지 않도록 안전장치
     if base.empty:
         st.warning(f"'{selected_period}' 기간 데이터가 없어 최신일자 전체 데이터를 표시합니다.")
         base = latest.copy()
@@ -426,9 +584,23 @@ with tab1:
     new_df = base[base["is_new"] == True].copy()
     up_df = base[base["delta"] > 0].copy().sort_values("delta", ascending=False)
 
+    release_df = load_upcoming_releases()
+
+    if not release_df.empty:
+        today = pd.Timestamp.today().normalize()
+
+        release_df = release_df[release_df["release_date_dt"] >= today].copy()
+
+        if selected_release_provider != "전체":
+            release_df = release_df[
+                release_df["provider"].str.contains(selected_release_provider, na=False)
+            ].copy()
+
+        release_df = release_df.sort_values(["release_date_dt", "title"], ascending=[True, True])
+
     st.markdown("<br>", unsafe_allow_html=True)
 
-    col1, col2, col3 = st.columns([1.15, 1, 1])
+    col1, col2, col3, col4 = st.columns([1.1, 1, 1, 1])
 
     with col1:
         st.subheader(f"🏆 {selected_ott} {selected_period} TOP100")
@@ -486,6 +658,10 @@ with tab1:
                     <span class="small">{meta}</span>
                 </div>
                 """, unsafe_allow_html=True)
+
+    with col4:
+        st.subheader("🗓 공개 예정작")
+        render_upcoming_releases(release_df, max_items=12)
 
 with tab2:
     st.subheader("🔎 타이틀로 OTT 제공처 검색")

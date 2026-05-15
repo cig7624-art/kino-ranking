@@ -1,7 +1,9 @@
 import streamlit as st
 import pandas as pd
 import requests
+import re
 from pathlib import Path
+from urllib.parse import quote
 from playwright.sync_api import sync_playwright
 
 st.set_page_config(

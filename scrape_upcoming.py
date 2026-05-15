@@ -243,9 +243,18 @@ def scrape_upcoming():
                 page.wait_for_timeout(5000)
 
                 # 스크롤해서 lazy load 유도
-                for _ in range(5):
-                    page.mouse.wheel(0, 1200)
-                    page.wait_for_timeout(700)
+previous_height = 0
+
+for _ in range(30):
+    page.mouse.wheel(0, 1600)
+    page.wait_for_timeout(1000)
+
+    current_height = page.evaluate("document.body.scrollHeight")
+
+    if current_height == previous_height:
+        break
+
+    previous_height = current_height
 
                 body_text = page.locator("body").inner_text(timeout=15000)
 

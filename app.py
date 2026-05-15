@@ -634,6 +634,21 @@ with tab1:
         unsafe_allow_html=True
     )
 
+    st.markdown(
+    f"""
+    <div class="base-label" title="{base_tooltip}">
+        ⓘ 랭킹 기준: {display_base_label}
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+    btv_plus_only = st.checkbox(
+    "B tv+ 편성작만 보기",
+    value=False,
+    help="현재는 체크박스만 노출됩니다. 필터 기능은 추후 연결 예정입니다."
+)
+
     base = latest[latest["period"] == selected_period].copy()
 
     if selected_ott != "전체":

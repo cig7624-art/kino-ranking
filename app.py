@@ -1,9 +1,8 @@
 import streamlit as st
 import pandas as pd
 import requests
-import re
 from pathlib import Path
-from urllib.parse import quote
+from playwright.sync_api import sync_playwright
 
 st.set_page_config(
     page_title="키노라이츠 랭킹/OTT 검색",
@@ -91,20 +90,10 @@ h1,h2,h3,p,label,div,span { color:#f8fafc !important; }
     font-weight:700;
 }
 
-.filter-note {
-    color:#94a3b8 !important;
-    font-size:12px;
-    margin-top:2px;
-    margin-bottom:10px;
-}
-
 [data-baseweb="select"] * { color:#111827 !important; }
 [data-baseweb="popover"] * {
     color:#111827 !important;
     background:#ffffff !important;
-}
-[data-baseweb="checkbox"] * {
-    color:#f8fafc !important;
 }
 input { color:#111827 !important; }
 </style>
@@ -117,89 +106,30 @@ OTT_NAMES = [
     "쿠팡플레이", "왓챠", "애플TV+", "라프텔"
 ]
 
-SHEET_ID = "13_ULv4lXt2UPugaom5daL9ycV8COG7tD7bzmDT3WIwA"
 
-
-def normalize_title(title):
-    if title is None:
-        return ""
-
-    try:
-        if pd.isna(title):
-            return ""
-    except Exception:
-        pass
-
-    title = str(title).strip().lower()
-    title = re.sub(r"\s+", "", title)
-    title = re.sub(r"[^0-9a-zA-Z가-힣]", "", title)
-
-    return title
-
-
-def is_date_like(value):
-    if value is None:
-        return False
-
-    try:
-        if pd.isna(value):
-            return False
-    except Exception:
-        pass
-
-    text = str(value).strip()
-
-    if text == "":
-        return False
-
-    if text.upper() in ["X", "O"]:
-        return False
-
-    if text in ["-", "없음", "미정", "nan", "NaN", "None"]:
-        return False
-
-    if re.fullmatch(r"\d{5}(\.0)?", text):
-        return True
-
-    date_patterns = [
-        r"\d{4}[-./]\d{1,2}[-./]\d{1,2}",
-        r"\d{2}[-./]\d{1,2}[-./]\d{1,2}",
-        r"\d{1,2}월\s*\d{1,2}일",
-        r"\d{4}년\s*\d{1,2}월\s*\d{1,2}일",
-    ]
-
-    for pattern in date_patterns:
-        if re.search(pattern, text):
-            return True
-
-    parsed = pd.to_datetime(text, errors="coerce")
-
-    return not pd.isna(parsed)
-
-
-def make_period_key(value):
-    text = str(value).strip().lower()
+def normalize_period(value):
+    value = str(value).strip().lower()
 
     mapping = {
-        "일간": "daily",
-        "daily": "daily",
-        "day": "daily",
-        "d": "daily",
-        "주간": "weekly",
-        "weekly": "weekly",
-        "week": "weekly",
-        "w": "weekly",
-        "월간": "monthly",
-        "monthly": "monthly",
-        "month": "monthly",
-        "m": "monthly",
+        "일간": "일간",
+        "daily": "일간",
+        "day": "일간",
+        "d": "일간",
+        "주간": "주간",
+        "weekly": "주간",
+        "week": "주간",
+        "w": "주간",
+        "월간": "월간",
+        "monthly": "월간",
+        "month": "월간",
+        "m": "월간",
     }
 
-    return mapping.get(text, text)
+    return mapping.get(value, str(value).strip())
 
 
-@st.cache_data(ttl=3600)
-def load_ranking_history():
+@st.cache_data(ttl=300)
+def load_ranking_data():
     file = Path("ranking_history.csv")
 
     if not file.exists():
@@ -210,240 +140,28 @@ def load_ranking_history():
     if df.empty:
         return df
 
-    for col in ["providers", "genres", "open_year", "media_type", "is_new", "delta", "rank"]:
+    required_cols = [
+        "date", "period", "title", "rank", "delta", "is_new",
+        "providers", "genres", "open_year", "media_type"
+    ]
+
+    for col in required_cols:
         if col not in df.columns:
             df[col] = ""
 
     df["date"] = df["date"].astype(str)
-    df["period"] = df["period"].astype(str)
-    df["period_key"] = df["period"].apply(make_period_key)
+    df["period"] = df["period"].apply(normalize_period)
     df["title"] = df["title"].astype(str)
     df["providers"] = df["providers"].fillna("").astype(str)
     df["genres"] = df["genres"].fillna("").astype(str)
     df["open_year"] = df["open_year"].fillna("").astype(str)
     df["media_type"] = df["media_type"].fillna("").astype(str)
+
     df["rank"] = pd.to_numeric(df["rank"], errors="coerce")
     df["delta"] = pd.to_numeric(df["delta"], errors="coerce").fillna(0)
     df["is_new"] = df["is_new"].astype(str).str.lower().isin(["true", "1"])
 
     return df
-
-
-@st.cache_data(ttl=3600)
-def load_google_sheet_raw(sheet_name):
-    encoded_sheet = quote(sheet_name)
-    url = (
-        f"https://docs.google.com/spreadsheets/d/{SHEET_ID}"
-        f"/gviz/tq?tqx=out:csv&sheet={encoded_sheet}"
-    )
-
-    return pd.read_csv(url, header=None, dtype=str).fillna("")
-
-
-def get_col_value(row, col_index):
-    try:
-        return row.iloc[col_index]
-    except Exception:
-        return ""
-
-
-def add_btv_title(rows, title, category, source_sheet, btv_date=""):
-    title_text = str(title).strip()
-
-    if title_text == "":
-        return
-
-    title_norm = normalize_title(title_text)
-
-    if title_norm == "":
-        return
-
-    rows.append({
-        "title_norm": title_norm,
-        "btv_title": title_text,
-        "btv_plus_category": category,
-        "btv_plus_date": str(btv_date).strip(),
-        "btv_source_sheet": source_sheet,
-    })
-
-
-@st.cache_data(ttl=3600)
-def load_btv_plus_titles():
-    rows = []
-
-    for sheet_name in ["콘텐츠라인업", "콘텐츠 라인업", "콘텐츠 Line-up", "라인업"]:
-        try:
-            raw = load_google_sheet_raw(sheet_name)
-        except Exception:
-            continue
-
-        if raw.empty:
-            continue
-
-        for _, row in raw.iterrows():
-            title = get_col_value(row, 3)
-            btv_date = get_col_value(row, 5)
-
-            if str(title).strip() == "":
-                continue
-
-            if not is_date_like(btv_date):
-                continue
-
-            add_btv_title(
-                rows,
-                title,
-                "콘텐츠라인업",
-                sheet_name,
-                btv_date
-            )
-
-        break
-
-    c_col_sheets = [
-        ("영화", "영화"),
-        ("해외드라마", "해외드라마"),
-        ("애니메이션(25'1~)", "애니메이션"),
-        ("애니메이션 (25'1~)", "애니메이션"),
-    ]
-
-    loaded_animation = False
-
-    for sheet_name, category in c_col_sheets:
-        if category == "애니메이션" and loaded_animation:
-            continue
-
-        try:
-            raw = load_google_sheet_raw(sheet_name)
-        except Exception:
-            continue
-
-        if raw.empty:
-            continue
-
-        for _, row in raw.iterrows():
-            title = get_col_value(row, 2)
-
-            if str(title).strip() == "":
-                continue
-
-            add_btv_title(
-                rows,
-                title,
-                category,
-                sheet_name,
-                ""
-            )
-
-        if category == "애니메이션":
-            loaded_animation = True
-
-    for sheet_name in ["키즈", "Kids"]:
-        try:
-            raw = load_google_sheet_raw(sheet_name)
-        except Exception:
-            continue
-
-        if raw.empty:
-            continue
-
-        for _, row in raw.iterrows():
-            title = get_col_value(row, 5)
-
-            if str(title).strip() == "":
-                continue
-
-            add_btv_title(
-                rows,
-                title,
-                "키즈",
-                sheet_name,
-                ""
-            )
-
-        break
-
-    if not rows:
-        return pd.DataFrame(columns=["title_norm", "btv_title"])
-
-    btv_df = pd.DataFrame(rows).fillna("")
-    btv_df = btv_df[btv_df["title_norm"] != ""].copy()
-
-    remove_words = [
-        "타이틀명",
-        "콘텐츠명",
-        "제목",
-        "title",
-        "방송명",
-        "프로그램명",
-        "편성일자",
-        "btv편성일자",
-        "btv편성",
-        "장르",
-        "구분",
-    ]
-
-    btv_df = btv_df[
-        ~btv_df["title_norm"].isin([normalize_title(w) for w in remove_words])
-    ].copy()
-
-    btv_df = btv_df.drop_duplicates("title_norm", keep="first")
-
-    return btv_df
-
-
-def attach_btv_plus_flag(base_df):
-    base_df = base_df.copy()
-
-    if base_df.empty:
-        base_df["is_btv_plus"] = False
-        return base_df
-
-    try:
-        btv_df = load_btv_plus_titles()
-    except Exception as e:
-        st.warning(f"B tv+ 편성작 구글시트 로드 실패: {e}")
-        base_df["is_btv_plus"] = False
-        return base_df
-
-    if btv_df.empty:
-        base_df["is_btv_plus"] = False
-        return base_df
-
-    btv_set = set(btv_df["title_norm"].astype(str).tolist())
-
-    base_df["title_norm"] = base_df["title"].apply(normalize_title)
-
-    base_df["is_btv_plus"] = base_df["title_norm"].isin(btv_set)
-
-    unmatched_idx = base_df[base_df["is_btv_plus"] == False].index.tolist()
-    btv_list = list(btv_set)
-
-    for idx in unmatched_idx:
-        kino_norm = str(base_df.at[idx, "title_norm"])
-
-        if len(kino_norm) < 4:
-            continue
-
-        matched = False
-
-        for btv_norm in btv_list:
-            if len(btv_norm) < 4:
-                continue
-
-            if kino_norm in btv_norm or btv_norm in kino_norm:
-                shorter = min(len(kino_norm), len(btv_norm))
-                longer = max(len(kino_norm), len(btv_norm))
-                score = shorter / longer
-
-                if score >= 0.7:
-                    matched = True
-                    break
-
-        if matched:
-            base_df.at[idx, "is_btv_plus"] = True
-
-    return base_df
 
 
 def make_meta(row):
@@ -475,10 +193,8 @@ def make_meta(row):
 
 
 def render_rank_card(row):
-    rank_value = row.get("rank", "")
-
     try:
-        rank_text = str(int(rank_value))
+        rank_text = str(int(row["rank"]))
     except Exception:
         rank_text = "-"
 
@@ -543,8 +259,6 @@ def search_contents(keyword):
 
 
 def get_ott_providers(content_id):
-    from playwright.sync_api import sync_playwright
-
     urls = [
         f"https://m.kinolights.com/title/{content_id}",
         f"https://m.kinolights.com/content/{content_id}",
@@ -597,7 +311,7 @@ def get_ott_providers(content_id):
 tab1, tab2 = st.tabs(["📈 랭킹 대시보드", "🔎 OTT 제공처 검색"])
 
 with tab1:
-    df = load_ranking_history()
+    df = load_ranking_data()
 
     if df.empty:
         st.error("ranking_history.csv가 없거나 수집된 랭킹 데이터가 없습니다.")
@@ -630,36 +344,10 @@ with tab1:
         </div>
         """, unsafe_allow_html=True)
 
-    selected_period_key = make_period_key(selected_period)
-
-    base = latest[latest["period_key"] == selected_period_key].copy()
+    base = latest[latest["period"] == selected_period].copy()
 
     if selected_ott != "전체":
         base = base[base["providers"].str.contains(selected_ott, na=False)].copy()
-
-    only_btv_plus = st.checkbox(
-        "B tv+ 편성작만 보기",
-        value=False
-    )
-
-    if only_btv_plus:
-        with st.spinner("B tv+ 편성작만 필터링 중..."):
-            base = attach_btv_plus_flag(base)
-
-        btv_count = int(base["is_btv_plus"].sum()) if "is_btv_plus" in base.columns else 0
-        total_count = len(base)
-
-        st.markdown(
-            f'<div class="filter-note">현재 조건 기준 B tv+ 매칭: {btv_count}개 / 전체 {total_count}개</div>',
-            unsafe_allow_html=True
-        )
-
-        base = base[base["is_btv_plus"] == True].copy()
-    else:
-        st.markdown(
-            '<div class="filter-note">B tv+ 편성작만 보기를 체크하면 구글시트와 매칭합니다.</div>',
-            unsafe_allow_html=True
-        )
 
     base = base.sort_values("rank")
     new_df = base[base["is_new"] == True].copy()
@@ -670,8 +358,7 @@ with tab1:
     col1, col2, col3 = st.columns([1.15, 1, 1])
 
     with col1:
-        title_prefix = "B tv+ 편성작 " if only_btv_plus else ""
-        st.subheader(f"🏆 {title_prefix}{selected_ott} {selected_period} TOP100")
+        st.subheader(f"🏆 {selected_ott} {selected_period} TOP100")
 
         if base.empty:
             st.warning("데이터 없음")
@@ -680,8 +367,7 @@ with tab1:
                 render_rank_card(row)
 
     with col2:
-        title_prefix = "B tv+ " if only_btv_plus else ""
-        st.subheader(f"🚀 {title_prefix}급상승 콘텐츠")
+        st.subheader("🚀 급상승 콘텐츠")
 
         if up_df.empty:
             st.info("급상승 콘텐츠 없음")
@@ -704,8 +390,7 @@ with tab1:
                 """, unsafe_allow_html=True)
 
     with col3:
-        title_prefix = "B tv+ " if only_btv_plus else ""
-        st.subheader(f"🔥 {title_prefix}신규 진입 콘텐츠")
+        st.subheader("🔥 신규 진입 콘텐츠")
 
         if new_df.empty:
             st.info("신규 진입 콘텐츠 없음")

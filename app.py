@@ -15,27 +15,90 @@ st.set_page_config(
 st.markdown("""
 <style>
 .stApp {
-    background:#090d1a;
+    background:
+        radial-gradient(circle at 12% 0%, rgba(37,99,235,0.20), transparent 30%),
+        radial-gradient(circle at 90% 0%, rgba(59,130,246,0.13), transparent 28%),
+        linear-gradient(180deg, #071326 0%, #050b18 52%, #050b18 100%);
+}
+
+.block-container {
+    padding-top:1.05rem;
+    padding-left:1.25rem;
+    padding-right:1.25rem;
+    max-width:100%;
 }
 
 h1,h2,h3,p,label,div,span {
     color:#f8fafc !important;
 }
 
-.block-container {
-    padding-top:1.3rem;
-    max-width:100%;
+header, footer {
+    visibility:hidden;
 }
 
-/* 상단 탭 */
+/* 상단 헤더 */
+.kino-header {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    margin-bottom:10px;
+}
+
+.kino-title {
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-size:30px;
+    font-weight:950;
+    letter-spacing:-0.7px;
+    color:#f8fbff !important;
+}
+
+.kino-actions {
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    gap:12px;
+}
+
+.update-pill {
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    color:#9fb0ca !important;
+    background:rgba(15,28,50,0.72);
+    border:1px solid rgba(111,139,178,0.20);
+    border-radius:999px;
+    padding:9px 13px;
+    font-size:13px;
+    font-weight:700;
+}
+
+.export-fake {
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    color:#d7e3f7 !important;
+    background:#0f1a2b;
+    border:1px solid rgba(115,144,184,0.35);
+    border-radius:10px;
+    padding:9px 14px;
+    font-size:13px;
+    font-weight:800;
+}
+
+/* 탭 */
 .stTabs [data-baseweb="tab-list"] {
-    gap:18px;
-    border-bottom:1px solid #1e293b;
+    gap:28px;
+    border-bottom:1px solid rgba(116,142,180,0.24);
+    margin-bottom:14px;
 }
 
 .stTabs [data-baseweb="tab"] {
-    color:#94a3b8;
-    font-weight:800;
+    color:#94a3b8 !important;
+    font-weight:850;
+    padding-bottom:10px;
 }
 
 .stTabs [aria-selected="true"] {
@@ -43,7 +106,53 @@ h1,h2,h3,p,label,div,span {
     border-bottom:3px solid #3b82f6;
 }
 
-/* 랭킹 기준 + B tv+ 체크박스 */
+/* 상단 필터 영역 */
+.filter-shell {
+    background:rgba(8,18,34,0.78);
+    border:1px solid rgba(111,139,178,0.16);
+    border-radius:16px;
+    padding:15px 17px 13px;
+    margin-bottom:12px;
+    box-shadow:0 14px 28px rgba(0,0,0,0.14);
+}
+
+.filter-title {
+    color:#9fb0ca !important;
+    font-size:12px;
+    font-weight:900;
+    margin-bottom:8px;
+}
+
+div[data-testid="stSelectbox"] label {
+    color:#cbd5e1 !important;
+    font-weight:850 !important;
+    font-size:13px !important;
+}
+
+[data-baseweb="select"] {
+    border-radius:10px !important;
+}
+
+[data-baseweb="select"] > div {
+    background:#0f1a2b !important;
+    border:1px solid rgba(115,144,184,0.34) !important;
+    border-radius:10px !important;
+}
+
+[data-baseweb="select"] * {
+    color:#111827 !important;
+}
+
+[data-baseweb="popover"] * {
+    color:#111827 !important;
+    background:#ffffff !important;
+}
+
+input {
+    color:#111827 !important;
+}
+
+/* 랭킹 기준 + B tv+ */
 .base-row {
     display:flex;
     align-items:center;
@@ -52,11 +161,11 @@ h1,h2,h3,p,label,div,span {
     color:#94a3b8 !important;
     font-size:14px;
     margin-top:8px;
-    margin-bottom:10px;
-    background:#0f172a;
-    border:1px solid #1e293b;
+    margin-bottom:12px;
+    background:rgba(13,26,47,0.82);
+    border:1px solid rgba(112,140,178,0.16);
     border-radius:12px;
-    padding:10px 14px;
+    padding:11px 15px;
 }
 
 .base-info {
@@ -71,7 +180,7 @@ h1,h2,h3,p,label,div,span {
     gap:7px;
     color:#cbd5e1 !important;
     font-size:14px;
-    font-weight:700;
+    font-weight:750;
     cursor:default;
     user-select:none;
     white-space:nowrap;
@@ -104,97 +213,109 @@ h1,h2,h3,p,label,div,span {
     box-shadow:0 8px 24px rgba(0,0,0,0.35);
 }
 
-/* 공통 카드 */
+/* 컬럼 타이틀 */
+div[data-testid="column"] h3 {
+    font-size:20px !important;
+    font-weight:950 !important;
+    letter-spacing:-0.4px;
+    margin-bottom:12px !important;
+}
+
+/* 랭킹 카드 */
 .rank-card {
-    background:#0f172a;
-    border:1px solid #1e293b;
+    background:rgba(13,27,49,0.96);
+    border:1px solid rgba(111,139,178,0.20);
     border-radius:12px;
-    padding:8px 10px;
-    margin-bottom:7px;
+    padding:9px 10px;
+    margin-bottom:8px;
     display:flex;
     align-items:center;
     justify-content:space-between;
-    min-height:68px;
+    min-height:70px;
+    box-shadow:0 6px 18px rgba(0,0,0,0.08);
 }
 
 .rank-card:hover {
-    border-color:#334155;
+    border-color:#3b82f6;
     background:#111c2f;
 }
 
 .rank-left {
     display:flex;
     align-items:center;
-    gap:10px;
+    gap:11px;
     min-width:0;
 }
 
 .rank-num {
-    font-size:17px;
-    font-weight:900;
-    color:#f8fafc !important;
-    min-width:30px;
-    text-align:right;
+    font-size:20px;
+    font-weight:950;
+    color:#dce8fb !important;
+    min-width:32px;
+    text-align:center;
     font-style:italic;
 }
 
 .title {
     font-size:15px;
-    font-weight:800;
+    font-weight:850;
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
-    max-width:260px;
+    max-width:270px;
+    color:#f8fafc !important;
 }
 
 .meta {
-    color:#64748b !important;
+    color:#8fa1bb !important;
     font-size:12px;
-    margin-top:3px;
+    margin-top:4px;
     line-height:1.35;
 }
 
 .badge-new {
     color:#f97316 !important;
-    font-weight:900;
+    font-weight:950;
     font-size:13px;
 }
 
 .badge-up {
     color:#22c55e !important;
-    font-weight:900;
+    font-weight:950;
     font-size:13px;
 }
 
 .badge-down {
     color:#ef4444 !important;
-    font-weight:900;
+    font-weight:950;
     font-size:13px;
 }
 
+/* 급상승/신규 */
 .side-card {
-    background:#0f172a;
-    border:1px solid #1e293b;
+    background:rgba(13,27,49,0.96);
+    border:1px solid rgba(111,139,178,0.20);
     border-radius:12px;
-    padding:9px 11px;
+    padding:10px 12px;
     margin-bottom:8px;
-    min-height:58px;
+    min-height:62px;
+    box-shadow:0 6px 18px rgba(0,0,0,0.08);
 }
 
 .side-card:hover {
-    border-color:#334155;
+    border-color:#3b82f6;
     background:#111c2f;
 }
 
 .small {
-    color:#94a3b8 !important;
+    color:#8fa1bb !important;
     font-size:12px;
 }
 
 /* 공개예정작 */
 .release-row {
-    background:#0f172a;
-    border:1px solid #1e293b;
+    background:rgba(13,27,49,0.96);
+    border:1px solid rgba(111,139,178,0.20);
     border-radius:12px;
     padding:8px 9px;
     margin-bottom:8px;
@@ -203,6 +324,7 @@ h1,h2,h3,p,label,div,span {
     align-items:center;
     gap:10px;
     min-height:66px;
+    box-shadow:0 6px 18px rgba(0,0,0,0.08);
 }
 
 .release-row:hover {
@@ -221,7 +343,7 @@ h1,h2,h3,p,label,div,span {
 .release-poster {
     width:44px;
     height:54px;
-    border-radius:7px;
+    border-radius:8px;
     background:linear-gradient(145deg,#1e293b,#0b1220);
     border:1px solid #263244;
     overflow:hidden;
@@ -230,7 +352,7 @@ h1,h2,h3,p,label,div,span {
     align-items:center;
     justify-content:center;
     color:#64748b !important;
-    font-size:11px;
+    font-size:10px;
     font-weight:900;
 }
 
@@ -248,7 +370,7 @@ h1,h2,h3,p,label,div,span {
 
 .release-title {
     font-size:14px;
-    font-weight:800;
+    font-weight:850;
     color:#f8fafc !important;
     white-space:nowrap;
     overflow:hidden;
@@ -267,7 +389,7 @@ h1,h2,h3,p,label,div,span {
 }
 
 .release-meta {
-    color:#94a3b8 !important;
+    color:#8fa1bb !important;
     font-size:12px;
     margin-top:4px;
     white-space:nowrap;
@@ -283,14 +405,14 @@ h1,h2,h3,p,label,div,span {
     padding:6px 8px;
     color:#f8fafc !important;
     font-size:12px;
-    font-weight:900;
+    font-weight:950;
     white-space:nowrap;
     flex-shrink:0;
 }
 
 .release-empty {
-    background:#0f172a;
-    border:1px solid #1e293b;
+    background:rgba(13,27,49,0.96);
+    border:1px solid rgba(111,139,178,0.20);
     border-radius:12px;
     padding:12px;
     color:#94a3b8 !important;
@@ -306,7 +428,7 @@ h1,h2,h3,p,label,div,span {
     padding:2px 5px;
     margin-right:6px;
     font-size:10px;
-    font-weight:900;
+    font-weight:950;
     background:#1e293b !important;
     color:#f8fafc !important;
 }
@@ -330,24 +452,8 @@ h1,h2,h3,p,label,div,span {
     margin-top:6px;
     font-weight:700;
 }
-
-/* selectbox */
-[data-baseweb="select"] * {
-    color:#111827 !important;
-}
-
-[data-baseweb="popover"] * {
-    color:#111827 !important;
-    background:#ffffff !important;
-}
-
-input {
-    color:#111827 !important;
-}
 </style>
 """, unsafe_allow_html=True)
-
-st.markdown("<h1>🎬 키노라이츠 랭킹 / OTT 편성 검색</h1>", unsafe_allow_html=True)
 
 OTT_NAMES = [
     "넷플릭스", "티빙", "웨이브", "디즈니+",
@@ -800,10 +906,33 @@ def get_ott_providers(content_id):
     return sorted(set(found))
 
 
+df_for_header = load_ranking_data()
+latest_label = "-"
+
+if not df_for_header.empty:
+    try:
+        latest_date_for_header = sorted(df_for_header["date"].astype(str).unique(), reverse=True)[0]
+        latest_label = pd.to_datetime(latest_date_for_header).strftime("%m.%d 10:00")
+    except Exception:
+        latest_label = "-"
+
+st.markdown(f"""
+<div class="kino-header">
+    <div class="kino-title">
+        <span>🎬</span>
+        <span>키노라이츠 랭킹 / OTT 편성 검색</span>
+    </div>
+    <div class="kino-actions">
+        <div class="update-pill">↻ 데이터 업데이트: {latest_label}</div>
+        <div class="export-fake">⇩ 내보내기</div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
 tab1, tab2 = st.tabs(["📈 랭킹 대시보드", "🔎 OTT 제공처 검색"])
 
 with tab1:
-    df = load_ranking_data()
+    df = df_for_header
 
     if df.empty:
         st.error("ranking_history.csv가 없거나 수집된 랭킹 데이터가 없습니다.")
@@ -811,6 +940,8 @@ with tab1:
 
     latest_date = sorted(df["date"].unique(), reverse=True)[0]
     latest = df[df["date"] == latest_date].copy()
+
+    st.markdown('<div class="filter-shell"><div class="filter-title">필터</div>', unsafe_allow_html=True)
 
     top1, top2, top3 = st.columns([1, 1, 1])
 
@@ -834,6 +965,8 @@ with tab1:
             RELEASE_PROVIDERS,
             index=0
         )
+
+    st.markdown('</div>', unsafe_allow_html=True)
 
     display_base_label = get_kino_base_label(selected_period, latest_date)
     base_tooltip = get_kino_base_tooltip(selected_period)

@@ -115,7 +115,7 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     padding:14px 14px 16px 14px !important;
 }
 
-/* 필터 select */
+/* selectbox */
 div[data-testid="stSelectbox"] label {
     color:#cbd5e1 !important;
     font-weight:850 !important;
@@ -132,10 +132,17 @@ div[data-testid="stSelectbox"] label {
     border-radius:10px !important;
 }
 
+/* 닫힌 selectbox 글자색 */
 [data-baseweb="select"] * {
-    color:#111827 !important;
+    color:#f8fafc !important;
 }
 
+/* selectbox 화살표/아이콘 */
+[data-baseweb="select"] svg {
+    fill:#cbd5e1 !important;
+}
+
+/* 열린 드롭다운 목록은 흰 배경이므로 검정 글자 */
 [data-baseweb="popover"] * {
     color:#111827 !important;
     background:#ffffff !important;
@@ -143,6 +150,161 @@ div[data-testid="stSelectbox"] label {
 
 input {
     color:#111827 !important;
+}
+
+/* 상단 필터 영역 */
+.top-filter-layout {
+    display:grid;
+    grid-template-columns: 0.46fr 0.54fr;
+    gap:18px;
+    align-items:stretch;
+    margin-bottom:12px;
+}
+
+.left-filter-box {
+    background:rgba(8,18,34,0.78);
+    border:1px solid rgba(111,139,178,0.16);
+    border-radius:16px;
+    padding:16px 18px 14px;
+}
+
+.release-filter-box {
+    background:linear-gradient(135deg, rgba(18,42,78,0.82), rgba(10,22,42,0.78));
+    border:1px dashed rgba(78,139,255,0.92);
+    border-radius:16px;
+    padding:16px 18px 15px;
+    box-shadow:0 0 26px rgba(55,119,255,0.16);
+    min-height:106px;
+}
+
+.release-filter-title {
+    color:#9fc0ff !important;
+    font-weight:900;
+    font-size:14px;
+    margin-bottom:11px;
+}
+
+.release-chip-row {
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:8px;
+}
+
+.release-chip {
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    min-height:31px;
+    padding:0 12px;
+    border-radius:999px;
+    border:1px solid rgba(111,139,178,0.35);
+    background:rgba(11,22,40,0.96);
+    color:#d8e3f5 !important;
+    font-size:13px;
+    font-weight:850;
+}
+
+.release-chip.active {
+    background:#4a80ff;
+    color:#ffffff !important;
+    border-color:#6ea0ff;
+    box-shadow:0 0 14px rgba(74,128,255,0.38);
+}
+
+.release-chip.logo-netflix-chip::before {
+    content:"N";
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:18px;
+    height:18px;
+    border-radius:50%;
+    background:#050505;
+    color:#ff3045;
+    font-size:10px;
+    font-weight:950;
+}
+
+.release-chip.logo-tving-chip::before {
+    content:"T";
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:18px;
+    height:18px;
+    border-radius:50%;
+    background:#0b0b0f;
+    color:#ff1745;
+    font-size:10px;
+    font-weight:950;
+}
+
+.release-chip.logo-coupang-chip::before {
+    content:"▶";
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:18px;
+    height:18px;
+    border-radius:50%;
+    background:#1798ff;
+    color:#fff;
+    font-size:9px;
+    font-weight:950;
+}
+
+.release-chip.logo-wavve-chip::before {
+    content:"W";
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:18px;
+    height:18px;
+    border-radius:50%;
+    background:#276cff;
+    color:#fff;
+    font-size:10px;
+    font-weight:950;
+}
+
+.release-chip.logo-disney-chip::before {
+    content:"D+";
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:18px;
+    height:18px;
+    border-radius:50%;
+    background:#053a54;
+    color:#bfe2ff;
+    font-size:9px;
+    font-weight:950;
+}
+
+.release-chip.logo-watcha-chip::before {
+    content:"W";
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:18px;
+    height:18px;
+    border-radius:50%;
+    background:#090913;
+    color:#ff3f9d;
+    font-size:10px;
+    font-weight:950;
+}
+
+.date-chip {
+    min-width:45px;
+    border-radius:9px;
+}
+
+.calendar-chip {
+    min-width:34px;
+    border-radius:9px;
 }
 
 /* 랭킹 기준 + B tv+ */
@@ -934,29 +1096,74 @@ with tab1:
     latest_date = sorted(df["date"].unique(), reverse=True)[0]
     latest = df[df["date"] == latest_date].copy()
 
-    with st.container(border=True):
-        top1, top2, top3 = st.columns([1, 1, 1])
+    filter_left, filter_right = st.columns([0.46, 0.54])
 
-        with top1:
-            selected_period = st.selectbox(
-                "기간 선택",
-                ["일간", "주간", "월간"],
-                index=1
+    with filter_left:
+        with st.container(border=True):
+            f1, f2 = st.columns([1, 1])
+
+            with f1:
+                selected_period = st.selectbox(
+                    "기간 선택",
+                    ["일간", "주간", "월간"],
+                    index=1
+                )
+
+            with f2:
+                selected_ott = st.selectbox(
+                    "OTT 선택",
+                    ["전체"] + OTT_NAMES,
+                    index=0
+                )
+
+            st.markdown(
+                """
+                <div class="btv-check-wrap" style="margin-top:10px;">
+                    <span class="btv-check-box"></span>
+                    <span>B tv+ 편성작만 보기</span>
+                </div>
+                """,
+                unsafe_allow_html=True
             )
 
-        with top2:
-            selected_ott = st.selectbox(
-                "OTT 선택",
-                ["전체"] + OTT_NAMES,
-                index=0
-            )
+    with filter_right:
+        selected_release_provider = st.selectbox(
+            "공개예정작 OTT",
+            RELEASE_PROVIDERS,
+            index=0
+        )
 
-        with top3:
-            selected_release_provider = st.selectbox(
-                "공개예정작 OTT",
-                RELEASE_PROVIDERS,
-                index=0
-            )
+        active_class = {
+            "전체": "active" if selected_release_provider == "전체" else "",
+            "넷플릭스": "active" if selected_release_provider == "넷플릭스" else "",
+            "티빙": "active" if selected_release_provider == "티빙" else "",
+            "쿠팡플레이": "active" if selected_release_provider == "쿠팡플레이" else "",
+            "웨이브": "active" if selected_release_provider == "웨이브" else "",
+            "디즈니+": "active" if selected_release_provider == "디즈니+" else "",
+            "왓챠": "active" if selected_release_provider == "왓챠" else "",
+        }
+
+        st.markdown(
+            f"""
+            <div class="release-filter-box">
+                <div class="release-filter-title">공개예정작 필터</div>
+                <div class="release-chip-row">
+                    <span class="release-chip {active_class['전체']}">전체</span>
+                    <span class="release-chip logo-netflix-chip {active_class['넷플릭스']}">넷플릭스</span>
+                    <span class="release-chip logo-tving-chip {active_class['티빙']}">티빙</span>
+                    <span class="release-chip logo-coupang-chip {active_class['쿠팡플레이']}">쿠팡플레이</span>
+                    <span class="release-chip logo-wavve-chip {active_class['웨이브']}">웨이브</span>
+                    <span class="release-chip logo-disney-chip {active_class['디즈니+']}">디즈니+</span>
+                    <span class="release-chip logo-watcha-chip {active_class['왓챠']}">왓챠</span>
+                    <span class="release-chip date-chip active">오늘</span>
+                    <span class="release-chip date-chip">7일</span>
+                    <span class="release-chip date-chip">14일</span>
+                    <span class="release-chip calendar-chip">📅</span>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
     display_base_label = get_kino_base_label(selected_period, latest_date)
     base_tooltip = get_kino_base_tooltip(selected_period)
@@ -966,10 +1173,6 @@ with tab1:
         <div class="base-row">
             <div class="base-info" title="{base_tooltip}">
                 ⓘ 랭킹 기준: {display_base_label}
-            </div>
-            <div class="btv-check-wrap">
-                <span class="btv-check-box"></span>
-                <span>B tv+ 편성작만 보기</span>
             </div>
         </div>
         """,

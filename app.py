@@ -4,7 +4,6 @@ import requests
 import re
 from pathlib import Path
 from urllib.parse import quote
-from playwright.sync_api import sync_playwright
 
 st.set_page_config(
     page_title="키노라이츠 랭킹/OTT 검색",
@@ -178,6 +177,58 @@ def is_date_like(value):
     return not pd.isna(parsed)
 
 
+def make_period_key(value):
+    text = str(value).strip().lower()
+
+    mapping = {
+        "일간": "daily",
+        "daily": "daily",
+        "day": "daily",
+        "d": "daily",
+        "주간": "weekly",
+        "weekly": "weekly",
+        "week": "weekly",
+        "w": "weekly",
+        "월간": "monthly",
+        "monthly": "monthly",
+        "month": "monthly",
+        "m": "monthly",
+    }
+
+    return mapping.get(text, text)
+
+
+@st.cache_data(ttl=3600)
+def load_ranking_history():
+    file = Path("ranking_history.csv")
+
+    if not file.exists():
+        return pd.DataFrame()
+
+    df = pd.read_csv(file)
+
+    if df.empty:
+        return df
+
+    for col in ["providers", "genres", "open_year", "media_type", "is_new", "delta", "rank"]:
+        if col not in df.columns:
+            df[col] = ""
+
+    df["date"] = df["date"].astype(str)
+    df["period"] = df["period"].astype(str)
+    df["period_key"] = df["period"].apply(make_period_key)
+    df["title"] = df["title"].astype(str)
+    df["providers"] = df["providers"].fillna("").astype(str)
+    df["genres"] = df["genres"].fillna("").astype(str)
+    df["open_year"] = df["open_year"].fillna("").astype(str)
+    df["media_type"] = df["media_type"].fillna("").astype(str)
+    df["rank"] = pd.to_numeric(df["rank"], errors="coerce")
+    df["delta"] = pd.to_numeric(df["delta"], errors="coerce").fillna(0)
+    df["is_new"] = df["is_new"].astype(str).str.lower().isin(["true", "1"])
+
+    return df
+
+
 @st.cache_data(ttl=3600)
 def load_google_sheet_raw(sheet_name):
     encoded_sheet = quote(sheet_name)
@@ -220,7 +271,6 @@ def add_btv_title(rows, title, category, source_sheet, btv_date=""):
 def load_btv_plus_titles():
     rows = []
 
-    # 콘텐츠라인업: D열 타이틀, F열 날짜
     for sheet_name in ["콘텐츠라인업", "콘텐츠 라인업", "콘텐츠 Line-up", "라인업"]:
         try:
             raw = load_google_sheet_raw(sheet_name)
@@ -250,7 +300,6 @@ def load_btv_plus_titles():
 
         break
 
-    # 영화 / 해외드라마 / 애니메이션: C열 타이틀
     c_col_sheets = [
         ("영화", "영화"),
         ("해외드라마", "해외드라마"),
@@ -289,7 +338,6 @@ def load_btv_plus_titles():
         if category == "애니메이션":
             loaded_animation = True
 
-    # 키즈: F열 타이틀
     for sheet_name in ["키즈", "Kids"]:
         try:
             raw = load_google_sheet_raw(sheet_name)
@@ -366,10 +414,8 @@ def attach_btv_plus_flag(base_df):
 
     base_df["title_norm"] = base_df["title"].apply(normalize_title)
 
-    # 1차: 공백/특수문자 제거 후 완전일치
     base_df["is_btv_plus"] = base_df["title_norm"].isin(btv_set)
 
-    # 2차: 포함관계 매칭은 아직 매칭 안 된 것만 대상으로 최소화
     unmatched_idx = base_df[base_df["is_btv_plus"] == False].index.tolist()
     btv_list = list(btv_set)
 
@@ -398,112 +444,6 @@ def attach_btv_plus_flag(base_df):
             base_df.at[idx, "is_btv_plus"] = True
 
     return base_df
-
-
-def make_period_key(value):
-    text = str(value).strip().lower()
-
-    mapping = {
-        "일간": "daily",
-        "daily": "daily",
-        "day": "daily",
-        "d": "daily",
-        "주간": "weekly",
-        "weekly": "weekly",
-        "week": "weekly",
-        "w": "weekly",
-        "월간": "monthly",
-        "monthly": "monthly",
-        "month": "monthly",
-        "m": "monthly",
-    }
-
-    return mapping.get(text, text)
-
-
-def search_contents(keyword):
-    query = """
-    query SearchContents($keyword: String!) {
-      contents(keyword: $keyword, limit: 5) {
-        id
-        titleKr
-        openYear
-      }
-    }
-    """
-
-    payload = {
-        "operationName": "SearchContents",
-        "variables": {"keyword": keyword},
-        "query": query,
-    }
-
-    res = requests.post(
-        "https://gateway.kinolights.com/graphql",
-        json=payload,
-        headers={
-            "Content-Type": "application/json",
-            "User-Agent": "Mozilla/5.0",
-        },
-        timeout=20,
-    )
-
-    data = res.json()
-
-    if "errors" in data:
-        return []
-
-    return data["data"]["contents"]
-
-
-def get_ott_providers(content_id):
-    urls = [
-        f"https://m.kinolights.com/title/{content_id}",
-        f"https://m.kinolights.com/content/{content_id}",
-        f"https://m.kinolights.com/contents/{content_id}",
-    ]
-
-    found = []
-
-    with sync_playwright() as p:
-        browser = p.chromium.launch(
-            headless=True,
-            executable_path="/usr/bin/chromium"
-        )
-
-        page = browser.new_page(
-            viewport={"width": 430, "height": 1600},
-            user_agent="Mozilla/5.0"
-        )
-
-        for url in urls:
-            try:
-                page.goto(url, wait_until="domcontentloaded", timeout=20000)
-                page.wait_for_timeout(1200)
-
-                text = page.locator("body").inner_text()
-
-                if "보러가기" not in text:
-                    continue
-
-                section = text.split("보러가기", 1)[1]
-
-                if "시청 주의 가이드" in section:
-                    section = section.split("시청 주의 가이드", 1)[0]
-
-                for ott in OTT_NAMES:
-                    if ott in section:
-                        found.append(ott)
-
-                if found:
-                    break
-
-            except Exception:
-                continue
-
-        browser.close()
-
-    return sorted(set(found))
 
 
 def make_meta(row):
@@ -567,36 +507,101 @@ def render_rank_card(row):
     """, unsafe_allow_html=True)
 
 
+def search_contents(keyword):
+    query = """
+    query SearchContents($keyword: String!) {
+      contents(keyword: $keyword, limit: 5) {
+        id
+        titleKr
+        openYear
+      }
+    }
+    """
+
+    payload = {
+        "operationName": "SearchContents",
+        "variables": {"keyword": keyword},
+        "query": query,
+    }
+
+    res = requests.post(
+        "https://gateway.kinolights.com/graphql",
+        json=payload,
+        headers={
+            "Content-Type": "application/json",
+            "User-Agent": "Mozilla/5.0",
+        },
+        timeout=20,
+    )
+
+    data = res.json()
+
+    if "errors" in data:
+        return []
+
+    return data["data"]["contents"]
+
+
+def get_ott_providers(content_id):
+    from playwright.sync_api import sync_playwright
+
+    urls = [
+        f"https://m.kinolights.com/title/{content_id}",
+        f"https://m.kinolights.com/content/{content_id}",
+        f"https://m.kinolights.com/contents/{content_id}",
+    ]
+
+    found = []
+
+    with sync_playwright() as p:
+        browser = p.chromium.launch(
+            headless=True,
+            executable_path="/usr/bin/chromium"
+        )
+
+        page = browser.new_page(
+            viewport={"width": 430, "height": 1600},
+            user_agent="Mozilla/5.0"
+        )
+
+        for url in urls:
+            try:
+                page.goto(url, wait_until="domcontentloaded", timeout=20000)
+                page.wait_for_timeout(1200)
+
+                text = page.locator("body").inner_text()
+
+                if "보러가기" not in text:
+                    continue
+
+                section = text.split("보러가기", 1)[1]
+
+                if "시청 주의 가이드" in section:
+                    section = section.split("시청 주의 가이드", 1)[0]
+
+                for ott in OTT_NAMES:
+                    if ott in section:
+                        found.append(ott)
+
+                if found:
+                    break
+
+            except Exception:
+                continue
+
+        browser.close()
+
+    return sorted(set(found))
+
+
 tab1, tab2 = st.tabs(["📈 랭킹 대시보드", "🔎 OTT 제공처 검색"])
 
 with tab1:
-    file = Path("ranking_history.csv")
-
-    if not file.exists():
-        st.error("ranking_history.csv가 없습니다. Actions에서 수집을 먼저 실행하세요.")
-        st.stop()
-
-    df = pd.read_csv(file)
+    df = load_ranking_history()
 
     if df.empty:
-        st.error("수집된 랭킹 데이터가 없습니다.")
+        st.error("ranking_history.csv가 없거나 수집된 랭킹 데이터가 없습니다.")
         st.stop()
-
-    for col in ["providers", "genres", "open_year", "media_type", "is_new", "delta", "rank"]:
-        if col not in df.columns:
-            df[col] = ""
-
-    df["date"] = df["date"].astype(str)
-    df["period"] = df["period"].astype(str)
-    df["period_key"] = df["period"].apply(make_period_key)
-    df["title"] = df["title"].astype(str)
-    df["providers"] = df["providers"].fillna("").astype(str)
-    df["genres"] = df["genres"].fillna("").astype(str)
-    df["open_year"] = df["open_year"].fillna("").astype(str)
-    df["media_type"] = df["media_type"].fillna("").astype(str)
-    df["rank"] = pd.to_numeric(df["rank"], errors="coerce")
-    df["delta"] = pd.to_numeric(df["delta"], errors="coerce").fillna(0)
-    df["is_new"] = df["is_new"].astype(str).str.lower().isin(["true", "1"])
 
     latest_date = sorted(df["date"].unique(), reverse=True)[0]
     latest = df[df["date"] == latest_date].copy()

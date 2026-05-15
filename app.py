@@ -83,7 +83,6 @@ h1,h2,h3,p,label,div,span { color:#f8fafc !important; }
     gap:10px;
 }
 
-
 .release-left {
     min-width:0;
     flex:1;
@@ -338,7 +337,6 @@ def load_upcoming_releases():
     df["provider"] = df["provider"].fillna("").astype(str).str.strip()
     df["genre"] = df["genre"].fillna("").astype(str).str.strip()
 
-    # 하단 주메뉴 / 카운트 / 점수 / 노이즈 제거
     df = df[~df["title"].apply(is_bad_release_title)].copy()
 
     df["release_date_dt"] = pd.to_datetime(df["release_date"], errors="coerce")
@@ -470,8 +468,8 @@ def render_upcoming_releases(release_df, max_items=80):
         provider = str(row.get("provider", "")).strip()
         genre = str(row.get("genre", "")).strip()
         date_text = format_release_date(row.get("release_date_dt"))
+        logo = get_provider_logo(provider)
 
-        # HTML 깨짐 방지
         safe_title = html.escape(title)
         safe_provider = html.escape(provider)
         safe_genre = html.escape(genre)
@@ -486,22 +484,21 @@ def render_upcoming_releases(release_df, max_items=80):
             meta_parts.append(safe_genre)
 
         if meta_parts:
-            meta_html = f'<div class="release-meta">{" · ".join(meta_parts)}</div>'
+            meta_html = '<div class="release-meta">' + " · ".join(meta_parts) + '</div>'
         else:
             meta_html = ""
 
-        st.markdown(
-            f"""
-            <div class="release-row">
-                <div class="release-left">
-                    <div class="release-title">{safe_title}</div>
-                    {meta_html}
-                </div>
-                <div class="release-date">{safe_date}</div>
-            </div>
-            """,
-            unsafe_allow_html=True
+        row_html = (
+            '<div class="release-row">'
+            '<div class="release-left">'
+            f'<div class="release-title">{logo}{safe_title}</div>'
+            f'{meta_html}'
+            '</div>'
+            f'<div class="release-date">{safe_date}</div>'
+            '</div>'
         )
+
+        st.markdown(row_html, unsafe_allow_html=True)
 
 
 def search_contents(keyword):

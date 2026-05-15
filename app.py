@@ -177,7 +177,6 @@ def is_date_like(value):
     if text in ["-", "없음", "미정", "nan", "NaN", "None"]:
         return False
 
-    # 엑셀 시리얼 날짜: 45700 또는 45700.0
     if re.fullmatch(r"\d{5}(\.0)?", text):
         return True
 
@@ -245,7 +244,6 @@ def load_btv_plus_titles():
     rows = []
 
     # 콘텐츠라인업: D열 타이틀, F열 날짜
-    # D열 index = 3, F열 index = 5
     lineup_sheet_candidates = [
         "콘텐츠라인업",
         "콘텐츠 라인업",
@@ -263,8 +261,8 @@ def load_btv_plus_titles():
             continue
 
         for _, row in raw.iterrows():
-            title = get_col_value(row, 3)
-            btv_date = get_col_value(row, 5)
+            title = get_col_value(row, 3)      # D열
+            btv_date = get_col_value(row, 5)   # F열
 
             if str(title).strip() == "":
                 continue
@@ -283,7 +281,6 @@ def load_btv_plus_titles():
         break
 
     # 영화 / 해외드라마 / 애니메이션(25'1~): C열 타이틀
-    # C열 index = 2
     c_col_sheets = [
         ("영화", "영화"),
         ("해외드라마", "해외드라마"),
@@ -306,7 +303,7 @@ def load_btv_plus_titles():
             continue
 
         for _, row in raw.iterrows():
-            title = get_col_value(row, 2)
+            title = get_col_value(row, 2)  # C열
 
             if str(title).strip() == "":
                 continue
@@ -323,7 +320,6 @@ def load_btv_plus_titles():
             loaded_animation = True
 
     # 키즈: F열 타이틀
-    # F열 index = 5
     kids_sheet_candidates = [
         "키즈",
         "Kids",
@@ -339,7 +335,7 @@ def load_btv_plus_titles():
             continue
 
         for _, row in raw.iterrows():
-            title = get_col_value(row, 5)
+            title = get_col_value(row, 5)  # F열
 
             if str(title).strip() == "":
                 continue
@@ -369,7 +365,6 @@ def load_btv_plus_titles():
     btv_df = pd.DataFrame(rows).fillna("")
     btv_df = btv_df[btv_df["title_norm"] != ""].copy()
 
-    # 헤더/안내문 제거
     remove_words = [
         "타이틀명",
         "콘텐츠명",
@@ -413,20 +408,11 @@ def make_empty_match():
     }
 
 
-def find_btv_match_info(kino_title, btv_df, btv_map=None, btv_norm_list=None):
+def find_btv_match_info(kino_title, btv_map, btv_norm_list):
     kino_norm = normalize_title(kino_title)
 
-    if kino_norm == "" or btv_df.empty:
+    if kino_norm == "":
         return make_empty_match()
-
-    if btv_map is None:
-        btv_map = {
-            str(row["title_norm"]): row
-            for _, row in btv_df.iterrows()
-        }
-
-    if btv_norm_list is None:
-        btv_norm_list = list(btv_map.keys())
 
     # 1차: 공백/특수문자 제거 후 완전일치
     if kino_norm in btv_map:
@@ -444,7 +430,6 @@ def find_btv_match_info(kino_title, btv_df, btv_map=None, btv_norm_list=None):
         }
 
     # 2차: 포함관계 매칭
-    # 너무 짧은 제목은 오탐 방지
     if len(kino_norm) < 4:
         return make_empty_match()
 
@@ -464,7 +449,6 @@ def find_btv_match_info(kino_title, btv_df, btv_map=None, btv_norm_list=None):
                 best_score = score
                 best_norm = btv_norm
 
-    # 포함관계는 0.7 이상만 인정
     if best_norm and best_score >= 0.7:
         row = btv_map[best_norm]
 
@@ -502,7 +486,6 @@ def fast_match_titles(title_list):
         result.append(
             find_btv_match_info(
                 kino_title=title,
-                btv_df=btv_df,
                 btv_map=btv_map,
                 btv_norm_list=btv_norm_list
             )
@@ -715,24 +698,32 @@ with tab1:
     if selected_ott != "전체":
         base = base[base["providers"].str.contains(selected_ott, na=False)].copy()
 
-    # 현재 조건 base에만 빠른 B tv+ 매칭 적용
-    base = attach_btv_plus_flag(base)
-
-    btv_count = int(base["is_btv_plus"].sum()) if "is_btv_plus" in base.columns else 0
-    total_count = len(base)
-
     only_btv_plus = st.checkbox(
         "B tv+ 편성작만 보기",
         value=False
     )
 
-    st.markdown(
-        f'<div class="filter-note">현재 조건 기준 B tv+ 매칭: {btv_count}개 / 전체 {total_count}개</div>',
-        unsafe_allow_html=True
-    )
-
+    # 핵심 변경:
+    # 체크 전에는 B tv+ 매칭 자체를 하지 않음.
+    # 체크했을 때만 구글시트 로드 + 매칭 + 필터링.
     if only_btv_plus:
+        with st.spinner("B tv+ 편성작만 필터링 중..."):
+            base = attach_btv_plus_flag(base)
+
+        btv_count = int(base["is_btv_plus"].sum()) if "is_btv_plus" in base.columns else 0
+        total_count = len(base)
+
+        st.markdown(
+            f'<div class="filter-note">현재 조건 기준 B tv+ 매칭: {btv_count}개 / 전체 {total_count}개</div>',
+            unsafe_allow_html=True
+        )
+
         base = base[base["is_btv_plus"] == True].copy()
+    else:
+        st.markdown(
+            '<div class="filter-note">B tv+ 편성작만 보기를 체크하면 구글시트와 매칭합니다.</div>',
+            unsafe_allow_html=True
+        )
 
     base = base.sort_values("rank")
     new_df = base[base["is_new"] == True].copy()

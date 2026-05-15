@@ -75,17 +75,14 @@ h1,h2,h3,p,label,div,span { color:#f8fafc !important; }
     background:#0f172a;
     border:1px solid #1e293b;
     border-radius:12px;
-    padding:9px 10px;
+    padding:10px 11px;
     margin-bottom:8px;
     display:flex;
     justify-content:space-between;
     align-items:center;
-    gap:8px;
+    gap:10px;
 }
 
-.release-row * {
-    background:transparent !important;
-}
 
 .release-left {
     min-width:0;
@@ -99,7 +96,7 @@ h1,h2,h3,p,label,div,span { color:#f8fafc !important; }
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
-    max-width:260px;
+    max-width:250px;
 }
 
 .release-meta {
@@ -109,7 +106,7 @@ h1,h2,h3,p,label,div,span { color:#f8fafc !important; }
 }
 
 .release-date {
-    background:#1e293b !important;
+    background:#1e293b;
     border:1px solid #334155;
     border-radius:9px;
     padding:6px 8px;
@@ -467,38 +464,44 @@ def render_upcoming_releases(release_df, max_items=80):
     for _, row in release_df.head(max_items).iterrows():
         title = str(row.get("title", "")).strip()
 
-        # 혹시 로드 후에도 남아 있는 노이즈 제거
         if is_bad_release_title(title):
             continue
 
         provider = str(row.get("provider", "")).strip()
         genre = str(row.get("genre", "")).strip()
         date_text = format_release_date(row.get("release_date_dt"))
-        logo = get_provider_logo(provider)
+
+        # HTML 깨짐 방지
+        safe_title = html.escape(title)
+        safe_provider = html.escape(provider)
+        safe_genre = html.escape(genre)
+        safe_date = html.escape(date_text)
 
         meta_parts = []
 
-        if provider:
-            meta_parts.append(provider)
+        if safe_provider:
+            meta_parts.append(safe_provider)
 
-        if genre:
-            meta_parts.append(genre)
-
-        meta_html = ""
+        if safe_genre:
+            meta_parts.append(safe_genre)
 
         if meta_parts:
-            meta_text = " · ".join(meta_parts)
-            meta_html = f'<div class="release-meta">{meta_text}</div>'
+            meta_html = f'<div class="release-meta">{" · ".join(meta_parts)}</div>'
+        else:
+            meta_html = ""
 
-        st.markdown(f"""
-        <div class="release-row">
-            <div class="release-left">
-                <div class="release-title">{logo}{title}</div>
-                {meta_html}
+        st.markdown(
+            f"""
+            <div class="release-row">
+                <div class="release-left">
+                    <div class="release-title">{safe_title}</div>
+                    {meta_html}
+                </div>
+                <div class="release-date">{safe_date}</div>
             </div>
-            <div class="release-date">{date_text}</div>
-        </div>
-        """, unsafe_allow_html=True)
+            """,
+            unsafe_allow_html=True
+        )
 
 
 def search_contents(keyword):

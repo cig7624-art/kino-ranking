@@ -1,13 +1,13 @@
 import streamlit as st
 import pandas as pd
-import json
-import html
+import requests
 import re
+import html
 from pathlib import Path
-import streamlit.components.v1 as components
+from playwright.sync_api import sync_playwright
 
 st.set_page_config(
-    page_title="키노라이츠 랭킹 / OTT 편성 검색",
+    page_title="키노라이츠 랭킹/OTT 검색",
     page_icon="🎬",
     layout="wide"
 )
@@ -15,20 +15,339 @@ st.set_page_config(
 st.markdown("""
 <style>
 .stApp {
-    background:#050b18;
+    background:#090d1a;
 }
+
+h1,h2,h3,p,label,div,span {
+    color:#f8fafc !important;
+}
+
 .block-container {
-    padding-top:0.6rem;
-    padding-left:1.1rem;
-    padding-right:1.1rem;
+    padding-top:1.3rem;
     max-width:100%;
 }
-header, footer {
-    visibility:hidden;
+
+/* 상단 탭 */
+.stTabs [data-baseweb="tab-list"] {
+    gap:18px;
+    border-bottom:1px solid #1e293b;
+}
+
+.stTabs [data-baseweb="tab"] {
+    color:#94a3b8;
+    font-weight:800;
+}
+
+.stTabs [aria-selected="true"] {
+    color:#93c5fd !important;
+    border-bottom:3px solid #3b82f6;
+}
+
+/* 랭킹 기준 + B tv+ 체크박스 */
+.base-row {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    color:#94a3b8 !important;
+    font-size:14px;
+    margin-top:8px;
+    margin-bottom:10px;
+    background:#0f172a;
+    border:1px solid #1e293b;
+    border-radius:12px;
+    padding:10px 14px;
+}
+
+.base-info {
+    color:#94a3b8 !important;
+    font-size:14px;
+}
+
+.btv-check-wrap {
+    position:relative;
+    display:flex;
+    align-items:center;
+    gap:7px;
+    color:#cbd5e1 !important;
+    font-size:14px;
+    font-weight:700;
+    cursor:default;
+    user-select:none;
+    white-space:nowrap;
+}
+
+.btv-check-box {
+    width:15px;
+    height:15px;
+    border:1px solid #94a3b8;
+    border-radius:4px;
+    background:#0f172a;
+    display:inline-block;
+}
+
+.btv-check-wrap:hover::after {
+    content:"현재는 체크박스만 노출됩니다. B tv+ 편성작 필터 기능은 추후 연결 예정입니다.";
+    position:absolute;
+    top:26px;
+    right:0;
+    width:310px;
+    background:#111827;
+    color:#f8fafc;
+    border:1px solid #334155;
+    border-radius:10px;
+    padding:9px 11px;
+    font-size:12px;
+    font-weight:500;
+    line-height:1.4;
+    z-index:9999;
+    box-shadow:0 8px 24px rgba(0,0,0,0.35);
+}
+
+/* 공통 카드 */
+.rank-card {
+    background:#0f172a;
+    border:1px solid #1e293b;
+    border-radius:12px;
+    padding:8px 10px;
+    margin-bottom:7px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    min-height:68px;
+}
+
+.rank-card:hover {
+    border-color:#334155;
+    background:#111c2f;
+}
+
+.rank-left {
+    display:flex;
+    align-items:center;
+    gap:10px;
+    min-width:0;
+}
+
+.rank-num {
+    font-size:17px;
+    font-weight:900;
+    color:#f8fafc !important;
+    min-width:30px;
+    text-align:right;
+    font-style:italic;
+}
+
+.title {
+    font-size:15px;
+    font-weight:800;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    max-width:260px;
+}
+
+.meta {
+    color:#64748b !important;
+    font-size:12px;
+    margin-top:3px;
+    line-height:1.35;
+}
+
+.badge-new {
+    color:#f97316 !important;
+    font-weight:900;
+    font-size:13px;
+}
+
+.badge-up {
+    color:#22c55e !important;
+    font-weight:900;
+    font-size:13px;
+}
+
+.badge-down {
+    color:#ef4444 !important;
+    font-weight:900;
+    font-size:13px;
+}
+
+.side-card {
+    background:#0f172a;
+    border:1px solid #1e293b;
+    border-radius:12px;
+    padding:9px 11px;
+    margin-bottom:8px;
+    min-height:58px;
+}
+
+.side-card:hover {
+    border-color:#334155;
+    background:#111c2f;
+}
+
+.small {
+    color:#94a3b8 !important;
+    font-size:12px;
+}
+
+/* 공개예정작 */
+.release-row {
+    background:#0f172a;
+    border:1px solid #1e293b;
+    border-radius:12px;
+    padding:8px 9px;
+    margin-bottom:8px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    min-height:66px;
+}
+
+.release-row:hover {
+    border-color:#3b82f6;
+    background:#111c2f;
+}
+
+.release-left {
+    display:flex;
+    align-items:center;
+    gap:9px;
+    min-width:0;
+    flex:1;
+}
+
+.release-poster {
+    width:44px;
+    height:54px;
+    border-radius:7px;
+    background:linear-gradient(145deg,#1e293b,#0b1220);
+    border:1px solid #263244;
+    overflow:hidden;
+    flex-shrink:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#64748b !important;
+    font-size:11px;
+    font-weight:900;
+}
+
+.release-poster img {
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+}
+
+.release-info {
+    min-width:0;
+    flex:1;
+}
+
+.release-title {
+    font-size:14px;
+    font-weight:800;
+    color:#f8fafc !important;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    max-width:210px;
+    text-decoration:none;
+}
+
+.release-title a {
+    color:#f8fafc !important;
+    text-decoration:none;
+}
+
+.release-title a:hover {
+    color:#93c5fd !important;
+}
+
+.release-meta {
+    color:#94a3b8 !important;
+    font-size:12px;
+    margin-top:4px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    max-width:210px;
+}
+
+.release-date {
+    background:#1e293b;
+    border:1px solid #334155;
+    border-radius:9px;
+    padding:6px 8px;
+    color:#f8fafc !important;
+    font-size:12px;
+    font-weight:900;
+    white-space:nowrap;
+    flex-shrink:0;
+}
+
+.release-empty {
+    background:#0f172a;
+    border:1px solid #1e293b;
+    border-radius:12px;
+    padding:12px;
+    color:#94a3b8 !important;
+    font-size:13px;
+}
+
+/* OTT 로고 배지 */
+.ott-logo {
+    display:inline-block;
+    min-width:22px;
+    text-align:center;
+    border-radius:6px;
+    padding:2px 5px;
+    margin-right:6px;
+    font-size:10px;
+    font-weight:900;
+    background:#1e293b !important;
+    color:#f8fafc !important;
+}
+
+.logo-netflix { color:#ef4444 !important; }
+.logo-tving { color:#ef4444 !important; }
+.logo-wavve { color:#60a5fa !important; }
+.logo-disney { color:#93c5fd !important; }
+.logo-watcha { color:#ec4899 !important; }
+.logo-coupang { color:#38bdf8 !important; }
+.logo-apple { color:#f8fafc !important; }
+.logo-laftel { color:#c084fc !important; }
+
+.ott-badge {
+    display:inline-block;
+    background:#1e293b;
+    border:1px solid #475569;
+    border-radius:999px;
+    padding:5px 10px;
+    margin-right:6px;
+    margin-top:6px;
+    font-weight:700;
+}
+
+/* selectbox */
+[data-baseweb="select"] * {
+    color:#111827 !important;
+}
+
+[data-baseweb="popover"] * {
+    color:#111827 !important;
+    background:#ffffff !important;
+}
+
+input {
+    color:#111827 !important;
 }
 </style>
 """, unsafe_allow_html=True)
 
+st.markdown("<h1>🎬 키노라이츠 랭킹 / OTT 편성 검색</h1>", unsafe_allow_html=True)
 
 OTT_NAMES = [
     "넷플릭스", "티빙", "웨이브", "디즈니+",
@@ -82,32 +401,17 @@ def get_kino_base_label(selected_period, latest_date):
     return str(latest_date)
 
 
-def make_meta(row):
-    media_type = str(row.get("media_type", "")).upper()
-    genres = str(row.get("genres", "")).replace(",", "/")
-    open_year = str(row.get("open_year", ""))
+def get_kino_base_tooltip(selected_period):
+    if selected_period == "일간":
+        return "집계 기준: 일간 · 전일 기준, 매일 오후 2시 업데이트"
 
-    type_text = ""
+    if selected_period == "주간":
+        return "집계 기준: 주간 · 전주 월요일~일요일"
 
-    if media_type == "MOVIE":
-        type_text = "영화"
-    elif media_type in ["TV", "SHOW", "SERIES", "DRAMA"]:
-        type_text = "드라마"
-    elif media_type == "ANIMATION":
-        type_text = "애니메이션"
+    if selected_period == "월간":
+        return "집계 기준: 월간 · 전월 1일~말일"
 
-    parts = []
-
-    if type_text:
-        parts.append(type_text)
-
-    if genres and genres != "nan":
-        parts.append(genres)
-
-    if open_year and open_year != "nan":
-        parts.append(open_year)
-
-    return " · ".join(parts)
+    return "키노라이츠 트렌드 랭킹 기준"
 
 
 def is_bad_release_title(title):
@@ -203,16 +507,16 @@ def load_upcoming_releases():
 
     if not file.exists():
         return pd.DataFrame(columns=[
-            "collect_date", "release_date", "title", "provider",
-            "genre", "url", "image_url"
+            "collect_date", "release_date", "title",
+            "provider", "genre", "url", "image_url"
         ])
 
     df = pd.read_csv(file)
 
     if df.empty:
         return pd.DataFrame(columns=[
-            "collect_date", "release_date", "title", "provider",
-            "genre", "url", "image_url"
+            "collect_date", "release_date", "title",
+            "provider", "genre", "url", "image_url"
         ])
 
     for col in ["collect_date", "release_date", "title", "provider", "genre", "url", "image_url"]:
@@ -230,6 +534,8 @@ def load_upcoming_releases():
     df = df[~df["title"].apply(is_bad_release_title)].copy()
 
     df["release_date_dt"] = pd.to_datetime(df["release_date"], errors="coerce")
+
+    df = df[df["title"].str.strip() != ""].copy()
     df = df[df["release_date_dt"].notna()].copy()
 
     df = df.drop_duplicates(
@@ -245,964 +551,455 @@ def load_upcoming_releases():
     return df
 
 
-def safe_str(value):
-    if pd.isna(value):
+def make_meta(row):
+    media_type = str(row.get("media_type", "")).upper()
+    genres = str(row.get("genres", "")).replace(",", "/")
+    open_year = str(row.get("open_year", ""))
+
+    type_text = ""
+
+    if media_type == "MOVIE":
+        type_text = "영화"
+    elif media_type in ["TV", "SHOW", "SERIES", "DRAMA"]:
+        type_text = "드라마"
+    elif media_type == "ANIMATION":
+        type_text = "애니메이션"
+
+    parts = []
+
+    if type_text:
+        parts.append(type_text)
+
+    if genres and genres != "nan":
+        parts.append(genres)
+
+    if open_year and open_year != "nan":
+        parts.append(open_year)
+
+    return " · ".join(parts)
+
+
+def get_provider_logo(provider):
+    p = str(provider).strip()
+
+    if p == "":
         return ""
-    return str(value)
+
+    if "넷플" in p:
+        return '<span class="ott-logo logo-netflix">N</span>'
+    if "티빙" in p:
+        return '<span class="ott-logo logo-tving">T</span>'
+    if "웨이브" in p:
+        return '<span class="ott-logo logo-wavve">W</span>'
+    if "디즈니" in p:
+        return '<span class="ott-logo logo-disney">D+</span>'
+    if "왓챠" in p:
+        return '<span class="ott-logo logo-watcha">W</span>'
+    if "쿠팡" in p:
+        return '<span class="ott-logo logo-coupang">▶</span>'
+    if "애플" in p:
+        return '<span class="ott-logo logo-apple"></span>'
+    if "라프텔" in p:
+        return '<span class="ott-logo logo-laftel">L</span>'
+
+    return ""
 
 
-def build_payload():
-    ranking_df = load_ranking_data()
-    upcoming_df = load_upcoming_releases()
+def format_release_date(value):
+    dt = pd.to_datetime(value, errors="coerce")
 
-    if ranking_df.empty:
-        return {
-            "ranking": [],
-            "upcoming": [],
-            "latest_date": "",
-            "update_label": "-",
-            "base_labels": {
-                "일간": "-",
-                "주간": "-",
-                "월간": "-"
-            }
-        }
+    if pd.isna(dt):
+        return "-"
 
-    latest_date = sorted(ranking_df["date"].unique(), reverse=True)[0]
+    return f"{dt.month}/{dt.day}"
 
-    update_label = "-"
+
+def render_rank_card(row):
     try:
-        update_label = pd.to_datetime(latest_date).strftime("%m.%d 10:00")
+        rank_text = str(int(row["rank"]))
     except Exception:
-        update_label = str(latest_date)
+        rank_text = "-"
 
-    base_labels = {
-        "일간": get_kino_base_label("일간", latest_date),
-        "주간": get_kino_base_label("주간", latest_date),
-        "월간": get_kino_base_label("월간", latest_date),
-    }
+    if row.get("is_new", False):
+        badge = '<span class="badge-new">NEW</span>'
+    elif row.get("delta", 0) > 0:
+        badge = f'<span class="badge-up">▲{int(row["delta"])}</span>'
+    elif row.get("delta", 0) < 0:
+        badge = f'<span class="badge-down">▼{abs(int(row["delta"]))}</span>'
+    else:
+        badge = ""
 
-    latest = ranking_df[ranking_df["date"] == latest_date].copy()
+    meta = html.escape(make_meta(row))
+    title = html.escape(str(row.get("title", "")))
 
-    ranking_rows = []
-
-    for _, row in latest.iterrows():
-        ranking_rows.append({
-            "date": safe_str(row.get("date", "")),
-            "period": safe_str(row.get("period", "")),
-            "title": safe_str(row.get("title", "")),
-            "rank": int(row["rank"]) if pd.notna(row.get("rank")) else None,
-            "delta": int(row["delta"]) if pd.notna(row.get("delta")) else 0,
-            "is_new": bool(row.get("is_new", False)),
-            "providers": safe_str(row.get("providers", "")),
-            "meta": make_meta(row),
-            "media_type": safe_str(row.get("media_type", "")),
-            "genres": safe_str(row.get("genres", "")),
-            "open_year": safe_str(row.get("open_year", "")),
-        })
-
-    upcoming_rows = []
-
-    for _, row in upcoming_df.iterrows():
-        release_dt = row.get("release_date_dt")
-        release_date_label = ""
-
-        try:
-            release_date_label = pd.to_datetime(release_dt).strftime("%-m/%-d")
-        except Exception:
-            try:
-                release_date_label = pd.to_datetime(release_dt).strftime("%m/%d")
-            except Exception:
-                release_date_label = safe_str(row.get("release_date", ""))
-
-        release_group = release_date_label
-
-        today = pd.Timestamp.today().normalize()
-        try:
-            d = pd.to_datetime(release_dt).normalize()
-            if d == today:
-                release_group = "오늘"
-            elif d == today + pd.Timedelta(days=1):
-                release_group = "내일"
-            else:
-                weekday_map = ["월", "화", "수", "목", "금", "토", "일"]
-                release_group = f"{d.month}/{d.day}({weekday_map[d.weekday()]})"
-        except Exception:
-            pass
-
-        upcoming_rows.append({
-            "collect_date": safe_str(row.get("collect_date", "")),
-            "release_date": safe_str(row.get("release_date", "")),
-            "release_label": release_date_label,
-            "release_group": release_group,
-            "title": safe_str(row.get("title", "")),
-            "provider": safe_str(row.get("provider", "")),
-            "genre": safe_str(row.get("genre", "")),
-            "url": safe_str(row.get("url", "")),
-            "image_url": safe_str(row.get("image_url", "")),
-        })
-
-    return {
-        "ranking": ranking_rows,
-        "upcoming": upcoming_rows,
-        "latest_date": latest_date,
-        "update_label": update_label,
-        "base_labels": base_labels,
-    }
-
-
-payload = build_payload()
-
-payload_json = json.dumps(payload, ensure_ascii=False)
-payload_json = payload_json.replace("</", "<\\/")
-
-html_template = r"""
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<style>
-* {
-    box-sizing:border-box;
-}
-html, body {
-    margin:0;
-    padding:0;
-    background:#050b18;
-    color:#e5edf8;
-    font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", "Pretendard", "Apple SD Gothic Neo", sans-serif;
-}
-body {
-    overflow-x:hidden;
-}
-.dashboard {
-    width:100%;
-    min-height:1180px;
-    padding:22px 24px 28px 24px;
-    background:
-        radial-gradient(circle at 12% 0%, rgba(42,104,255,0.20), transparent 32%),
-        radial-gradient(circle at 88% 4%, rgba(40,109,255,0.16), transparent 28%),
-        linear-gradient(180deg, #071326 0%, #050b18 45%, #050b18 100%);
-}
-.topbar {
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:18px;
-}
-.title-wrap {
-    display:flex;
-    align-items:center;
-    gap:10px;
-}
-.main-title {
-    font-size:29px;
-    line-height:1;
-    font-weight:900;
-    letter-spacing:-0.6px;
-    color:#f8fbff;
-}
-.title-icon {
-    font-size:25px;
-}
-.top-actions {
-    display:flex;
-    align-items:center;
-    gap:12px;
-    color:#8fa1bb;
-    font-size:14px;
-}
-.update {
-    display:flex;
-    align-items:center;
-    gap:7px;
-}
-.export-btn {
-    background:rgba(15,28,50,0.88);
-    border:1px solid rgba(103,129,168,0.35);
-    color:#c9d6e8;
-    padding:10px 15px;
-    border-radius:9px;
-    font-weight:700;
-    cursor:pointer;
-}
-.export-btn:hover {
-    border-color:#4d8cff;
-    color:#fff;
-}
-.tabs {
-    display:flex;
-    gap:34px;
-    height:42px;
-    border-bottom:1px solid rgba(116,142,180,0.22);
-    margin-bottom:14px;
-}
-.tab {
-    position:relative;
-    font-size:15px;
-    color:#8d9bb0;
-    font-weight:800;
-    padding:12px 0 13px;
-}
-.tab.active {
-    color:#8fb6ff;
-}
-.tab.active::after {
-    content:"";
-    position:absolute;
-    left:0;
-    right:0;
-    bottom:-1px;
-    height:3px;
-    background:#4b83ff;
-    border-radius:10px 10px 0 0;
-}
-.controls-shell {
-    border:1px solid rgba(109,136,177,0.14);
-    border-radius:14px;
-    background:rgba(8,18,34,0.72);
-    padding:18px 20px 16px;
-    margin-bottom:12px;
-}
-.controls-row {
-    display:grid;
-    grid-template-columns: 1.1fr 1fr 1.55fr;
-    gap:18px;
-    align-items:start;
-}
-.left-controls {
-    display:flex;
-    align-items:center;
-    gap:20px;
-    flex-wrap:wrap;
-}
-.control-group {
-    display:flex;
-    align-items:center;
-    gap:12px;
-}
-.control-label {
-    font-size:14px;
-    color:#cbd7eb;
-    font-weight:800;
-    white-space:nowrap;
-}
-.select-box {
-    height:39px;
-    min-width:155px;
-    border:1px solid rgba(115,144,184,0.32);
-    border-radius:8px;
-    background:#0f1a2b;
-    color:#f3f7ff;
-    padding:0 38px 0 14px;
-    font-size:14px;
-    font-weight:700;
-    outline:none;
-}
-.btv-check {
-    grid-column:1 / span 2;
-    display:flex;
-    align-items:center;
-    gap:8px;
-    margin-top:13px;
-    color:#d6e0ef;
-    font-size:14px;
-    font-weight:800;
-    width:max-content;
-}
-.btv-check input {
-    width:16px;
-    height:16px;
-    accent-color:#4b83ff;
-}
-.release-filter {
-    grid-column:3;
-    grid-row:1 / span 2;
-    border:1px dashed rgba(78,139,255,0.9);
-    border-radius:14px;
-    padding:17px 18px;
-    background:linear-gradient(135deg, rgba(18,42,78,0.82), rgba(10,22,42,0.78));
-    box-shadow:0 0 26px rgba(55,119,255,0.16);
-}
-.release-filter-title {
-    color:#9fc0ff;
-    font-weight:900;
-    font-size:14px;
-    margin-bottom:13px;
-}
-.chips {
-    display:flex;
-    flex-wrap:wrap;
-    gap:8px;
-    align-items:center;
-}
-.chip {
-    display:inline-flex;
-    align-items:center;
-    gap:6px;
-    border:1px solid rgba(111,139,178,0.35);
-    background:rgba(11,22,40,0.96);
-    color:#d8e3f5;
-    height:32px;
-    border-radius:999px;
-    padding:0 11px;
-    font-size:13px;
-    font-weight:800;
-    cursor:pointer;
-    user-select:none;
-}
-.chip.active {
-    background:#4a80ff;
-    color:#fff;
-    border-color:#6ea0ff;
-    box-shadow:0 0 14px rgba(74,128,255,0.38);
-}
-.provider-logo {
-    width:19px;
-    height:19px;
-    border-radius:50%;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    font-size:10px;
-    font-weight:950;
-    background:#0b1220;
-}
-.logo-netflix { color:#ff3045; background:#050505; }
-.logo-tving { color:#ff1745; background:#0b0b0f; }
-.logo-coupang { color:#ffffff; background:#1798ff; }
-.logo-wavve { color:#ffffff; background:#276cff; }
-.logo-disney { color:#bfe2ff; background:#053a54; }
-.logo-watcha { color:#ff3f9d; background:#090913; }
-.logo-apple { color:#ffffff; background:#111827; }
-.logo-laftel { color:#ffffff; background:#5936b4; }
-.date-chip {
-    height:32px;
-    border-radius:9px;
-    padding:0 12px;
-}
-.base-row {
-    display:flex;
-    align-items:center;
-    gap:16px;
-    color:#91a4bf;
-    font-size:13px;
-    background:rgba(13,26,47,0.82);
-    border:1px solid rgba(112,140,178,0.12);
-    border-radius:9px;
-    padding:11px 15px;
-    margin-bottom:14px;
-}
-.info-icon {
-    width:18px;
-    height:18px;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    border:1px solid rgba(160,176,205,0.45);
-    border-radius:50%;
-    font-size:12px;
-    color:#b7c6dd;
-}
-.columns {
-    display:grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
-    gap:12px;
-}
-.panel {
-    background:rgba(10,21,39,0.84);
-    border:1px solid rgba(113,142,181,0.18);
-    border-radius:13px;
-    padding:13px 12px 15px;
-    min-height:615px;
-    box-shadow:0 10px 28px rgba(0,0,0,0.16);
-}
-.panel.release-panel {
-    border-color:#367cff;
-    box-shadow:0 0 0 1px rgba(50,115,255,0.20), 0 0 24px rgba(51,113,255,0.18);
-}
-.panel-head {
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:3px 4px 13px;
-}
-.panel-title {
-    display:flex;
-    align-items:center;
-    gap:7px;
-    font-size:20px;
-    font-weight:950;
-    letter-spacing:-0.4px;
-    color:#f8fbff;
-}
-.more {
-    color:#8da0ba;
-    font-size:13px;
-    font-weight:800;
-}
-.card {
-    display:grid;
-    grid-template-columns:42px 58px minmax(0, 1fr) 32px;
-    gap:11px;
-    align-items:center;
-    min-height:82px;
-    background:rgba(13,27,49,0.96);
-    border:1px solid rgba(111,139,178,0.18);
-    border-radius:9px;
-    margin-bottom:7px;
-    padding:8px 10px;
-}
-.card.small-rank {
-    grid-template-columns:42px minmax(0, 1fr) 44px;
-}
-.rank-no {
-    font-size:29px;
-    color:#dce8fb;
-    font-weight:900;
-    text-align:center;
-}
-.poster-placeholder {
-    width:58px;
-    height:58px;
-    border-radius:7px;
-    background:linear-gradient(145deg, #263c64, #0b1728);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    color:#83a6df;
-    font-size:18px;
-    font-weight:900;
-    overflow:hidden;
-}
-.poster-placeholder img {
-    width:100%;
-    height:100%;
-    object-fit:cover;
-    display:block;
-}
-.card-title {
-    font-size:15px;
-    color:#f5f8ff;
-    font-weight:900;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    line-height:1.25;
-}
-.card-meta {
-    color:#8da0bb;
-    font-size:12px;
-    margin-top:5px;
-    line-height:1.38;
-    display:-webkit-box;
-    -webkit-line-clamp:2;
-    -webkit-box-orient:vertical;
-    overflow:hidden;
-}
-.status {
-    text-align:right;
-    font-size:12px;
-    font-weight:950;
-}
-.status.new {
-    color:#64ee78;
-}
-.status.up {
-    color:#ff4b36;
-}
-.status.down {
-    color:#ff5a6b;
-}
-.status.flat {
-    color:#6e82a0;
-}
-.bottom-more {
-    margin-top:13px;
-    height:52px;
-    border-radius:8px;
-    border:1px solid rgba(113,142,181,0.18);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    color:#91a4bf;
-    font-size:14px;
-    font-weight:800;
-    background:rgba(12,24,43,0.65);
-}
-.release-groups {
-    max-height:540px;
-    overflow:hidden;
-}
-.release-group-title {
-    display:flex;
-    align-items:center;
-    gap:8px;
-    color:#cddbf0;
-    font-size:13px;
-    font-weight:950;
-    padding:0 6px 7px;
-    margin-top:2px;
-}
-.group-count {
-    background:#1e2f50;
-    color:#a9bbd8;
-    border-radius:999px;
-    padding:2px 8px;
-    font-size:12px;
-}
-.release-card {
-    display:grid;
-    grid-template-columns:50px minmax(0, 1fr) 24px;
-    gap:10px;
-    align-items:center;
-    min-height:62px;
-    background:rgba(13,27,49,0.96);
-    border:1px solid rgba(111,139,178,0.18);
-    border-radius:8px;
-    margin-bottom:7px;
-    padding:8px 9px;
-    text-decoration:none;
-    color:inherit;
-}
-.release-card:hover {
-    border-color:#4b83ff;
-    background:rgba(17,36,66,1);
-}
-.release-poster {
-    width:48px;
-    height:48px;
-    border-radius:6px;
-    background:linear-gradient(145deg,#243c65,#0e1728);
-    overflow:hidden;
-}
-.release-poster img {
-    width:100%;
-    height:100%;
-    object-fit:cover;
-    display:block;
-}
-.release-title {
-    font-size:14px;
-    color:#f5f8ff;
-    font-weight:900;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    line-height:1.25;
-}
-.release-meta {
-    color:#8da0bb;
-    font-size:12px;
-    margin-top:4px;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-}
-.bookmark {
-    color:#6e82a0;
-    font-size:18px;
-}
-.empty {
-    color:#90a0b8;
-    padding:14px 6px;
-}
-@media (max-width: 1200px) {
-    .columns {
-        grid-template-columns:1fr 1fr;
-    }
-    .controls-row {
-        grid-template-columns:1fr;
-    }
-    .release-filter {
-        grid-column:1;
-        grid-row:auto;
-    }
-    .btv-check {
-        grid-column:1;
-    }
-}
-</style>
-</head>
-<body>
-<div class="dashboard">
-    <div class="topbar">
-        <div class="title-wrap">
-            <div class="title-icon">🎬</div>
-            <div class="main-title">키노라이츠 랭킹 / OTT 편성 검색</div>
-        </div>
-        <div class="top-actions">
-            <div class="update">↻ 데이터 업데이트: <span id="updateLabel">-</span></div>
-            <button class="export-btn" onclick="exportCSV()">⇩ 내보내기</button>
-        </div>
-    </div>
-
-    <div class="tabs">
-        <div class="tab active">랭킹 대시보드</div>
-        <div class="tab">OTT 제공처 검색</div>
-    </div>
-
-    <div class="controls-shell">
-        <div class="controls-row">
-            <div class="left-controls">
-                <div class="control-group">
-                    <div class="control-label">기간 선택</div>
-                    <select class="select-box" id="periodSelect" onchange="renderDashboard()">
-                        <option value="일간">일간</option>
-                        <option value="주간" selected>주간</option>
-                        <option value="월간">월간</option>
-                    </select>
-                </div>
-                <div class="control-group">
-                    <div class="control-label">OTT 선택</div>
-                    <select class="select-box" id="ottSelect" onchange="renderDashboard()">
-                        <option value="전체">전체</option>
-                        <option value="넷플릭스">넷플릭스</option>
-                        <option value="티빙">티빙</option>
-                        <option value="쿠팡플레이">쿠팡플레이</option>
-                        <option value="웨이브">웨이브</option>
-                        <option value="디즈니+">디즈니+</option>
-                        <option value="왓챠">왓챠</option>
-                    </select>
-                </div>
-            </div>
-
-            <label class="btv-check" title="현재는 체크박스만 노출됩니다. B tv+ 편성작 필터 기능은 추후 연결 예정입니다.">
-                <input type="checkbox" disabled />
-                <span>B tv+ 편성작만 보기</span>
-            </label>
-
-            <div class="release-filter">
-                <div class="release-filter-title">공개예정작 필터</div>
-                <div class="chips" id="providerChips"></div>
-                <div style="height:8px"></div>
-                <div class="chips" id="rangeChips"></div>
-            </div>
-        </div>
-    </div>
-
-    <div class="base-row">
-        <span class="info-icon">i</span>
-        <span>랭킹 기준: <b id="baseLabel">-</b></span>
-        <span>|</span>
-        <span>공개예정작 기준: 오늘 이후</span>
-    </div>
-
-    <div class="columns">
-        <section class="panel">
-            <div class="panel-head">
-                <div class="panel-title">🏆 <span id="topTitle">전체 주간 TOP100</span></div>
-                <div class="more">더보기 〉</div>
-            </div>
-            <div id="topList"></div>
-            <div class="bottom-more">TOP100 전체 보기 〉</div>
-        </section>
-
-        <section class="panel">
-            <div class="panel-head">
-                <div class="panel-title">🚀 급상승 콘텐츠</div>
-                <div class="more">더보기 〉</div>
-            </div>
-            <div id="upList"></div>
-            <div class="bottom-more">급상승 콘텐츠 더보기 〉</div>
-        </section>
-
-        <section class="panel">
-            <div class="panel-head">
-                <div class="panel-title">🔥 신규 진입 콘텐츠</div>
-                <div class="more">더보기 〉</div>
-            </div>
-            <div id="newList"></div>
-            <div class="bottom-more">신규 진입 콘텐츠 더보기 〉</div>
-        </section>
-
-        <section class="panel release-panel">
-            <div class="panel-head">
-                <div class="panel-title">🗓 공개 예정작</div>
-                <div class="more">더보기 〉</div>
-            </div>
-            <div class="release-groups" id="releaseList"></div>
-            <div class="bottom-more">공개 예정작 전체 보기 〉</div>
-        </section>
-    </div>
-</div>
-
-<script>
-const DATA = __PAYLOAD__;
-
-let selectedProvider = "전체";
-let selectedRange = "7일";
-
-const providerList = ["전체", "넷플릭스", "티빙", "쿠팡플레이", "웨이브", "디즈니+", "왓챠"];
-const rangeList = ["오늘", "7일", "14일"];
-
-function logo(provider) {
-    if (!provider || provider === "전체") return "";
-    if (provider.includes("넷플")) return '<span class="provider-logo logo-netflix">N</span>';
-    if (provider.includes("티빙")) return '<span class="provider-logo logo-tving">T</span>';
-    if (provider.includes("쿠팡")) return '<span class="provider-logo logo-coupang">▶</span>';
-    if (provider.includes("웨이브")) return '<span class="provider-logo logo-wavve">W</span>';
-    if (provider.includes("디즈니")) return '<span class="provider-logo logo-disney">D+</span>';
-    if (provider.includes("왓챠")) return '<span class="provider-logo logo-watcha">W</span>';
-    if (provider.includes("애플")) return '<span class="provider-logo logo-apple"></span>';
-    if (provider.includes("라프텔")) return '<span class="provider-logo logo-laftel">L</span>';
-    return "";
-}
-
-function escapeHtml(value) {
-    return String(value ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-}
-
-function providerText(item) {
-    if (item.provider) return item.provider;
-    return "";
-}
-
-function renderChips() {
-    const providerWrap = document.getElementById("providerChips");
-    providerWrap.innerHTML = providerList.map(p => {
-        const active = selectedProvider === p ? "active" : "";
-        const label = p === "전체" ? "전체" : `${logo(p)} ${p}`;
-        return `<div class="chip ${active}" onclick="selectProvider('${p}')">${label}</div>`;
-    }).join("");
-
-    const rangeWrap = document.getElementById("rangeChips");
-    rangeWrap.innerHTML = rangeList.map(r => {
-        const active = selectedRange === r ? "active" : "";
-        return `<div class="chip date-chip ${active}" onclick="selectRange('${r}')">${r}</div>`;
-    }).join("") + `<div class="chip date-chip">📅</div>`;
-}
-
-function selectProvider(p) {
-    selectedProvider = p;
-    renderDashboard();
-}
-
-function selectRange(r) {
-    selectedRange = r;
-    renderDashboard();
-}
-
-function getPeriod() {
-    return document.getElementById("periodSelect").value;
-}
-
-function getOtt() {
-    return document.getElementById("ottSelect").value;
-}
-
-function filterRanking() {
-    const period = getPeriod();
-    const ott = getOtt();
-
-    return DATA.ranking
-        .filter(x => x.period === period)
-        .filter(x => {
-            if (ott === "전체") return true;
-            return String(x.providers || "").includes(ott);
-        })
-        .sort((a, b) => (a.rank || 9999) - (b.rank || 9999));
-}
-
-function statusHtml(item) {
-    if (item.is_new) return `<div class="status new">NEW</div>`;
-    if ((item.delta || 0) > 0) return `<div class="status up">▲ ${item.delta}</div>`;
-    if ((item.delta || 0) < 0) return `<div class="status down">▼ ${Math.abs(item.delta)}</div>`;
-    return `<div class="status flat">-</div>`;
-}
-
-function cardHtml(item, mode="top") {
-    const title = escapeHtml(item.title);
-    const meta = escapeHtml(item.meta || "");
-    const rank = item.rank ?? "-";
-    const first = title ? title.slice(0,1) : "?";
-
-    if (mode === "top") {
-        return `
-        <div class="card">
-            <div class="rank-no">${rank}</div>
-            <div class="poster-placeholder">${first}</div>
+    st.markdown(f"""
+    <div class="rank-card">
+        <div class="rank-left">
+            <div class="rank-num">{rank_text}</div>
             <div>
-                <div class="card-title">${title}</div>
-                <div class="card-meta">${meta}</div>
+                <div class="title">{title}</div>
+                <div class="meta">{meta}</div>
             </div>
-            ${statusHtml(item)}
-        </div>`;
-    }
-
-    return `
-    <div class="card small-rank">
-        <div class="rank-no">${rank}</div>
-        <div>
-            <div class="card-title">${title}</div>
-            <div class="card-meta">${meta}</div>
         </div>
-        ${statusHtml(item)}
-    </div>`;
-}
+        <div>{badge}</div>
+    </div>
+    """, unsafe_allow_html=True)
 
-function renderRanking() {
-    const period = getPeriod();
-    const ott = getOtt();
-    const base = filterRanking();
 
-    document.getElementById("topTitle").innerText = `${ott} ${period} TOP100`;
-    document.getElementById("baseLabel").innerText = DATA.base_labels[period] || "-";
+def render_upcoming_releases(release_df, max_items=80):
+    if release_df.empty:
+        st.markdown(
+            '<div class="release-empty">공개예정작 데이터가 없습니다.</div>',
+            unsafe_allow_html=True
+        )
+        return
 
-    const top = base.slice(0, 5);
-    const up = [...base].filter(x => (x.delta || 0) > 0).sort((a,b) => (b.delta || 0) - (a.delta || 0)).slice(0, 5);
-    const newest = [...base].filter(x => x.is_new).slice(0, 5);
+    for _, row in release_df.head(max_items).iterrows():
+        title = str(row.get("title", "")).strip()
 
-    document.getElementById("topList").innerHTML = top.length
-        ? top.map(x => cardHtml(x, "top")).join("")
-        : `<div class="empty">데이터 없음</div>`;
+        if is_bad_release_title(title):
+            continue
 
-    document.getElementById("upList").innerHTML = up.length
-        ? up.map(x => cardHtml(x, "small")).join("")
-        : `<div class="empty">급상승 콘텐츠 없음</div>`;
+        provider = str(row.get("provider", "")).strip()
+        genre = str(row.get("genre", "")).strip()
+        date_text = format_release_date(row.get("release_date_dt"))
+        url = str(row.get("url", "")).strip()
+        image_url = str(row.get("image_url", "")).strip()
 
-    document.getElementById("newList").innerHTML = newest.length
-        ? newest.map(x => cardHtml(x, "small")).join("")
-        : `<div class="empty">신규 진입 콘텐츠 없음</div>`;
-}
+        logo = get_provider_logo(provider)
 
-function parseDate(d) {
-    if (!d) return null;
-    const dt = new Date(d + "T00:00:00");
-    if (isNaN(dt.getTime())) return null;
-    return dt;
-}
+        safe_title = html.escape(title)
+        safe_provider = html.escape(provider)
+        safe_genre = html.escape(genre)
+        safe_date = html.escape(date_text)
+        safe_url = html.escape(url)
+        safe_image_url = html.escape(image_url)
 
-function filterUpcoming() {
-    const today = new Date();
-    today.setHours(0,0,0,0);
+        meta_parts = []
 
-    let end = new Date(today);
-    if (selectedRange === "오늘") {
-        end.setDate(today.getDate());
-    } else if (selectedRange === "14일") {
-        end.setDate(today.getDate() + 14);
-    } else {
-        end.setDate(today.getDate() + 7);
+        if safe_provider:
+            meta_parts.append(safe_provider)
+
+        if safe_genre:
+            meta_parts.append(safe_genre)
+
+        meta_html = ""
+
+        if meta_parts:
+            meta_text = " · ".join(meta_parts)
+            meta_html = f'<div class="release-meta">{meta_text}</div>'
+
+        if safe_image_url:
+            poster_html = f'<img src="{safe_image_url}" onerror="this.style.display=\'none\';" />'
+        else:
+            poster_html = "IMG"
+
+        if safe_url:
+            title_html = f'<a href="{safe_url}" target="_self">{logo}{safe_title}</a>'
+        else:
+            title_html = f'{logo}{safe_title}'
+
+        row_html = (
+            '<div class="release-row">'
+            '<div class="release-left">'
+            f'<div class="release-poster">{poster_html}</div>'
+            '<div class="release-info">'
+            f'<div class="release-title">{title_html}</div>'
+            f'{meta_html}'
+            '</div>'
+            '</div>'
+            f'<div class="release-date">{safe_date}</div>'
+            '</div>'
+        )
+
+        st.markdown(row_html, unsafe_allow_html=True)
+
+
+def search_contents(keyword):
+    query = """
+    query SearchContents($keyword: String!) {
+      contents(keyword: $keyword, limit: 5) {
+        id
+        titleKr
+        openYear
+      }
+    }
+    """
+
+    payload = {
+        "operationName": "SearchContents",
+        "variables": {"keyword": keyword},
+        "query": query,
     }
 
-    const hasProvider = DATA.upcoming.some(x => String(x.provider || "").trim() !== "");
+    res = requests.post(
+        "https://gateway.kinolights.com/graphql",
+        json=payload,
+        headers={
+            "Content-Type": "application/json",
+            "User-Agent": "Mozilla/5.0",
+        },
+        timeout=20,
+    )
 
-    return DATA.upcoming
-        .filter(x => {
-            const d = parseDate(x.release_date);
-            if (!d) return false;
-            return d >= today && d <= end;
-        })
-        .filter(x => {
-            if (selectedProvider === "전체") return true;
-            if (!hasProvider) return true;
-            return String(x.provider || "").includes(selectedProvider);
-        })
-        .sort((a, b) => {
-            const da = parseDate(a.release_date)?.getTime() || 0;
-            const db = parseDate(b.release_date)?.getTime() || 0;
-            return da - db || String(a.title).localeCompare(String(b.title));
-        });
-}
+    data = res.json()
 
-function releaseCardHtml(item) {
-    const title = escapeHtml(item.title);
-    const provider = providerText(item);
-    const genre = item.genre ? ` · ${escapeHtml(item.genre)}` : "";
-    const providerHtml = provider ? `${logo(provider)} ${escapeHtml(provider)}` : "";
-    const meta = providerHtml ? `${providerHtml}${genre} · ${escapeHtml(item.release_label || "")} 공개` : `${escapeHtml(item.release_label || "")} 공개`;
-    const img = item.image_url
-        ? `<img src="${escapeHtml(item.image_url)}" onerror="this.style.display='none';" />`
-        : "";
-    const url = item.url || "#";
-    const target = item.url ? "_top" : "_self";
+    if "errors" in data:
+        return []
 
-    return `
-    <a class="release-card" href="${escapeHtml(url)}" target="${target}">
-        <div class="release-poster">${img}</div>
-        <div>
-            <div class="release-title">${title}</div>
-            <div class="release-meta">${meta}</div>
+    return data["data"]["contents"]
+
+
+def get_ott_providers(content_id):
+    urls = [
+        f"https://m.kinolights.com/title/{content_id}",
+        f"https://m.kinolights.com/content/{content_id}",
+        f"https://m.kinolights.com/contents/{content_id}",
+    ]
+
+    found = []
+
+    with sync_playwright() as p:
+        browser = p.chromium.launch(
+            headless=True,
+            executable_path="/usr/bin/chromium"
+        )
+
+        page = browser.new_page(
+            viewport={"width": 430, "height": 1600},
+            user_agent="Mozilla/5.0"
+        )
+
+        for url in urls:
+            try:
+                page.goto(url, wait_until="domcontentloaded", timeout=20000)
+                page.wait_for_timeout(1200)
+
+                text = page.locator("body").inner_text()
+
+                if "보러가기" not in text:
+                    continue
+
+                section = text.split("보러가기", 1)[1]
+
+                if "시청 주의 가이드" in section:
+                    section = section.split("시청 주의 가이드", 1)[0]
+
+                for ott in OTT_NAMES:
+                    if ott in section:
+                        found.append(ott)
+
+                if found:
+                    break
+
+            except Exception:
+                continue
+
+        browser.close()
+
+    return sorted(set(found))
+
+
+tab1, tab2 = st.tabs(["📈 랭킹 대시보드", "🔎 OTT 제공처 검색"])
+
+with tab1:
+    df = load_ranking_data()
+
+    if df.empty:
+        st.error("ranking_history.csv가 없거나 수집된 랭킹 데이터가 없습니다.")
+        st.stop()
+
+    latest_date = sorted(df["date"].unique(), reverse=True)[0]
+    latest = df[df["date"] == latest_date].copy()
+
+    top1, top2, top3 = st.columns([1, 1, 1])
+
+    with top1:
+        selected_period = st.selectbox(
+            "기간 선택",
+            ["일간", "주간", "월간"],
+            index=1
+        )
+
+    with top2:
+        selected_ott = st.selectbox(
+            "OTT 선택",
+            ["전체"] + OTT_NAMES,
+            index=0
+        )
+
+    with top3:
+        selected_release_provider = st.selectbox(
+            "공개예정작 OTT",
+            RELEASE_PROVIDERS,
+            index=0
+        )
+
+    display_base_label = get_kino_base_label(selected_period, latest_date)
+    base_tooltip = get_kino_base_tooltip(selected_period)
+
+    st.markdown(
+        f"""
+        <div class="base-row">
+            <div class="base-info" title="{base_tooltip}">
+                ⓘ 랭킹 기준: {display_base_label}
+            </div>
+            <div class="btv-check-wrap">
+                <span class="btv-check-box"></span>
+                <span>B tv+ 편성작만 보기</span>
+            </div>
         </div>
-        <div class="bookmark">♡</div>
-    </a>`;
-}
+        """,
+        unsafe_allow_html=True
+    )
 
-function renderUpcoming() {
-    const list = filterUpcoming();
-    const wrap = document.getElementById("releaseList");
+    base = latest[latest["period"] == selected_period].copy()
 
-    if (!list.length) {
-        wrap.innerHTML = `<div class="empty">공개예정작 데이터가 없습니다.</div>`;
-        return;
-    }
+    if selected_ott != "전체":
+        base = base[base["providers"].str.contains(selected_ott, na=False)].copy()
 
-    const groups = {};
-    list.forEach(item => {
-        const g = item.release_group || item.release_label || "기타";
-        if (!groups[g]) groups[g] = [];
-        groups[g].push(item);
-    });
+    if base.empty:
+        st.warning(f"'{selected_period}' 기간 데이터가 없어 최신일자 전체 데이터를 표시합니다.")
+        base = latest.copy()
 
-    const groupKeys = Object.keys(groups);
-    let html = "";
+        if selected_ott != "전체":
+            base = base[base["providers"].str.contains(selected_ott, na=False)].copy()
 
-    groupKeys.slice(0, 6).forEach(group => {
-        const items = groups[group].slice(0, 3);
-        html += `<div class="release-group-title">${escapeHtml(group)} <span class="group-count">${groups[group].length}</span></div>`;
-        html += items.map(releaseCardHtml).join("");
-    });
+    base = base.sort_values("rank")
+    new_df = base[base["is_new"] == True].copy()
+    up_df = base[base["delta"] > 0].copy().sort_values("delta", ascending=False)
 
-    wrap.innerHTML = html;
-}
+    release_df = load_upcoming_releases()
 
-function renderDashboard() {
-    renderChips();
-    renderRanking();
-    renderUpcoming();
-}
+    if not release_df.empty:
+        release_df = release_df[release_df["release_date_dt"].notna()].copy()
 
-function exportCSV() {
-    const rows = [
-        ["section","rank","title","meta","release_date","provider","url"]
-    ];
+        if selected_release_provider != "전체":
+            has_provider = release_df["provider"].astype(str).str.strip() != ""
 
-    filterRanking().forEach(x => {
-        rows.push(["ranking", x.rank || "", x.title || "", x.meta || "", "", x.providers || "", ""]);
-    });
+            if has_provider.any():
+                release_df = release_df[
+                    release_df["provider"].str.contains(
+                        selected_release_provider,
+                        na=False
+                    )
+                ].copy()
 
-    filterUpcoming().forEach(x => {
-        rows.push(["upcoming", "", x.title || "", x.genre || "", x.release_date || "", x.provider || "", x.url || ""]);
-    });
+        release_df = release_df.sort_values(
+            ["release_date_dt", "title"],
+            ascending=[True, True]
+        )
 
-    const csv = rows.map(r => r.map(v => `"${String(v).replaceAll('"','""')}"`).join(",")).join("\\n");
-    const blob = new Blob(["\\ufeff" + csv], { type:"text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "kino_dashboard_export.csv";
-    a.click();
-    URL.revokeObjectURL(url);
-}
+    st.markdown("<br>", unsafe_allow_html=True)
 
-document.getElementById("updateLabel").innerText = DATA.update_label || "-";
-renderDashboard();
-</script>
-</body>
-</html>
-"""
+    col1, col2, col3, col4 = st.columns([1.1, 1, 1, 1])
 
-dashboard_html = html_template.replace("__PAYLOAD__", payload_json)
+    with col1:
+        st.subheader(f"🏆 {selected_ott} {selected_period} TOP100")
 
-components.html(
-    dashboard_html,
-    height=1250,
-    scrolling=True
-)
+        if base.empty:
+            st.warning("데이터 없음")
+        else:
+            for _, row in base.head(100).iterrows():
+                render_rank_card(row)
+
+    with col2:
+        st.subheader("🚀 급상승 콘텐츠")
+
+        if up_df.empty:
+            st.info("급상승 콘텐츠 없음")
+        else:
+            for _, row in up_df.head(30).iterrows():
+                meta = html.escape(make_meta(row))
+
+                try:
+                    rank_text = str(int(row["rank"]))
+                except Exception:
+                    rank_text = "-"
+
+                title = html.escape(str(row["title"]))
+                delta = int(row["delta"])
+
+                st.markdown(f"""
+                <div class="side-card">
+                    <span class="badge-up">▲{delta}</span>
+                    &nbsp;
+                    <b>{title}</b><br>
+                    <span class="small">#{rank_text} · {meta}</span>
+                </div>
+                """, unsafe_allow_html=True)
+
+    with col3:
+        st.subheader("🔥 신규 진입 콘텐츠")
+
+        if new_df.empty:
+            st.info("신규 진입 콘텐츠 없음")
+        else:
+            for _, row in new_df.head(30).iterrows():
+                meta = html.escape(make_meta(row))
+
+                try:
+                    rank_text = str(int(row["rank"]))
+                except Exception:
+                    rank_text = "-"
+
+                title = html.escape(str(row["title"]))
+
+                st.markdown(f"""
+                <div class="side-card">
+                    <span class="badge-new">NEW</span>
+                    &nbsp;
+                    #{rank_text}
+                    &nbsp;
+                    <b>{title}</b><br>
+                    <span class="small">{meta}</span>
+                </div>
+                """, unsafe_allow_html=True)
+
+    with col4:
+        st.subheader("🗓 공개 예정작")
+        render_upcoming_releases(release_df, max_items=80)
+
+with tab2:
+    st.subheader("🔎 타이틀로 OTT 제공처 검색")
+
+    keyword = st.text_input(
+        "작품명을 입력하세요",
+        placeholder="예: 멋진 신세계"
+    )
+
+    if keyword:
+        with st.spinner("키노라이츠에서 정액제 제공처 확인 중..."):
+            results = search_contents(keyword)
+
+            if not results:
+                st.warning("검색 결과 없음")
+                st.stop()
+
+            item = results[0]
+            title = item.get("titleKr")
+            open_year = item.get("openYear")
+            content_id = item.get("id")
+
+            providers = get_ott_providers(content_id)
+
+            if providers:
+                provider_html = "".join(
+                    [f'<span class="ott-badge">{p}</span>' for p in providers]
+                )
+            else:
+                provider_html = '<span class="small">정액제 OTT 없음</span>'
+
+            st.markdown(f"""
+            <div class="side-card">
+                <h3>{title}</h3>
+                <div class="small">연도: {open_year}</div>
+                <div style="margin-top:10px;">{provider_html}</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            with st.expander("다른 검색 후보 보기"):
+                for other in results[1:]:
+                    st.markdown(
+                        f"- {other.get('titleKr')} ({other.get('openYear')})"
+                    )

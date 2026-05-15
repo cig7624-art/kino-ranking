@@ -2,7 +2,6 @@ name: Update Ranking
 
 on:
   schedule:
-    # 매일 오전 9시 KST = 매일 00:00 UTC
     - cron: '0 0 * * *'
   workflow_dispatch:
 
@@ -24,12 +23,14 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run scraper
-        run: python scrape.py
+        run: |
+          python scrape.py
+          python scrape_upcoming.py
 
       - name: Commit CSV
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add ranking_history.csv
-          git commit -m "Update ranking" || echo "No changes"
+          git add ranking_history.csv upcoming_releases.csv
+          git commit -m "Update ranking and upcoming releases" || echo "No changes"
           git push

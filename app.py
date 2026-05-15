@@ -16,24 +16,6 @@ st.markdown("""
 h1,h2,h3,p,label,div,span { color:#f8fafc !important; }
 .block-container { padding-top:1.3rem; }
 
-.metric {
-    background:#111827;
-    border:1px solid #263244;
-    border-radius:16px;
-    padding:14px 16px;
-    min-height:72px;
-}
-.metric-title {
-    color:#94a3b8 !important;
-    font-size:13px;
-    margin-bottom:6px;
-}
-.metric-text {
-    color:#f8fafc !important;
-    font-size:18px;
-    font-weight:800;
-}
-
 .base-label {
     color:#94a3b8 !important;
     font-size:14px;
@@ -211,19 +193,13 @@ def normalize_period(value):
 
 
 def get_kino_base_label(selected_period, latest_date):
-    """
-    키노라이츠 화면 기준일 표기 방식.
-    일간: MM.DD 기준
-    주간: MM.DD~MM.DD 기준
-    월간: YYYY.MM 기준
-    """
     latest = pd.to_datetime(latest_date)
 
     if selected_period == "일간":
         return latest.strftime("%m.%d 기준")
 
     if selected_period == "주간":
-        weekday = latest.weekday()  # 월=0, 일=6
+        weekday = latest.weekday()
         this_week_monday = latest - pd.Timedelta(days=weekday)
         prev_week_monday = this_week_monday - pd.Timedelta(days=7)
         prev_week_sunday = prev_week_monday + pd.Timedelta(days=6)
@@ -306,11 +282,16 @@ def load_upcoming_releases():
     df["title"] = df["title"].fillna("").astype(str)
     df["provider"] = df["provider"].fillna("").astype(str)
     df["genre"] = df["genre"].fillna("").astype(str)
+
     df["release_date_dt"] = pd.to_datetime(df["release_date"], errors="coerce")
 
     df = df[df["title"].str.strip() != ""].copy()
     df = df[df["release_date_dt"].notna()].copy()
-    df = df.sort_values(["release_date_dt", "title"], ascending=[True, True])
+
+    df = df.sort_values(
+        ["release_date_dt", "title"],
+        ascending=[True, True]
+    )
 
     return df
 
@@ -406,7 +387,7 @@ def render_rank_card(row):
     """, unsafe_allow_html=True)
 
 
-def render_upcoming_releases(release_df, max_items=8):
+def render_upcoming_releases(release_df, max_items=12):
     if release_df.empty:
         st.markdown(
             '<div class="release-empty">공개예정작 데이터가 없습니다.</div>',
@@ -421,9 +402,14 @@ def render_upcoming_releases(release_df, max_items=8):
         date_text = format_release_date(row.get("release_date_dt"))
         logo = get_provider_logo(provider)
 
-        meta = provider
-        if genre:
+        if provider and genre:
             meta = f"{provider} · {genre}"
+        elif provider:
+            meta = provider
+        elif genre:
+            meta = genre
+        else:
+            meta = "키노라이츠 공개예정작"
 
         st.markdown(f"""
         <div class="release-row">
@@ -562,7 +548,7 @@ with tab1:
     st.markdown(
         f"""
         <div class="base-label" title="{base_tooltip}">
-            ⓘ 랭킹 기준: {display_base_label} &nbsp;&nbsp; | &nbsp;&nbsp; 공개예정작 기준: 오늘 이후
+            ⓘ 랭킹 기준: {display_base_label} &nbsp;&nbsp; | &nbsp;&nbsp; 공개예정작 기준: 키노라이츠 공개예정작
         </div>
         """,
         unsafe_allow_html=True
@@ -587,16 +573,25 @@ with tab1:
     release_df = load_upcoming_releases()
 
     if not release_df.empty:
-        today = pd.Timestamp.today().normalize()
+        release_df = release_df[release_df["release_date_dt"].notna()].copy()
 
-        release_df = release_df[release_df["release_date_dt"] >= today].copy()
-
+        # provider 값이 비어 있는 현재 상태에서는 OTT 필터를 강제로 적용하면 전체가 사라짐.
+        # provider 값이 하나라도 있을 때만 OTT 필터 적용.
         if selected_release_provider != "전체":
-            release_df = release_df[
-                release_df["provider"].str.contains(selected_release_provider, na=False)
-            ].copy()
+            has_provider = release_df["provider"].astype(str).str.strip() != ""
 
-        release_df = release_df.sort_values(["release_date_dt", "title"], ascending=[True, True])
+            if has_provider.any():
+                release_df = release_df[
+                    release_df["provider"].str.contains(
+                        selected_release_provider,
+                        na=False
+                    )
+                ].copy()
+
+        release_df = release_df.sort_values(
+            ["release_date_dt", "title"],
+            ascending=[True, True]
+        )
 
     st.markdown("<br>", unsafe_allow_html=True)
 

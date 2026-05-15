@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import requests
 import re
-import difflib
 from pathlib import Path
 from urllib.parse import quote
 from playwright.sync_api import sync_playwright
@@ -292,10 +291,10 @@ def load_btv_plus_titles():
         ("애니메이션 (25'1~)", "애니메이션"),
     ]
 
-    loaded_c_sheet_names = set()
+    loaded_animation = False
 
     for sheet_name, category in c_col_sheets:
-        if category in loaded_c_sheet_names and category == "애니메이션":
+        if category == "애니메이션" and loaded_animation:
             continue
 
         try:
@@ -320,7 +319,8 @@ def load_btv_plus_titles():
                 btv_date=""
             )
 
-        loaded_c_sheet_names.add(category)
+        if category == "애니메이션":
+            loaded_animation = True
 
     # 키즈: F열 타이틀
     # F열 index = 5
@@ -369,6 +369,7 @@ def load_btv_plus_titles():
     btv_df = pd.DataFrame(rows).fillna("")
     btv_df = btv_df[btv_df["title_norm"] != ""].copy()
 
+    # 헤더/안내문 제거
     remove_words = [
         "타이틀명",
         "콘텐츠명",
@@ -379,6 +380,8 @@ def load_btv_plus_titles():
         "편성일자",
         "btv편성일자",
         "btv편성",
+        "장르",
+        "구분",
     ]
 
     btv_df = btv_df[
@@ -397,10 +400,8 @@ def load_btv_plus_titles():
     return btv_df
 
 
-def find_btv_match_info(kino_title, btv_df):
-    kino_norm = normalize_title(kino_title)
-
-    default = {
+def make_empty_match():
+    return {
         "is_btv_plus": False,
         "btv_title": "",
         "btv_plus_category": "",
@@ -411,14 +412,25 @@ def find_btv_match_info(kino_title, btv_df):
         "btv_match_type": "",
     }
 
+
+def find_btv_match_info(kino_title, btv_df, btv_map=None, btv_norm_list=None):
+    kino_norm = normalize_title(kino_title)
+
     if kino_norm == "" or btv_df.empty:
-        return default
+        return make_empty_match()
 
-    # 1차: 완전일치
-    exact = btv_df[btv_df["title_norm"] == kino_norm]
+    if btv_map is None:
+        btv_map = {
+            str(row["title_norm"]): row
+            for _, row in btv_df.iterrows()
+        }
 
-    if not exact.empty:
-        row = exact.iloc[0]
+    if btv_norm_list is None:
+        btv_norm_list = list(btv_map.keys())
+
+    # 1차: 공백/특수문자 제거 후 완전일치
+    if kino_norm in btv_map:
+        row = btv_map[kino_norm]
 
         return {
             "is_btv_plus": True,
@@ -431,15 +443,16 @@ def find_btv_match_info(kino_title, btv_df):
             "btv_match_type": "exact",
         }
 
-    best_row = None
+    # 2차: 포함관계 매칭
+    # 너무 짧은 제목은 오탐 방지
+    if len(kino_norm) < 4:
+        return make_empty_match()
+
+    best_norm = ""
     best_score = 0.0
-    best_type = ""
 
-    # 2차: 포함관계
-    for _, row in btv_df.iterrows():
-        btv_norm = str(row.get("title_norm", ""))
-
-        if len(kino_norm) < 4 or len(btv_norm) < 4:
+    for btv_norm in btv_norm_list:
+        if len(btv_norm) < 4:
             continue
 
         if kino_norm in btv_norm or btv_norm in kino_norm:
@@ -449,86 +462,82 @@ def find_btv_match_info(kino_title, btv_df):
 
             if score > best_score:
                 best_score = score
-                best_row = row
-                best_type = "contains"
+                best_norm = btv_norm
 
-    if best_row is not None and best_score >= 0.62:
+    # 포함관계는 0.7 이상만 인정
+    if best_norm and best_score >= 0.7:
+        row = btv_map[best_norm]
+
         return {
             "is_btv_plus": True,
-            "btv_title": best_row.get("btv_title", ""),
-            "btv_plus_category": best_row.get("btv_plus_category", ""),
-            "btv_genre": best_row.get("btv_genre", ""),
-            "btv_plus_date": best_row.get("btv_plus_date", ""),
-            "btv_source_sheet": best_row.get("btv_source_sheet", ""),
+            "btv_title": row.get("btv_title", ""),
+            "btv_plus_category": row.get("btv_plus_category", ""),
+            "btv_genre": row.get("btv_genre", ""),
+            "btv_plus_date": row.get("btv_plus_date", ""),
+            "btv_source_sheet": row.get("btv_source_sheet", ""),
             "btv_match_score": round(best_score, 3),
-            "btv_match_type": best_type,
+            "btv_match_type": "contains",
         }
 
-    # 3차: 유사도 매칭
-    for _, row in btv_df.iterrows():
-        btv_norm = str(row.get("title_norm", ""))
+    return make_empty_match()
 
-        if len(kino_norm) < 4 or len(btv_norm) < 4:
-            continue
 
-        score = difflib.SequenceMatcher(None, kino_norm, btv_norm).ratio()
+@st.cache_data(ttl=3600)
+def fast_match_titles(title_list):
+    btv_df = load_btv_plus_titles()
 
-        if score > best_score:
-            best_score = score
-            best_row = row
-            best_type = "similar"
+    if btv_df.empty:
+        return [make_empty_match() for _ in title_list]
 
-    if best_row is not None and best_score >= 0.86:
-        return {
-            "is_btv_plus": True,
-            "btv_title": best_row.get("btv_title", ""),
-            "btv_plus_category": best_row.get("btv_plus_category", ""),
-            "btv_genre": best_row.get("btv_genre", ""),
-            "btv_plus_date": best_row.get("btv_plus_date", ""),
-            "btv_source_sheet": best_row.get("btv_source_sheet", ""),
-            "btv_match_score": round(best_score, 3),
-            "btv_match_type": best_type,
-        }
+    btv_map = {
+        str(row["title_norm"]): row
+        for _, row in btv_df.iterrows()
+    }
 
-    return default
+    btv_norm_list = list(btv_map.keys())
+
+    result = []
+
+    for title in title_list:
+        result.append(
+            find_btv_match_info(
+                kino_title=title,
+                btv_df=btv_df,
+                btv_map=btv_map,
+                btv_norm_list=btv_norm_list
+            )
+        )
+
+    return result
 
 
 def attach_btv_plus_flag(df):
     df = df.copy()
 
-    try:
-        btv_df = load_btv_plus_titles()
-    except Exception as e:
-        st.warning(f"B tv+ 편성작 구글시트 로드 실패: {e}")
+    if df.empty:
         df["is_btv_plus"] = False
-        return df
-
-    if df.empty or btv_df.empty:
-        df["is_btv_plus"] = False
-        df["btv_title"] = ""
-        df["btv_plus_category"] = ""
-        df["btv_genre"] = ""
-        df["btv_plus_date"] = ""
-        df["btv_source_sheet"] = ""
-        df["btv_match_score"] = 0.0
-        df["btv_match_type"] = ""
         return df
 
     if "title" not in df.columns:
         df["is_btv_plus"] = False
         return df
 
-    match_rows = []
+    try:
+        title_list = df["title"].astype(str).tolist()
+        match_rows = fast_match_titles(title_list)
+        match_df = pd.DataFrame(match_rows)
 
-    # 여기서부터는 이미 최신일자/기간/OTT까지 줄인 base에만 적용됨
-    for _, row in df.iterrows():
-        match_rows.append(find_btv_match_info(row.get("title", ""), btv_df))
+        df = pd.concat(
+            [df.reset_index(drop=True), match_df.reset_index(drop=True)],
+            axis=1
+        )
 
-    match_df = pd.DataFrame(match_rows)
+        return df
 
-    df = pd.concat([df.reset_index(drop=True), match_df.reset_index(drop=True)], axis=1)
-
-    return df
+    except Exception as e:
+        st.warning(f"B tv+ 편성작 매칭 실패: {e}")
+        df["is_btv_plus"] = False
+        return df
 
 
 def search_contents(keyword):
@@ -706,9 +715,8 @@ with tab1:
     if selected_ott != "전체":
         base = base[base["providers"].str.contains(selected_ott, na=False)].copy()
 
-    # 핵심 변경: 전체 df가 아니라 현재 조건 base에만 B tv+ 유사매칭 적용
-    with st.spinner("B tv+ 편성작 매칭 중..."):
-        base = attach_btv_plus_flag(base)
+    # 현재 조건 base에만 빠른 B tv+ 매칭 적용
+    base = attach_btv_plus_flag(base)
 
     btv_count = int(base["is_btv_plus"].sum()) if "is_btv_plus" in base.columns else 0
     total_count = len(base)

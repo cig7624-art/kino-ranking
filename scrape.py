@@ -1,7 +1,6 @@
 import requests
 import pandas as pd
 from datetime import datetime
-from pathlib import Path
 
 API_URL = "https://gateway.kinolights.com/graphql"
 
@@ -11,15 +10,15 @@ PERIODS = {
     "월간": "MONTHLY"
 }
 
-# 2026년 현재 키노라이츠 랭킹 필터 기준
-# 애플TV+, 라프텔은 키노라이츠 랭킹 화면에서 빠져 있으므로 제외
+# 임시 매핑: 현재 debug 기준으로 4는 넷플릭스로 확인됨
+# 나머지는 debug_provider_ids.csv 확인 후 확정
 PROVIDER_MAP = {
-    "8": "넷플릭스",
-    "119": "티빙",
-    "128": "쿠팡플레이",
-    "356": "웨이브",
-    "337": "디즈니+",
-    "97": "왓챠",
+    "4": "넷플릭스",
+    "10": "",
+    "14": "",
+    "16": "",
+    "17": "",
+    "8": "",
 }
 
 QUERY = """
@@ -41,34 +40,11 @@ query QueryRanking($rankingType: ContentRankingType!, $limit: Int = 100) {
 }
 """
 
+today = datetime.today().strftime("%Y-%m-%d")
+rows = []
+provider_debug_rows = []
 
-def normalize_genres(genres):
-    if not genres:
-        return ""
-
-    if isinstance(genres, list):
-        values = []
-
-        for item in genres:
-            if isinstance(item, str):
-                values.append(item)
-            elif isinstance(item, dict):
-                # 혹시 구조가 바뀌어 name/title 같은 키로 내려올 경우 대비
-                values.append(
-                    str(
-                        item.get("name")
-                        or item.get("title")
-                        or item.get("label")
-                        or ""
-                    )
-                )
-
-        return ",".join([v for v in values if v])
-
-    return str(genres)
-
-
-def fetch_ranking(period_kr, period_api):
+for period_kr, period_api in PERIODS.items():
     payload = {
         "operationName": "QueryRanking",
         "variables": {
@@ -93,45 +69,38 @@ def fetch_ranking(period_kr, period_api):
 
     print(period_kr, res.status_code, res.text[:200])
 
-    if res.status_code != 200:
-        return []
-
-    if not res.text.strip().startswith("{"):
-        return []
+    if res.status_code != 200 or not res.text.strip().startswith("{"):
+        continue
 
     data = res.json()
 
     if "errors" in data:
-        print(period_kr, "GraphQL errors:", data["errors"])
-        return []
+        print(period_kr, data["errors"])
+        continue
 
     items = data.get("data", {}).get("contentRankings", []) or []
 
     print(period_kr, "items:", len(items))
-
-    return items
-
-
-today = datetime.today().strftime("%Y-%m-%d")
-rows = []
-provider_debug_rows = []
-
-for period_kr, period_api in PERIODS.items():
-    items = fetch_ranking(period_kr, period_api)
 
     for idx, item in enumerate(items, start=1):
         content = item.get("content") or {}
 
         title = content.get("titleKr")
         media_type = content.get("mediaType")
-        genres = normalize_genres(content.get("genres"))
+        genres = content.get("genres") or []
         open_year = content.get("openYear")
+
+        if isinstance(genres, list):
+            genre_text = ",".join([str(g) for g in genres])
+        else:
+            genre_text = str(genres)
 
         providers = []
 
         for offer in content.get("vodOfferItems", []) or []:
             pid = str(offer.get("providerId"))
             is_active = offer.get("isActive")
+            mapped_name = PROVIDER_MAP.get(pid, "")
 
             provider_debug_rows.append({
                 "date": today,
@@ -139,13 +108,13 @@ for period_kr, period_api in PERIODS.items():
                 "rank": idx,
                 "title": title,
                 "providerId": pid,
-                "providerNameMapped": PROVIDER_MAP.get(pid, ""),
+                "providerNameMapped": mapped_name,
                 "isActive": is_active,
                 "raw_offer": str(offer)
             })
 
-            if is_active and pid in PROVIDER_MAP:
-                providers.append(PROVIDER_MAP[pid])
+            if is_active and mapped_name:
+                providers.append(mapped_name)
 
         rows.append({
             "date": today,
@@ -153,7 +122,7 @@ for period_kr, period_api in PERIODS.items():
             "rank": idx,
             "title": title,
             "media_type": media_type,
-            "genres": genres,
+            "genres": genre_text,
             "open_year": open_year,
             "is_new": item.get("isNew"),
             "delta": item.get("delta"),
@@ -183,4 +152,13 @@ print("ranking_history.csv 저장 완료")
 print(df.head(20))
 
 print("debug_provider_ids.csv 저장 완료")
-print(provider_debug_df.head(50))
+print(provider_debug_df.head(80))
+
+print("providerId counts")
+print(
+    provider_debug_df
+    .groupby(["providerId", "providerNameMapped"])
+    .size()
+    .reset_index(name="count")
+    .sort_values("count", ascending=False)
+)

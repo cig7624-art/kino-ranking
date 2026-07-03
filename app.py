@@ -151,20 +151,91 @@ input {
     color:#111827 !important;
 }
 
-/* 공개예정작 실제 필터 radio를 칩처럼 */
+/* 공개예정작 실제 필터 radio를 키노라이츠 칩처럼 */
 div[role="radiogroup"] {
-    display:flex;
-    flex-wrap:wrap;
-    gap:8px;
+    display:flex !important;
+    flex-wrap:wrap !important;
+    gap:8px !important;
+    align-items:center !important;
 }
 
+/* radio label 자체를 작은 pill로 */
 div[role="radiogroup"] label {
-    background:rgba(11,22,40,0.96) !important;
-    border:1px solid rgba(111,139,178,0.35) !important;
-    border-radius:999px !important;
-    padding:7px 12px !important;
-    margin:0 !important;
+    display:inline-flex !important;
+    align-items:center !important;
+    width:auto !important;
+    min-width:auto !important;
+    max-width:max-content !important;
+    height:32px !important;
     min-height:32px !important;
+    padding:0 12px !important;
+    margin:0 !important;
+    border-radius:999px !important;
+    border:1px solid rgba(111,139,178,0.45) !important;
+    background:rgba(8,18,34,0.92) !important;
+    box-shadow:none !important;
+}
+
+/* label 내부 불필요한 div 여백 제거 */
+div[role="radiogroup"] label > div {
+    display:flex !important;
+    align-items:center !important;
+    gap:6px !important;
+    width:auto !important;
+    min-width:0 !important;
+    margin:0 !important;
+    padding:0 !important;
+}
+
+/* 동그라미 radio 크기 */
+div[role="radiogroup"] label span {
+    margin:0 !important;
+}
+
+/* 텍스트 */
+div[role="radiogroup"] label p {
+    color:#f8fafc !important;
+    font-size:13px !important;
+    font-weight:850 !important;
+    line-height:1 !important;
+    margin:0 !important;
+    padding:0 !important;
+    white-space:nowrap !important;
+}
+
+/* hover */
+div[role="radiogroup"] label:hover {
+    border-color:#4a80ff !important;
+    background:#111c2f !important;
+}
+
+/* 선택된 칩 */
+div[role="radiogroup"] label:has(input:checked) {
+    background:#4a80ff !important;
+    border-color:#6ea0ff !important;
+    box-shadow:0 0 14px rgba(74,128,255,0.34) !important;
+}
+
+/* 선택된 칩 텍스트 */
+div[role="radiogroup"] label:has(input:checked) p {
+    color:#ffffff !important;
+}
+
+/* 공개예정작 필터 박스도 높이 줄임 */
+.release-filter-box {
+    background:rgba(10,21,39,0.82);
+    border:1px solid rgba(113,142,181,0.20);
+    border-radius:16px;
+    padding:14px 16px 14px;
+    box-shadow:0 12px 28px rgba(0,0,0,0.16);
+    min-height:auto;
+}
+
+.release-filter-title {
+    color:#9fc0ff !important;
+    font-weight:900;
+    font-size:14px;
+    margin-bottom:10px;
 }
 
 div[role="radiogroup"] label:hover {

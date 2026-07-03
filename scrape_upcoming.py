@@ -407,28 +407,57 @@ def merge_text_dates_with_cards(text_df, card_df):
     """
     날짜는 텍스트 파싱이 가장 안정적이고,
     링크/이미지/provider는 DOM 카드 후보에서 보강한다.
-    title 기준으로 느슨하게 합친다.
+    키노라이츠 개편으로 날짜 파싱이 실패해도 Actions가 죽지 않게 방어한다.
     """
     collect_date = datetime.now().strftime("%Y-%m-%d")
 
-    if text_df.empty:
-        base = pd.DataFrame(columns=["release_date", "title"])
-    else:
-        base = text_df.copy()
+    required_cols = ["release_date", "title"]
 
-    if card_df.empty:
+    if text_df is None or text_df.empty:
+        print("WARNING: 공개예정작 날짜/타이틀 텍스트 파싱 실패")
+        return pd.DataFrame(columns=[
+            "collect_date", "release_date", "title", "provider", "genre", "url", "image_url"
+        ])
+
+    for col in required_cols:
+        if col not in text_df.columns:
+            print(f"WARNING: text_df에 {col} 컬럼이 없습니다.")
+            return pd.DataFrame(columns=[
+                "collect_date", "release_date", "title", "provider", "genre", "url", "image_url"
+            ])
+
+    base = text_df.copy()
+
+    if card_df is None or card_df.empty:
         card_df = pd.DataFrame(columns=["title", "provider", "url", "image_url"])
 
-    # title 정규화 키
-    base["title_key"] = base["title"].astype(str).map(lambda x: re.sub(r"\s+", "", x).lower())
-    card_df["title_key"] = card_df["title"].astype(str).map(lambda x: re.sub(r"\s+", "", x).lower())
+    for col in ["title", "provider", "url", "image_url"]:
+        if col not in card_df.columns:
+            card_df[col] = ""
 
-    # 카드 후보 중 title 있는 것만
-    valid_cards = card_df[
-        card_df["title"].astype(str).str.strip() != ""
-    ].copy()
+    base["title"] = base["title"].fillna("").astype(str).str.strip()
+    base["release_date"] = base["release_date"].fillna("").astype(str).str.strip()
 
-    # 같은 title_key에서 url/image/provider 있는 카드 우선
+    base = base[base["title"] != ""].copy()
+    base = base[base["release_date"] != ""].copy()
+
+    if base.empty:
+        print("WARNING: 공개예정작 유효 데이터 없음")
+        return pd.DataFrame(columns=[
+            "collect_date", "release_date", "title", "provider", "genre", "url", "image_url"
+        ])
+
+    base["title_key"] = base["title"].astype(str).map(
+        lambda x: re.sub(r"\s+", "", x).lower()
+    )
+
+    card_df["title"] = card_df["title"].fillna("").astype(str).str.strip()
+    card_df["title_key"] = card_df["title"].astype(str).map(
+        lambda x: re.sub(r"\s+", "", x).lower()
+    )
+
+    valid_cards = card_df[card_df["title"] != ""].copy()
+
     if not valid_cards.empty:
         valid_cards["score"] = 0
         valid_cards.loc[valid_cards["url"].astype(str).str.strip() != "", "score"] += 3
@@ -465,6 +494,13 @@ def merge_text_dates_with_cards(text_df, card_df):
 
     merged["release_date_dt"] = pd.to_datetime(merged["release_date"], errors="coerce")
     merged = merged[merged["release_date_dt"].notna()].copy()
+
+    if merged.empty:
+        print("WARNING: 공개예정작 날짜 변환 후 유효 데이터 없음")
+        return pd.DataFrame(columns=[
+            "collect_date", "release_date", "title", "provider", "genre", "url", "image_url"
+        ])
+
     merged = merged.drop_duplicates(subset=["release_date", "title"], keep="first")
     merged = merged.sort_values(["release_date_dt", "title"])
     merged = merged.drop(columns=["release_date_dt"])

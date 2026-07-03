@@ -190,11 +190,11 @@ div[role="radiogroup"] input {
 
 /* 공개예정작 필터 박스 */
 .release-filter-box {
-    background:linear-gradient(135deg, rgba(18,42,78,0.82), rgba(10,22,42,0.78));
-    border:1px dashed rgba(78,139,255,0.92);
+    background:rgba(10,21,39,0.82);
+    border:1px solid rgba(113,142,181,0.20);
     border-radius:16px;
     padding:16px 18px 15px;
-    box-shadow:0 0 26px rgba(55,119,255,0.16);
+    box-shadow:0 12px 28px rgba(0,0,0,0.16);
     min-height:106px;
 }
 

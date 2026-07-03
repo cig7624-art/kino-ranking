@@ -106,7 +106,7 @@ header, footer {
     border-bottom:3px solid #3b82f6;
 }
 
-/* Streamlit border container를 패널처럼 */
+/* Streamlit border container */
 div[data-testid="stVerticalBlockBorderWrapper"] {
     background:rgba(10,21,39,0.82) !important;
     border:1px solid rgba(113,142,181,0.20) !important;
@@ -132,7 +132,6 @@ div[data-testid="stSelectbox"] label {
     border-radius:10px !important;
 }
 
-/* 닫힌 selectbox 글자색 */
 [data-baseweb="select"] * {
     color:#f8fafc !important;
 }
@@ -141,7 +140,6 @@ div[data-testid="stSelectbox"] label {
     fill:#cbd5e1 !important;
 }
 
-/* 열린 드롭다운 */
 [data-baseweb="popover"] * {
     color:#111827 !important;
     background:#ffffff !important;
@@ -151,129 +149,58 @@ input {
     color:#111827 !important;
 }
 
-/* 공개예정작 실제 필터 radio를 키노라이츠 칩처럼 */
-div[role="radiogroup"] {
-    display:flex !important;
-    flex-wrap:wrap !important;
-    gap:8px !important;
-    align-items:center !important;
-}
-
-/* radio label 자체를 작은 pill로 */
-div[role="radiogroup"] label {
-    display:inline-flex !important;
-    align-items:center !important;
-    width:auto !important;
-    min-width:auto !important;
-    max-width:max-content !important;
-    height:32px !important;
-    min-height:32px !important;
-    padding:0 12px !important;
+/* 공개예정작 필터: 큰 박스/테두리 제거 */
+.release-filter-area {
+    padding:0 !important;
     margin:0 !important;
-    border-radius:999px !important;
-    border:1px solid rgba(111,139,178,0.45) !important;
-    background:rgba(8,18,34,0.92) !important;
+    background:transparent !important;
+    border:none !important;
     box-shadow:none !important;
 }
 
-/* label 내부 불필요한 div 여백 제거 */
-div[role="radiogroup"] label > div {
-    display:flex !important;
-    align-items:center !important;
-    gap:6px !important;
-    width:auto !important;
-    min-width:0 !important;
-    margin:0 !important;
+.release-filter-title {
+    color:#9fc0ff !important;
+    font-weight:900;
+    font-size:14px;
+    margin:0 0 5px 0 !important;
     padding:0 !important;
 }
 
-/* 동그라미 radio 크기 */
-div[role="radiogroup"] label span {
+/* 버튼 칩 */
+div[data-testid="stButton"] {
     margin:0 !important;
 }
 
-/* 텍스트 */
-div[role="radiogroup"] label p {
-    color:#f8fafc !important;
+div[data-testid="stButton"] button {
+    height:31px !important;
+    min-height:31px !important;
+    border-radius:999px !important;
+    padding:0 12px !important;
     font-size:13px !important;
     font-weight:850 !important;
+    white-space:nowrap !important;
     line-height:1 !important;
     margin:0 !important;
-    padding:0 !important;
-    white-space:nowrap !important;
 }
 
-/* hover */
-div[role="radiogroup"] label:hover {
+div[data-testid="stButton"] button[kind="secondary"] {
+    background:rgba(8,18,34,0.92) !important;
+    color:#f8fafc !important;
+    border:1px solid rgba(111,139,178,0.45) !important;
+    box-shadow:none !important;
+}
+
+div[data-testid="stButton"] button[kind="secondary"]:hover {
     border-color:#4a80ff !important;
     background:#111c2f !important;
-}
-
-/* 선택된 칩 */
-div[role="radiogroup"] label:has(input:checked) {
-    background:#4a80ff !important;
-    border-color:#6ea0ff !important;
-    box-shadow:0 0 14px rgba(74,128,255,0.34) !important;
-}
-
-/* 선택된 칩 텍스트 */
-div[role="radiogroup"] label:has(input:checked) p {
     color:#ffffff !important;
 }
 
-/* 공개예정작 필터 박스도 높이 줄임 */
-.release-filter-box {
-    background:rgba(10,21,39,0.82);
-    border:1px solid rgba(113,142,181,0.20);
-    border-radius:16px;
-    padding:14px 16px 14px;
-    box-shadow:0 12px 28px rgba(0,0,0,0.16);
-    min-height:auto;
-}
-
-.release-filter-title {
-    color:#9fc0ff !important;
-    font-weight:900;
-    font-size:14px;
-    margin-bottom:10px;
-}
-
-div[role="radiogroup"] label:hover {
-    border-color:#4a80ff !important;
-    background:#111c2f !important;
-}
-
-div[role="radiogroup"] label:has(input:checked) {
+div[data-testid="stButton"] button[kind="primary"] {
     background:#4a80ff !important;
-    border-color:#6ea0ff !important;
-    box-shadow:0 0 14px rgba(74,128,255,0.38);
-}
-
-div[role="radiogroup"] label p {
-    color:#f8fafc !important;
-    font-size:13px !important;
-    font-weight:850 !important;
-}
-
-div[role="radiogroup"] input {
-    display:none !important;
-}
-
-/* 공개예정작 필터 박스 */
-.release-filter-box {
-    background:rgba(10,21,39,0.82);
-    border:1px solid rgba(113,142,181,0.20);
-    border-radius:16px;
-    padding:16px 18px 15px;
-    box-shadow:0 12px 28px rgba(0,0,0,0.16);
-    min-height:106px;
-}
-
-.release-filter-title {
-    color:#9fc0ff !important;
-    font-weight:900;
-    font-size:14px;
-    margin-bottom:11px;
+    color:#ffffff !important;
+    border:1px solid #6ea0ff !important;
+    box-shadow:0 0 12px rgba(74,128,255,0.32) !important;
 }
 
 /* 랭킹 기준 + B tv+ */
@@ -1047,6 +974,10 @@ def get_ott_providers(content_id):
     return sorted(set(found))
 
 
+def set_release_provider(provider):
+    st.session_state.selected_release_provider = provider
+
+
 df_for_header = load_ranking_data()
 latest_label = "-"
 
@@ -1056,6 +987,9 @@ if not df_for_header.empty:
         latest_label = pd.to_datetime(latest_date_for_header).strftime("%m.%d 10:00")
     except Exception:
         latest_label = "-"
+
+if "selected_release_provider" not in st.session_state:
+    st.session_state.selected_release_provider = "전체"
 
 st.markdown(f"""
 <div class="kino-header">
@@ -1113,17 +1047,39 @@ with tab1:
             )
 
     with filter_right:
-        st.markdown('<div class="release-filter-box"><div class="release-filter-title">공개예정작 필터</div>', unsafe_allow_html=True)
-
-        selected_release_provider = st.radio(
-            "공개예정작 필터",
-            RELEASE_PROVIDERS,
-            index=0,
-            horizontal=True,
-            label_visibility="collapsed"
+        st.markdown(
+            '<div class="release-filter-area"><div class="release-filter-title">공개예정작 필터</div></div>',
+            unsafe_allow_html=True
         )
 
-        st.markdown('</div>', unsafe_allow_html=True)
+        chip_cols_1 = st.columns([0.7, 1, 0.8, 1.2, 1, 0.8])
+        chip_cols_2 = st.columns([0.8, 0.8, 1, 1.6, 1])
+
+        for col, provider in zip(chip_cols_1, RELEASE_PROVIDERS[:6]):
+            with col:
+                active = st.session_state.selected_release_provider == provider
+                st.button(
+                    provider,
+                    key=f"release_provider_{provider}",
+                    type="primary" if active else "secondary",
+                    use_container_width=True,
+                    on_click=set_release_provider,
+                    args=(provider,)
+                )
+
+        for col, provider in zip(chip_cols_2, RELEASE_PROVIDERS[6:]):
+            with col:
+                active = st.session_state.selected_release_provider == provider
+                st.button(
+                    provider,
+                    key=f"release_provider_{provider}",
+                    type="primary" if active else "secondary",
+                    use_container_width=True,
+                    on_click=set_release_provider,
+                    args=(provider,)
+                )
+
+        selected_release_provider = st.session_state.selected_release_provider
 
     display_base_label = get_kino_base_label(selected_period, latest_date)
     base_tooltip = get_kino_base_tooltip(selected_period)

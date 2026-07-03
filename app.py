@@ -137,12 +137,11 @@ div[data-testid="stSelectbox"] label {
     color:#f8fafc !important;
 }
 
-/* selectbox 화살표/아이콘 */
 [data-baseweb="select"] svg {
     fill:#cbd5e1 !important;
 }
 
-/* 열린 드롭다운 목록은 흰 배경이므로 검정 글자 */
+/* 열린 드롭다운 */
 [data-baseweb="popover"] * {
     color:#111827 !important;
     background:#ffffff !important;
@@ -152,22 +151,44 @@ input {
     color:#111827 !important;
 }
 
-/* 상단 필터 영역 */
-.top-filter-layout {
-    display:grid;
-    grid-template-columns: 0.46fr 0.54fr;
-    gap:18px;
-    align-items:stretch;
-    margin-bottom:12px;
+/* 공개예정작 실제 필터 radio를 칩처럼 */
+div[role="radiogroup"] {
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
 }
 
-.left-filter-box {
-    background:rgba(8,18,34,0.78);
-    border:1px solid rgba(111,139,178,0.16);
-    border-radius:16px;
-    padding:16px 18px 14px;
+div[role="radiogroup"] label {
+    background:rgba(11,22,40,0.96) !important;
+    border:1px solid rgba(111,139,178,0.35) !important;
+    border-radius:999px !important;
+    padding:7px 12px !important;
+    margin:0 !important;
+    min-height:32px !important;
 }
 
+div[role="radiogroup"] label:hover {
+    border-color:#4a80ff !important;
+    background:#111c2f !important;
+}
+
+div[role="radiogroup"] label:has(input:checked) {
+    background:#4a80ff !important;
+    border-color:#6ea0ff !important;
+    box-shadow:0 0 14px rgba(74,128,255,0.38);
+}
+
+div[role="radiogroup"] label p {
+    color:#f8fafc !important;
+    font-size:13px !important;
+    font-weight:850 !important;
+}
+
+div[role="radiogroup"] input {
+    display:none !important;
+}
+
+/* 공개예정작 필터 박스 */
 .release-filter-box {
     background:linear-gradient(135deg, rgba(18,42,78,0.82), rgba(10,22,42,0.78));
     border:1px dashed rgba(78,139,255,0.92);
@@ -182,129 +203,6 @@ input {
     font-weight:900;
     font-size:14px;
     margin-bottom:11px;
-}
-
-.release-chip-row {
-    display:flex;
-    flex-wrap:wrap;
-    align-items:center;
-    gap:8px;
-}
-
-.release-chip {
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    gap:6px;
-    min-height:31px;
-    padding:0 12px;
-    border-radius:999px;
-    border:1px solid rgba(111,139,178,0.35);
-    background:rgba(11,22,40,0.96);
-    color:#d8e3f5 !important;
-    font-size:13px;
-    font-weight:850;
-}
-
-.release-chip.active {
-    background:#4a80ff;
-    color:#ffffff !important;
-    border-color:#6ea0ff;
-    box-shadow:0 0 14px rgba(74,128,255,0.38);
-}
-
-.release-chip.logo-netflix-chip::before {
-    content:"N";
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    width:18px;
-    height:18px;
-    border-radius:50%;
-    background:#050505;
-    color:#ff3045;
-    font-size:10px;
-    font-weight:950;
-}
-
-.release-chip.logo-tving-chip::before {
-    content:"T";
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    width:18px;
-    height:18px;
-    border-radius:50%;
-    background:#0b0b0f;
-    color:#ff1745;
-    font-size:10px;
-    font-weight:950;
-}
-
-.release-chip.logo-coupang-chip::before {
-    content:"▶";
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    width:18px;
-    height:18px;
-    border-radius:50%;
-    background:#1798ff;
-    color:#fff;
-    font-size:9px;
-    font-weight:950;
-}
-
-.release-chip.logo-wavve-chip::before {
-    content:"W";
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    width:18px;
-    height:18px;
-    border-radius:50%;
-    background:#276cff;
-    color:#fff;
-    font-size:10px;
-    font-weight:950;
-}
-
-.release-chip.logo-disney-chip::before {
-    content:"D+";
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    width:18px;
-    height:18px;
-    border-radius:50%;
-    background:#053a54;
-    color:#bfe2ff;
-    font-size:9px;
-    font-weight:950;
-}
-
-.release-chip.logo-watcha-chip::before {
-    content:"W";
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    width:18px;
-    height:18px;
-    border-radius:50%;
-    background:#090913;
-    color:#ff3f9d;
-    font-size:10px;
-    font-weight:950;
-}
-
-.date-chip {
-    min-width:45px;
-    border-radius:9px;
-}
-
-.calendar-chip {
-    min-width:34px;
-    border-radius:9px;
 }
 
 /* 랭킹 기준 + B tv+ */
@@ -871,10 +769,14 @@ def get_provider_logo(provider):
         return '<span class="ott-logo logo-watcha">W</span>'
     if "쿠팡" in p:
         return '<span class="ott-logo logo-coupang">▶</span>'
-    if "애플" in p:
+    if "Apple" in p or "애플" in p:
         return '<span class="ott-logo logo-apple"></span>'
     if "라프텔" in p:
         return '<span class="ott-logo logo-laftel">L</span>'
+    if "아마존" in p:
+        return '<span class="ott-logo">P</span>'
+    if "씨네폭스" in p:
+        return '<span class="ott-logo">C</span>'
 
     return ""
 
@@ -1140,43 +1042,17 @@ with tab1:
             )
 
     with filter_right:
-        selected_release_provider = st.selectbox(
-            "공개예정작 OTT",
+        st.markdown('<div class="release-filter-box"><div class="release-filter-title">공개예정작 필터</div>', unsafe_allow_html=True)
+
+        selected_release_provider = st.radio(
+            "공개예정작 필터",
             RELEASE_PROVIDERS,
-            index=0
+            index=0,
+            horizontal=True,
+            label_visibility="collapsed"
         )
 
-        active_class = {
-            "전체": "active" if selected_release_provider == "전체" else "",
-            "넷플릭스": "active" if selected_release_provider == "넷플릭스" else "",
-            "티빙": "active" if selected_release_provider == "티빙" else "",
-            "쿠팡플레이": "active" if selected_release_provider == "쿠팡플레이" else "",
-            "웨이브": "active" if selected_release_provider == "웨이브" else "",
-            "디즈니+": "active" if selected_release_provider == "디즈니+" else "",
-            "왓챠": "active" if selected_release_provider == "왓챠" else "",
-        }
-
-        st.markdown(
-            f"""
-            <div class="release-filter-box">
-                <div class="release-filter-title">공개예정작 필터</div>
-                <div class="release-chip-row">
-                    <span class="release-chip {active_class['전체']}">전체</span>
-                    <span class="release-chip logo-netflix-chip {active_class['넷플릭스']}">넷플릭스</span>
-                    <span class="release-chip logo-tving-chip {active_class['티빙']}">티빙</span>
-                    <span class="release-chip logo-coupang-chip {active_class['쿠팡플레이']}">쿠팡플레이</span>
-                    <span class="release-chip logo-wavve-chip {active_class['웨이브']}">웨이브</span>
-                    <span class="release-chip logo-disney-chip {active_class['디즈니+']}">디즈니+</span>
-                    <span class="release-chip logo-watcha-chip {active_class['왓챠']}">왓챠</span>
-                    <span class="release-chip date-chip active">오늘</span>
-                    <span class="release-chip date-chip">7일</span>
-                    <span class="release-chip date-chip">14일</span>
-                    <span class="release-chip calendar-chip">📅</span>
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+        st.markdown('</div>', unsafe_allow_html=True)
 
     display_base_label = get_kino_base_label(selected_period, latest_date)
     base_tooltip = get_kino_base_tooltip(selected_period)

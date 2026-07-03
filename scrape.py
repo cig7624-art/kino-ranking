@@ -10,15 +10,15 @@ PERIODS = {
     "월간": "MONTHLY"
 }
 
-# 임시 매핑: 현재 debug 기준으로 4는 넷플릭스로 확인됨
-# 나머지는 debug_provider_ids.csv 확인 후 확정
+# 키노라이츠 개편 후 providerId 기준
+# 랭킹 화면 기준: 넷플릭스 / 티빙 / 쿠팡플레이 / 웨이브 / 디즈니+ / 왓챠
 PROVIDER_MAP = {
     "4": "넷플릭스",
-    "10": "",
-    "14": "",
-    "16": "",
-    "17": "",
-    "8": "",
+    "8": "티빙",
+    "10": "쿠팡플레이",
+    "14": "웨이브",
+    "16": "디즈니+",
+    "17": "왓챠",
 }
 
 QUERY = """
@@ -40,11 +40,18 @@ query QueryRanking($rankingType: ContentRankingType!, $limit: Int = 100) {
 }
 """
 
-today = datetime.today().strftime("%Y-%m-%d")
-rows = []
-provider_debug_rows = []
 
-for period_kr, period_api in PERIODS.items():
+def normalize_genres(genres):
+    if not genres:
+        return ""
+
+    if isinstance(genres, list):
+        return ",".join([str(g) for g in genres if g])
+
+    return str(genres)
+
+
+def fetch_ranking(period_kr, period_api):
     payload = {
         "operationName": "QueryRanking",
         "variables": {
@@ -70,30 +77,35 @@ for period_kr, period_api in PERIODS.items():
     print(period_kr, res.status_code, res.text[:200])
 
     if res.status_code != 200 or not res.text.strip().startswith("{"):
-        continue
+        return []
 
     data = res.json()
 
     if "errors" in data:
         print(period_kr, data["errors"])
-        continue
+        return []
 
     items = data.get("data", {}).get("contentRankings", []) or []
 
     print(period_kr, "items:", len(items))
+
+    return items
+
+
+today = datetime.today().strftime("%Y-%m-%d")
+rows = []
+provider_debug_rows = []
+
+for period_kr, period_api in PERIODS.items():
+    items = fetch_ranking(period_kr, period_api)
 
     for idx, item in enumerate(items, start=1):
         content = item.get("content") or {}
 
         title = content.get("titleKr")
         media_type = content.get("mediaType")
-        genres = content.get("genres") or []
+        genres = normalize_genres(content.get("genres"))
         open_year = content.get("openYear")
-
-        if isinstance(genres, list):
-            genre_text = ",".join([str(g) for g in genres])
-        else:
-            genre_text = str(genres)
 
         providers = []
 
@@ -122,7 +134,7 @@ for period_kr, period_api in PERIODS.items():
             "rank": idx,
             "title": title,
             "media_type": media_type,
-            "genres": genre_text,
+            "genres": genres,
             "open_year": open_year,
             "is_new": item.get("isNew"),
             "delta": item.get("delta"),

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 from __future__ import annotations
 
 import csv
@@ -37,6 +36,19 @@ PROVIDERS = [
     "씨네폭스",
 ]
 
+PROVIDER_ALIASES = {
+    "넷플릭스": ["넷플릭스", "Netflix"],
+    "티빙": ["티빙", "TVING"],
+    "쿠팡플레이": ["쿠팡플레이", "Coupang Play"],
+    "디즈니+": ["디즈니+", "Disney+"],
+    "웨이브": ["웨이브", "Wavve"],
+    "라프텔": ["라프텔", "Laftel"],
+    "왓챠": ["왓챠", "Watcha"],
+    "Apple TV": ["Apple TV", "Apple TV+"],
+    "아마존 프라임 비디오": ["아마존 프라임 비디오", "Prime Video", "Amazon Prime"],
+    "씨네폭스": ["씨네폭스", "Cinefox"],
+}
+
 GENRE_WORDS = [
     "영화", "드라마", "예능", "애니메이션", "다큐멘터리", "시리즈",
     "키즈", "교양", "멜로/로맨스", "판타지", "액션", "코미디",
@@ -67,13 +79,13 @@ def normalize_url(url: str) -> str:
 def parse_release_date(text: str, today: date) -> str:
     t = norm(text)
 
-    if "오늘 공개" in t or t == "오늘":
+    if "오늘 공개" in t:
         return today.isoformat()
 
-    if "내일 공개" in t or t == "내일":
+    if "내일 공개" in t:
         return (today + timedelta(days=1)).isoformat()
 
-    m = re.search(r"(\d{1,2})\s*월\s*(\d{1,2})\s*일", t)
+    m = re.search(r"(\d{1,2})\s*월\s*(\d{1,2})\s*일\s*공개", t)
     if m:
         mo, d = map(int, m.groups())
         try:
@@ -82,18 +94,7 @@ def parse_release_date(text: str, today: date) -> str:
                 dt = date(today.year + 1, mo, d)
             return dt.isoformat()
         except ValueError:
-            pass
-
-    m = re.search(r"(?<!\d)(\d{1,2})[./](\d{1,2})(?!\d)", t)
-    if m:
-        mo, d = map(int, m.groups())
-        try:
-            dt = date(today.year, mo, d)
-            if dt < today - timedelta(days=45):
-                dt = date(today.year + 1, mo, d)
-            return dt.isoformat()
-        except ValueError:
-            pass
+            return ""
 
     return ""
 
@@ -112,25 +113,18 @@ def is_bad_title(title: str) -> bool:
 
     if not t:
         return True
-
     if t in BAD_TITLE_WORDS:
         return True
-
     if t in PROVIDERS:
         return True
-
     if t in GENRE_WORDS:
         return True
-
     if re.fullmatch(r"\d+", t):
         return True
-
     if re.search(r"\d{1,2}\s*월\s*\d{1,2}\s*일", t):
         return True
-
     if "공개" in t and len(t) <= 12:
         return True
-
     if "대표:" in t or "사업자등록번호" in t or "All rights reserved" in t:
         return True
 
@@ -139,67 +133,93 @@ def is_bad_title(title: str) -> bool:
 
 def extract_genre(text: str) -> str:
     t = norm(text)
+
     for g in ["영화", "드라마", "예능", "애니메이션", "다큐멘터리", "시리즈"]:
         if g in t:
             return g
+
     for g in GENRE_WORDS:
         if g in t:
             return g
+
     return ""
 
 
-def click_visible_text(page, label: str, exact: bool = True, timeout_ms: int = 3000) -> bool:
+def click_upcoming_tab(page) -> None:
     try:
-        loc = page.get_by_text(label, exact=exact)
-        count = min(loc.count(), 20)
-
-        for i in range(count):
-            item = loc.nth(i)
-            try:
-                if item.is_visible(timeout=500):
-                    item.click(timeout=timeout_ms)
-                    page.wait_for_timeout(900)
-                    return True
-            except Exception:
-                continue
+        page.get_by_text("공개 예정작", exact=True).first.click(timeout=5000)
+        page.wait_for_timeout(1200)
     except Exception:
         pass
 
-    return False
 
-
-def wait_and_scroll(page, max_scrolls: int = 12) -> None:
+def smart_scroll_all(page, max_rounds: int = 80) -> None:
+    """
+    body뿐 아니라 내부 스크롤 컨테이너까지 전부 내려봄.
+    키노라이츠 모바일 페이지처럼 리스트 영역이 따로 스크롤되는 경우 대응.
+    """
     try:
         page.wait_for_load_state("networkidle", timeout=8000)
     except PlaywrightTimeoutError:
         pass
 
-    page.wait_for_timeout(1200)
+    page.wait_for_timeout(1500)
 
-    last_height = 0
+    last_count = 0
     stable = 0
 
-    for _ in range(max_scrolls):
-        height = page.evaluate("() => document.body.scrollHeight")
-        page.mouse.wheel(0, 2800)
-        page.wait_for_timeout(800)
-        new_height = page.evaluate("() => document.body.scrollHeight")
+    for i in range(max_rounds):
+        result = page.evaluate(
+            """
+            () => {
+              const els = Array.from(document.querySelectorAll('*'));
+              const scrollables = els.filter(el => {
+                const s = window.getComputedStyle(el);
+                return (
+                  (s.overflowY === 'auto' || s.overflowY === 'scroll') &&
+                  el.scrollHeight > el.clientHeight + 50
+                );
+              });
 
-        if new_height == height or new_height == last_height:
+              window.scrollTo(0, document.body.scrollHeight);
+
+              for (const el of scrollables) {
+                el.scrollTop = el.scrollHeight;
+              }
+
+              const links = Array.from(document.querySelectorAll('a[href]'))
+                .filter(a => {
+                  const href = a.href || '';
+                  return href.includes('/season/') || href.includes('/movie/') || href.includes('/title/');
+                })
+                .length;
+
+              return {
+                links,
+                bodyHeight: document.body.scrollHeight,
+                scrollables: scrollables.length
+              };
+            }
+            """
+        )
+
+        count = int(result.get("links", 0))
+        print(f"[SCROLL] round={i+1} links={count} scrollables={result.get('scrollables')}")
+
+        page.wait_for_timeout(900)
+
+        if count <= last_count:
             stable += 1
         else:
             stable = 0
 
-        last_height = new_height
+        last_count = count
 
-        if stable >= 3:
+        if stable >= 8:
             break
 
-    page.evaluate("() => window.scrollTo(0, 0)")
-    page.wait_for_timeout(300)
 
-
-def extract_list_items(page, provider: str, today: date) -> list[dict[str, str]]:
+def extract_all_list_items(page, today: date) -> list[dict[str, str]]:
     js = """
     () => {
       const anchors = Array.from(document.querySelectorAll('a[href]'));
@@ -213,7 +233,7 @@ def extract_list_items(page, provider: str, today: date) -> list[dict[str, str]]
         }
 
         let box = a;
-        for (let i = 0; i < 4; i++) {
+        for (let i = 0; i < 5; i++) {
           if (box.parentElement) box = box.parentElement;
         }
 
@@ -227,7 +247,14 @@ def extract_list_items(page, provider: str, today: date) -> list[dict[str, str]]
         if (seen.has(href)) continue;
         seen.add(href);
 
-        out.push({ href, text, image_url, img_alt, aria, title });
+        out.push({
+          href,
+          text,
+          image_url,
+          img_alt,
+          aria,
+          title
+        });
       }
 
       return out;
@@ -243,6 +270,8 @@ def extract_list_items(page, provider: str, today: date) -> list[dict[str, str]]
         image_url = normalize_url(item.get("image_url", ""))
 
         release_date = parse_release_date(text, today)
+        if not release_date:
+            continue
 
         title = ""
         for cand in [item.get("img_alt", ""), item.get("aria", ""), item.get("title", "")]:
@@ -256,7 +285,7 @@ def extract_list_items(page, provider: str, today: date) -> list[dict[str, str]]
                 "collect_date": today.isoformat(),
                 "release_date": release_date,
                 "title": title,
-                "provider": provider,
+                "provider": "",
                 "genre": extract_genre(text),
                 "url": url,
                 "image_url": image_url,
@@ -267,22 +296,40 @@ def extract_list_items(page, provider: str, today: date) -> list[dict[str, str]]
     return rows
 
 
-def enrich_title_from_detail(page, row: dict[str, str], cache: dict[str, dict[str, str]]) -> dict[str, str]:
+def detect_providers_from_text(text: str) -> list[str]:
+    found = []
+
+    for provider, aliases in PROVIDER_ALIASES.items():
+        for alias in aliases:
+            if alias in text:
+                found.append(provider)
+                break
+
+    return found
+
+
+def enrich_from_detail(page, row: dict[str, str], cache: dict[str, dict]) -> list[dict[str, str]]:
     url = row.get("url", "")
 
     if not url:
-        return row
+        return []
 
     if url in cache:
         detail = cache[url]
     else:
-        detail = {"title": "", "genre": "", "image_url": ""}
+        detail = {
+            "title": "",
+            "genre": "",
+            "image_url": "",
+            "providers": [],
+            "body_text": "",
+        }
 
         try:
             page.goto(url, wait_until="domcontentloaded", timeout=30000)
             page.wait_for_timeout(1200)
 
-            body_text = page.locator("body").inner_text(timeout=5000)
+            body_text = page.locator("body").inner_text(timeout=6000)
 
             data = page.evaluate(
                 """
@@ -291,6 +338,12 @@ def enrich_title_from_detail(page, row: dict[str, str], cache: dict[str, dict[st
                   const h1 = document.querySelector('h1')?.innerText || '';
                   const h2 = document.querySelector('h2')?.innerText || '';
                   const img = document.querySelector('img');
+
+                  const altTexts = Array.from(document.querySelectorAll('img'))
+                    .map(img => img.alt || img.getAttribute('alt') || '')
+                    .filter(Boolean)
+                    .join(' ');
+
                   return {
                     document_title: document.title || '',
                     og_title: meta('meta[property="og:title"]'),
@@ -298,7 +351,8 @@ def enrich_title_from_detail(page, row: dict[str, str], cache: dict[str, dict[st
                     h1,
                     h2,
                     og_image: meta('meta[property="og:image"]'),
-                    first_img: img ? (img.currentSrc || img.src || img.getAttribute('src') || '') : ''
+                    first_img: img ? (img.currentSrc || img.src || img.getAttribute('src') || '') : '',
+                    alt_texts: altTexts
                   };
                 }
                 """
@@ -317,10 +371,15 @@ def enrich_title_from_detail(page, row: dict[str, str], cache: dict[str, dict[st
                     title = cand
                     break
 
+            provider_text = body_text + " " + data.get("alt_texts", "")
+            providers = detect_providers_from_text(provider_text)
+
             detail = {
                 "title": title,
                 "genre": extract_genre(body_text),
                 "image_url": normalize_url(data.get("og_image") or data.get("first_img") or ""),
+                "providers": providers,
+                "body_text": body_text[:3000],
             }
 
         except Exception as e:
@@ -328,60 +387,35 @@ def enrich_title_from_detail(page, row: dict[str, str], cache: dict[str, dict[st
 
         cache[url] = detail
 
-    if is_bad_title(row.get("title", "")) and detail.get("title"):
-        row["title"] = detail["title"]
+    title = row.get("title", "")
+    if is_bad_title(title) and detail.get("title"):
+        title = detail["title"]
 
-    if not row.get("genre") and detail.get("genre"):
-        row["genre"] = detail["genre"]
+    genre = row.get("genre") or detail.get("genre", "")
+    image_url = row.get("image_url") or detail.get("image_url", "")
 
-    if not row.get("image_url") and detail.get("image_url"):
-        row["image_url"] = detail["image_url"]
+    providers = detail.get("providers") or []
 
-    return row
+    # 상세페이지에서도 OTT를 못 찾으면 전체로 남김
+    if not providers:
+        providers = ["전체"]
 
+    out = []
 
-def collect_provider(context, provider: str, today: date, detail_cache: dict[str, dict[str, str]]):
-    page = context.new_page()
-    page.set_default_timeout(12000)
+    for provider in providers:
+        out.append(
+            {
+                "collect_date": row.get("collect_date", ""),
+                "release_date": row.get("release_date", ""),
+                "title": title,
+                "provider": provider,
+                "genre": genre,
+                "url": row.get("url", ""),
+                "image_url": image_url,
+            }
+        )
 
-    print(f"[OPEN] {TARGET_URL} / {provider}")
-    page.goto(TARGET_URL, wait_until="domcontentloaded", timeout=45000)
-    page.wait_for_timeout(1500)
-
-    click_visible_text(page, "공개 예정작", exact=True)
-
-    clicked = click_visible_text(page, provider, exact=True)
-    if not clicked:
-        print(f"[WARN] provider click failed: {provider}")
-
-    wait_and_scroll(page)
-
-    body_text = page.locator("body").inner_text(timeout=5000)
-    rows = extract_list_items(page, provider, today)
-
-    detail_page = context.new_page()
-    detail_page.set_default_timeout(12000)
-
-    enriched = []
-
-    for row in rows:
-        row = enrich_title_from_detail(detail_page, row, detail_cache)
-
-        if not row.get("url"):
-            continue
-
-        if not row.get("release_date"):
-            continue
-
-        if is_bad_title(row.get("title", "")):
-            continue
-
-        enriched.append({c: norm(row.get(c, "")) for c in COLUMNS})
-
-    detail_page.close()
-    page.close()
-
-    return enriched, body_text
+    return out
 
 
 def dedupe_rows(rows: list[dict[str, str]]) -> list[dict[str, str]]:
@@ -389,7 +423,12 @@ def dedupe_rows(rows: list[dict[str, str]]) -> list[dict[str, str]]:
     result = []
 
     for r in rows:
-        key = (norm(r.get("provider")), norm(r.get("url")))
+        key = (
+            norm(r.get("release_date")),
+            norm(r.get("title")),
+            norm(r.get("provider")),
+            norm(r.get("url")),
+        )
 
         if key in seen:
             continue
@@ -413,6 +452,7 @@ def save_debug(rows: list[dict[str, str]], debug_text: str) -> None:
 def existing_csv_has_rows(path: Path) -> bool:
     if not path.exists():
         return False
+
     try:
         return len(pd.read_csv(path)) > 0
     except Exception:
@@ -427,11 +467,9 @@ def write_csv_safely(rows: list[dict[str, str]]) -> None:
         today_str = date.today().isoformat()
         df["release_date"] = df["release_date"].fillna("").astype(str)
 
-        # 공개예정작만 남김: 오늘 이후만
         df = df[df["release_date"] >= today_str]
-
-        # 제목 오류 제거
         df = df[~df["title"].isin(["오늘 공개", "내일 공개", "공개 예정", "공개 예정작"])]
+        df = df[df["title"].fillna("").astype(str).str.len() > 0]
 
     if df.empty:
         print("[ERROR] 공개예정작 유효 데이터 0건입니다.")
@@ -455,14 +493,17 @@ def write_csv_safely(rows: list[dict[str, str]]) -> None:
 
 def main() -> None:
     today = date.today()
-    all_rows = []
-    debug_chunks = []
     detail_cache = {}
+    all_rows = []
 
     with sync_playwright() as p:
         browser = p.chromium.launch(
             headless=True,
-            args=["--no-sandbox", "--disable-dev-shm-usage"],
+            args=[
+                "--no-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-blink-features=AutomationControlled",
+            ],
         )
 
         context = browser.new_context(
@@ -479,24 +520,44 @@ def main() -> None:
             ),
         )
 
-        for provider in PROVIDERS:
-            rows, text = collect_provider(context, provider, today, detail_cache)
-            print(f"[COLLECT] {provider}: {len(rows)} rows")
-            all_rows.extend(rows)
-            debug_chunks.append(f"\n\n===== {provider} / rows={len(rows)} =====\n{text}")
+        page = context.new_page()
+        page.set_default_timeout(15000)
+
+        print(f"[OPEN] {TARGET_URL}")
+        page.goto(TARGET_URL, wait_until="domcontentloaded", timeout=45000)
+        page.wait_for_timeout(1800)
+
+        click_upcoming_tab(page)
+        smart_scroll_all(page)
 
         try:
-            page = context.new_page()
-            page.goto(TARGET_URL, wait_until="domcontentloaded", timeout=45000)
+            body_text = page.locator("body").inner_text(timeout=6000)
+        except Exception:
+            body_text = ""
+
+        try:
             page.screenshot(path=str(DEBUG_SCREENSHOT), full_page=True)
-            page.close()
         except Exception:
             pass
 
+        base_rows = extract_all_list_items(page, today)
+        print(f"[LIST] collected urls: {len(base_rows)}")
+
+        detail_page = context.new_page()
+        detail_page.set_default_timeout(15000)
+
+        for i, row in enumerate(base_rows, start=1):
+            enriched_rows = enrich_from_detail(detail_page, row, detail_cache)
+            all_rows.extend(enriched_rows)
+            if i % 10 == 0:
+                print(f"[DETAIL] {i}/{len(base_rows)}")
+
+        detail_page.close()
+        page.close()
         context.close()
         browser.close()
 
-    save_debug(all_rows, "".join(debug_chunks))
+    save_debug(all_rows, body_text)
     write_csv_safely(all_rows)
 
 

@@ -7,92 +7,72 @@ import pandas as pd
 from playwright.sync_api import sync_playwright
 
 
-OUTPUT = Path("upcoming_releases.csv")
-DEBUG_TEXT = Path("debug_upcoming_text.txt")
-DEBUG_CARDS = Path("debug_upcoming_cards.csv")
-
-BASE_URL = "https://m.kinolights.com"
 UPCOMING_URL = "https://m.kinolights.com/new?tab=upcoming"
-END_MARKER = "업데이트 정보를 모두 가져왔습니다"
 
-PROVIDERS = {
-    "netflix": "넷플릭스",
-    "넷플릭스": "넷플릭스",
-    "tving": "티빙",
-    "티빙": "티빙",
-    "wavve": "웨이브",
-    "웨이브": "웨이브",
-    "disney": "디즈니+",
-    "디즈니": "디즈니+",
-    "watcha": "왓챠",
-    "왓챠": "왓챠",
-    "coupang": "쿠팡플레이",
-    "쿠팡": "쿠팡플레이",
-    "apple": "애플TV+",
-    "애플": "애플TV+",
-    "laftel": "라프텔",
-    "라프텔": "라프텔",
+OUTPUT_FILE = Path("upcoming_releases.csv")
+DEBUG_CARDS_FILE = Path("debug_upcoming_cards.csv")
+DEBUG_TEXT_FILE = Path("debug_upcoming_text.txt")
+
+PROVIDERS = [
+    "넷플릭스",
+    "티빙",
+    "쿠팡플레이",
+    "디즈니+",
+    "웨이브",
+    "라프텔",
+    "왓챠",
+    "Apple TV",
+    "아마존 프라임 비디오",
+    "씨네폭스",
+]
+
+BAD_TITLES = {
+    "",
+    "홈",
+    "랭킹",
+    "탐색",
+    "혜택",
+    "마이페이지",
+    "주메뉴",
+    "신작",
+    "공개 예정작",
+    "공개예정작",
+    "종료 예정작",
+    "종료예정작",
+    "본 작품 제외",
+    "구매/대여 제외",
+    "업데이트 정보를 모두 가져왔습니다",
+    "업데이트 정보를 모두 가져왔습니다.",
+    "전체",
+    "MY",
+    "ALL",
+    "검색",
+    "공유",
+    "로그인",
+    "가입",
+    "작품",
+    "인물",
+    "컬렉션",
 }
 
-WEEKDAY_MAP = {
-    "월요일": 0,
-    "화요일": 1,
-    "수요일": 2,
-    "목요일": 3,
-    "금요일": 4,
-    "토요일": 5,
-    "일요일": 6,
-}
 
-
-def normalize_text(value):
-    return re.sub(r"\s+", " ", str(value or "")).strip()
+def normalize_space(text):
+    return re.sub(r"\s+", " ", str(text or "")).strip()
 
 
 def is_bad_title(title):
-    title = normalize_text(title)
+    title = normalize_space(title)
 
-    bad_titles = {
-        "",
-        "홈",
-        "랭킹",
-        "탐색",
-        "혜택",
-        "마이페이지",
-        "주메뉴",
-        "상단으로",
-        "맨 위로",
-        "뒤로가기",
-        "공유",
-        "검색",
-        "신작",
-        "공개예정작",
-        "종료예정작",
-        "본 작품 제외",
-        "구매/대여 제외",
-        "업데이트 정보를 모두 가져왔습니다",
-        "업데이트 정보를 모두 가져왔습니다.",
-        "전체",
-        "MY",
-        "ALL",
-        "작품",
-        "인물",
-        "컬렉션",
-        "필터",
-        "로그인",
-        "가입",
-    }
+    if title in BAD_TITLES:
+        return True
 
-    if title in bad_titles:
+    if re.fullmatch(r"\d{4}", title):
         return True
 
     if re.fullmatch(r"\d+\s*편(\s*공개예정)?", title):
         return True
 
-    if re.fullmatch(r"\d+\.\d+%?", title):
-        return True
-
-    if title == "%":
+    if re.fullmatch(r"\d+(\.\d+)?\s*%?", title):
         return True
 
     if len(title) <= 1:
@@ -101,476 +81,374 @@ def is_bad_title(title):
     return False
 
 
-def detect_provider_from_text(text):
-    text = str(text or "").lower()
+def parse_release_date(raw_text, collect_date):
+    text = str(raw_text or "")
+    base = datetime.strptime(collect_date, "%Y-%m-%d")
 
-    for key, provider in PROVIDERS.items():
-        if key.lower() in text:
-            return provider
+    if "오늘 공개" in text or "오늘" in text:
+        return base.strftime("%Y-%m-%d")
+
+    if "내일 공개" in text or "내일" in text:
+        return (base + timedelta(days=1)).strftime("%Y-%m-%d")
+
+    m = re.search(r"(\d{1,2})[./](\d{1,2})", text)
+
+    if m:
+        month = int(m.group(1))
+        day = int(m.group(2))
+        year = base.year
+
+        try:
+            dt = datetime(year, month, day)
+
+            if dt < base - timedelta(days=60):
+                dt = datetime(year + 1, month, day)
+
+            return dt.strftime("%Y-%m-%d")
+        except Exception:
+            return ""
 
     return ""
 
 
-def detect_provider_from_attrs(attrs):
-    joined = " ".join([str(v or "") for v in attrs.values()]).lower()
-    return detect_provider_from_text(joined)
+def extract_title(raw_text, image_alt=""):
+    alt = normalize_space(image_alt)
+
+    if alt and not is_bad_title(alt):
+        return alt
+
+    lines = [
+        normalize_space(x)
+        for x in str(raw_text or "").splitlines()
+        if normalize_space(x)
+    ]
+
+    for line in lines:
+        if is_bad_title(line):
+            continue
+
+        if line in PROVIDERS:
+            continue
+
+        if re.fullmatch(r"\d{1,2}[./]\d{1,2}", line):
+            continue
+
+        if "공개" in line and len(line) <= 10:
+            continue
+
+        if re.search(r"\d{4}\s*·", line):
+            continue
+
+        if any(x in line for x in ["영화", "드라마", "예능", "애니메이션", "다큐멘터리"]):
+            if len(line) <= 20:
+                continue
+
+        return line
+
+    return ""
 
 
-def parse_explicit_date(text, base_year):
-    text = normalize_text(text)
+def extract_genre(raw_text):
+    lines = [
+        normalize_space(x)
+        for x in str(raw_text or "").splitlines()
+        if normalize_space(x)
+    ]
 
-    # 05.18 / 5.18 / 05/18 / 5월 18일
-    m = re.fullmatch(r"(\d{1,2})[./월]\s*(\d{1,2})일?", text)
-    if m:
-        month = int(m.group(1))
-        day = int(m.group(2))
+    for line in lines:
+        if re.search(r"\d{4}\s*·", line):
+            return line
 
+    for line in lines:
+        if any(x in line for x in ["영화", "드라마", "예능", "애니메이션", "다큐멘터리"]):
+            return line
+
+    return ""
+
+
+def click_upcoming_tab(page):
+    candidates = ["공개 예정작", "공개예정작"]
+
+    for text in candidates:
         try:
-            return datetime(base_year, month, day).date()
-        except ValueError:
-            return None
+            page.get_by_text(text, exact=True).first.click(timeout=3000)
+            page.wait_for_timeout(1000)
+            return
+        except Exception:
+            pass
 
-    # 2026.05.18 / 2026-05-18
-    m = re.fullmatch(r"(20\d{2})[./-]\s*(\d{1,2})[./-]\s*(\d{1,2})", text)
-    if m:
-        year = int(m.group(1))
-        month = int(m.group(2))
-        day = int(m.group(3))
 
+def click_provider(page, provider):
+    candidates = [provider]
+
+    if provider == "Apple TV":
+        candidates = ["Apple TV", "Apple TV+", "애플TV+", "애플 TV"]
+    elif provider == "아마존 프라임 비디오":
+        candidates = ["아마존 프라임 비디오", "Prime Video", "아마존"]
+    elif provider == "씨네폭스":
+        candidates = ["씨네폭스", "CINEFOX"]
+
+    for name in candidates:
         try:
-            return datetime(year, month, day).date()
-        except ValueError:
-            return None
+            page.get_by_text(name, exact=True).first.click(timeout=4000)
+            page.wait_for_timeout(1500)
+            return True
+        except Exception:
+            pass
 
-    return None
-
-
-def next_weekday_date(today, weekday_name):
-    target = WEEKDAY_MAP[weekday_name]
-    today_weekday = today.weekday()
-
-    diff = target - today_weekday
-    if diff <= 0:
-        diff += 7
-
-    return today + timedelta(days=diff)
+    print(f"WARNING: provider button not found - {provider}")
+    return False
 
 
-def parse_date_heading(text, today):
-    text = normalize_text(text)
-
-    if text == "오늘":
-        return today
-
-    if text == "내일":
-        return today + timedelta(days=1)
-
-    if text in WEEKDAY_MAP:
-        return next_weekday_date(today, text)
-
-    explicit = parse_explicit_date(text, today.year)
-    if explicit:
-        return explicit
-
-    return None
-
-
-def scroll_until_end(page, max_scrolls=80):
-    found_marker = False
+def scroll_until_loaded(page):
+    last_height = 0
     stable_count = 0
-    last_text_len = 0
 
-    for i in range(max_scrolls):
+    for _ in range(20):
         try:
-            body_text = page.locator("body").inner_text(timeout=10000)
+            body_text = page.locator("body").inner_text(timeout=3000)
         except Exception:
             body_text = ""
 
-        if END_MARKER in body_text:
-            found_marker = True
-            print(f"END_MARKER found at scroll {i}")
+        if "업데이트 정보를 모두 가져왔습니다" in body_text:
             break
 
-        current_text_len = len(body_text)
+        try:
+            height = page.evaluate("document.body.scrollHeight")
+            page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+            page.wait_for_timeout(900)
+        except Exception:
+            break
 
-        if current_text_len == last_text_len:
+        if height == last_height:
             stable_count += 1
         else:
             stable_count = 0
 
-        last_text_len = current_text_len
+        last_height = height
 
-        try:
-            page.evaluate("window.scrollBy(0, window.innerHeight * 1.3)")
-        except Exception:
-            pass
-
-        try:
-            page.mouse.wheel(0, 1400)
-        except Exception:
-            pass
-
-        page.wait_for_timeout(900)
-
-        if stable_count >= 8:
-            print("Text length stable too long. Stop scrolling.")
+        if stable_count >= 4:
             break
 
-    return found_marker
+
+def collect_candidates(page):
+    return page.evaluate(
+        """
+        () => {
+            const results = [];
+            const seen = new Set();
+
+            const nodes = Array.from(document.querySelectorAll('a[href], article, li, div'));
+
+            for (const el of nodes) {
+                const text = (el.innerText || '').trim();
+                const img = el.querySelector('img');
+                const a = el.tagName.toLowerCase() === 'a' ? el : el.querySelector('a[href]');
+
+                const href = a ? a.href : '';
+                const imageUrl =
+                    img?.src ||
+                    img?.getAttribute('data-src') ||
+                    img?.getAttribute('data-original') ||
+                    '';
+
+                const imageAlt = img?.alt || '';
+
+                const looksLikeContent =
+                    href.includes('/title/') ||
+                    href.includes('/content/') ||
+                    href.includes('/contents/') ||
+                    imageUrl.includes('kinolights') ||
+                    imageUrl.includes('image') ||
+                    imageUrl.includes('poster');
+
+                if (!looksLikeContent) continue;
+
+                const key = href + '|' + imageUrl + '|' + text.slice(0, 80);
+                if (seen.has(key)) continue;
+                seen.add(key);
+
+                results.push({
+                    href,
+                    rawText: text,
+                    imageUrl,
+                    imageAlt
+                });
+            }
+
+            return results;
+        }
+        """
+    )
 
 
-def extract_date_blocks_from_text(body_text):
-    """
-    텍스트 기준으로 날짜별 작품명 후보를 만든다.
-    DOM 수집이 실패하거나 부족할 때 보조 기준으로 사용.
-    """
-    today_dt = datetime.now()
-    today = today_dt.date()
-
-    lines = [
-        normalize_text(line)
-        for line in str(body_text).splitlines()
-        if normalize_text(line)
-    ]
-
-    current_date = None
+def scrape_provider(page, provider, collect_date):
     rows = []
+    debug_rows = []
 
-    for line in lines:
-        date_heading = parse_date_heading(line, today)
+    candidates = collect_candidates(page)
 
-        if date_heading:
-            current_date = date_heading
-            continue
+    for idx, item in enumerate(candidates):
+        raw_text = item.get("rawText", "")
+        image_alt = item.get("imageAlt", "")
+        href = item.get("href", "")
+        image_url = item.get("imageUrl", "")
 
-        if current_date is None:
-            continue
+        title = extract_title(raw_text, image_alt)
+        release_date = parse_release_date(raw_text, collect_date)
+        genre = extract_genre(raw_text)
 
-        if is_bad_title(line):
+        skip_reason = ""
+
+        if is_bad_title(title):
+            skip_reason = "bad_title"
+        elif not release_date:
+            skip_reason = "no_release_date"
+
+        debug_rows.append({
+            "provider": provider,
+            "idx": idx,
+            "title": title,
+            "release_date": release_date,
+            "skip_reason": skip_reason,
+            "url": href,
+            "image_url": image_url,
+            "image_alt": image_alt,
+            "raw_text": raw_text,
+        })
+
+        if skip_reason:
             continue
 
         rows.append({
-            "release_date": current_date.strftime("%Y-%m-%d"),
-            "title": line,
+            "collect_date": collect_date,
+            "release_date": release_date,
+            "title": title,
+            "provider": provider,
+            "genre": genre,
+            "url": href,
+            "image_url": image_url,
         })
 
-    if not rows:
-        return pd.DataFrame(columns=["release_date", "title"])
-
-    df = pd.DataFrame(rows)
-    df = df.drop_duplicates(subset=["release_date", "title"], keep="first")
-    return df
-
-
-def get_element_attrs(locator):
-    attrs = {}
-
-    for attr in [
-        "href",
-        "src",
-        "alt",
-        "title",
-        "aria-label",
-        "class",
-        "data-src",
-        "data-original",
-        "style",
-    ]:
-        try:
-            value = locator.get_attribute(attr)
-            if value:
-                attrs[attr] = value
-        except Exception:
-            pass
-
-    return attrs
-
-
-def collect_card_candidates(page):
-    """
-    공개예정작 카드 후보 DOM 수집.
-    카드 구조를 아직 모르기 때문에 a/img 주변을 넓게 수집한다.
-    """
-    candidates = []
-
-    # 1) 링크 후보
-    link_locators = page.locator("a").all()
-
-    for idx, a in enumerate(link_locators):
-        try:
-            text = normalize_text(a.inner_text(timeout=1000))
-        except Exception:
-            text = ""
-
-        attrs = get_element_attrs(a)
-        href = attrs.get("href", "")
-        full_url = urljoin(BASE_URL, href) if href else ""
-
-        # 내부 이미지 수집
-        image_url = ""
-        image_alt = ""
-
-        try:
-            img = a.locator("img").first
-            if img.count() > 0:
-                img_attrs = get_element_attrs(img)
-                image_url = (
-                    img_attrs.get("src")
-                    or img_attrs.get("data-src")
-                    or img_attrs.get("data-original")
-                    or ""
-                )
-                image_alt = img_attrs.get("alt", "")
-                if image_url:
-                    image_url = urljoin(BASE_URL, image_url)
-        except Exception:
-            pass
-
-        provider = detect_provider_from_text(text) or detect_provider_from_attrs(attrs)
-
-        # title 후보
-        title = ""
-        text_lines = [normalize_text(x) for x in text.splitlines() if normalize_text(x)]
-
-        for line in text_lines:
-            if not is_bad_title(line):
-                title = line
-                break
-
-        if not title and image_alt and not is_bad_title(image_alt):
-            title = image_alt
-
-        if title or href or image_url:
-            candidates.append({
-                "source": "a",
-                "idx": idx,
-                "raw_text": text,
-                "title": title,
-                "href": href,
-                "url": full_url,
-                "image_url": image_url,
-                "image_alt": image_alt,
-                "provider": provider,
-                "attrs": str(attrs),
-            })
-
-    # 2) 이미지 후보
-    img_locators = page.locator("img").all()
-
-    for idx, img in enumerate(img_locators):
-        attrs = get_element_attrs(img)
-
-        image_url = (
-            attrs.get("src")
-            or attrs.get("data-src")
-            or attrs.get("data-original")
-            or ""
-        )
-        if image_url:
-            image_url = urljoin(BASE_URL, image_url)
-
-        image_alt = attrs.get("alt", "")
-        provider = detect_provider_from_attrs(attrs) or detect_provider_from_text(image_alt)
-
-        # 이미지 부모 링크 찾기
-        url = ""
-        href = ""
-
-        try:
-            parent_a = img.locator("xpath=ancestor::a[1]")
-            if parent_a.count() > 0:
-                href = parent_a.get_attribute("href") or ""
-                url = urljoin(BASE_URL, href) if href else ""
-        except Exception:
-            pass
-
-        title = image_alt if image_alt and not is_bad_title(image_alt) else ""
-
-        if image_url or title or url:
-            candidates.append({
-                "source": "img",
-                "idx": idx,
-                "raw_text": "",
-                "title": title,
-                "href": href,
-                "url": url,
-                "image_url": image_url,
-                "image_alt": image_alt,
-                "provider": provider,
-                "attrs": str(attrs),
-            })
-
-    return candidates
-
-
-def merge_text_dates_with_cards(text_df, card_df):
-    """
-    날짜는 텍스트 파싱이 가장 안정적이고,
-    링크/이미지/provider는 DOM 카드 후보에서 보강한다.
-    키노라이츠 개편으로 날짜 파싱이 실패해도 Actions가 죽지 않게 방어한다.
-    """
-    collect_date = datetime.now().strftime("%Y-%m-%d")
-
-    required_cols = ["release_date", "title"]
-
-    if text_df is None or text_df.empty:
-        print("WARNING: 공개예정작 날짜/타이틀 텍스트 파싱 실패")
-        return pd.DataFrame(columns=[
-            "collect_date", "release_date", "title", "provider", "genre", "url", "image_url"
-        ])
-
-    for col in required_cols:
-        if col not in text_df.columns:
-            print(f"WARNING: text_df에 {col} 컬럼이 없습니다.")
-            return pd.DataFrame(columns=[
-                "collect_date", "release_date", "title", "provider", "genre", "url", "image_url"
-            ])
-
-    base = text_df.copy()
-
-    if card_df is None or card_df.empty:
-        card_df = pd.DataFrame(columns=["title", "provider", "url", "image_url"])
-
-    for col in ["title", "provider", "url", "image_url"]:
-        if col not in card_df.columns:
-            card_df[col] = ""
-
-    base["title"] = base["title"].fillna("").astype(str).str.strip()
-    base["release_date"] = base["release_date"].fillna("").astype(str).str.strip()
-
-    base = base[base["title"] != ""].copy()
-    base = base[base["release_date"] != ""].copy()
-
-    if base.empty:
-        print("WARNING: 공개예정작 유효 데이터 없음")
-        return pd.DataFrame(columns=[
-            "collect_date", "release_date", "title", "provider", "genre", "url", "image_url"
-        ])
-
-    base["title_key"] = base["title"].astype(str).map(
-        lambda x: re.sub(r"\s+", "", x).lower()
-    )
-
-    card_df["title"] = card_df["title"].fillna("").astype(str).str.strip()
-    card_df["title_key"] = card_df["title"].astype(str).map(
-        lambda x: re.sub(r"\s+", "", x).lower()
-    )
-
-    valid_cards = card_df[card_df["title"] != ""].copy()
-
-    if not valid_cards.empty:
-        valid_cards["score"] = 0
-        valid_cards.loc[valid_cards["url"].astype(str).str.strip() != "", "score"] += 3
-        valid_cards.loc[valid_cards["image_url"].astype(str).str.strip() != "", "score"] += 3
-        valid_cards.loc[valid_cards["provider"].astype(str).str.strip() != "", "score"] += 2
-
-        valid_cards = valid_cards.sort_values("score", ascending=False)
-        valid_cards = valid_cards.drop_duplicates(subset=["title_key"], keep="first")
-
-        merged = base.merge(
-            valid_cards[["title_key", "provider", "url", "image_url"]],
-            on="title_key",
-            how="left",
-        )
-    else:
-        merged = base.copy()
-        merged["provider"] = ""
-        merged["url"] = ""
-        merged["image_url"] = ""
-
-    merged["collect_date"] = collect_date
-    merged["genre"] = ""
-
-    for col in ["provider", "url", "image_url"]:
-        if col not in merged.columns:
-            merged[col] = ""
-        merged[col] = merged[col].fillna("").astype(str)
-
-    merged = merged[
-        ["collect_date", "release_date", "title", "provider", "genre", "url", "image_url"]
-    ].copy()
-
-    merged = merged[~merged["title"].apply(is_bad_title)].copy()
-
-    merged["release_date_dt"] = pd.to_datetime(merged["release_date"], errors="coerce")
-    merged = merged[merged["release_date_dt"].notna()].copy()
-
-    if merged.empty:
-        print("WARNING: 공개예정작 날짜 변환 후 유효 데이터 없음")
-        return pd.DataFrame(columns=[
-            "collect_date", "release_date", "title", "provider", "genre", "url", "image_url"
-        ])
-
-    merged = merged.drop_duplicates(subset=["release_date", "title"], keep="first")
-    merged = merged.sort_values(["release_date_dt", "title"])
-    merged = merged.drop(columns=["release_date_dt"])
-
-    return merged
+    return rows, debug_rows
 
 
 def scrape_upcoming():
+    collect_date = datetime.today().strftime("%Y-%m-%d")
+
+    all_rows = []
+    all_debug_rows = []
+    debug_texts = []
+
     with sync_playwright() as p:
         browser = p.chromium.launch(
             headless=True,
-            executable_path="/usr/bin/chromium",
+            executable_path="/usr/bin/chromium"
         )
 
         page = browser.new_page(
-            viewport={"width": 430, "height": 900},
+            viewport={"width": 1440, "height": 1600},
             user_agent=(
-                "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) "
-                "AppleWebKit/605.1.15 (KHTML, like Gecko) "
-                "Version/16.0 Mobile/15E148 Safari/604.1"
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/120.0 Safari/537.36"
             ),
         )
 
-        page.goto(UPCOMING_URL, wait_until="domcontentloaded", timeout=40000)
-        page.wait_for_timeout(6000)
+        for provider in PROVIDERS:
+            print(f"==== {provider} ====")
 
-        # 공개예정작 탭 보정
-        try:
-            if page.get_by_text("공개예정작").count() > 0:
-                page.get_by_text("공개예정작").first.click(timeout=3000)
-                page.wait_for_timeout(2500)
-        except Exception:
-            pass
-
-        found_marker = scroll_until_end(page, max_scrolls=80)
-
-        body_text = page.locator("body").inner_text(timeout=15000)
-        DEBUG_TEXT.write_text(
-            f"FOUND_END_MARKER: {found_marker}\n\n{body_text}",
-            encoding="utf-8",
-        )
-
-        text_df = extract_date_blocks_from_text(body_text)
-
-        candidates = collect_card_candidates(page)
-        card_df = pd.DataFrame(candidates)
-
-        if card_df.empty:
-            card_df = pd.DataFrame(
-                columns=[
-                    "source", "idx", "raw_text", "title", "href", "url",
-                    "image_url", "image_alt", "provider", "attrs"
-                ]
+            page.goto(
+                UPCOMING_URL,
+                wait_until="networkidle",
+                timeout=50000
             )
 
-        card_df.to_csv(DEBUG_CARDS, index=False, encoding="utf-8-sig")
+            page.wait_for_timeout(2000)
 
-        final_df = merge_text_dates_with_cards(text_df, card_df)
+            click_upcoming_tab(page)
+
+            clicked = click_provider(page, provider)
+
+            if not clicked:
+                continue
+
+            scroll_until_loaded(page)
+
+            try:
+                body_text = page.locator("body").inner_text(timeout=5000)
+            except Exception:
+                body_text = ""
+
+            debug_texts.append(f"\n\n===== {provider} =====\n{body_text[:10000]}")
+
+            rows, debug_rows = scrape_provider(
+                page,
+                provider,
+                collect_date
+            )
+
+            print(provider, "rows:", len(rows))
+
+            all_rows.extend(rows)
+            all_debug_rows.extend(debug_rows)
 
         browser.close()
 
-    final_df.to_csv(OUTPUT, index=False, encoding="utf-8-sig")
+    if all_rows:
+        df = pd.DataFrame(all_rows)
 
-    print(f"FOUND_END_MARKER: {found_marker}")
-    print(f"text rows: {len(text_df)}")
-    print(f"card candidates: {len(card_df)}")
-    print(f"{OUTPUT} 저장 완료: {len(final_df)}개")
+        df = df[~df["title"].apply(is_bad_title)].copy()
 
-    if not final_df.empty:
-        print(final_df.head(80).to_string(index=False))
+        df["release_date_dt"] = pd.to_datetime(
+            df["release_date"],
+            errors="coerce"
+        )
+
+        df = df[df["release_date_dt"].notna()].copy()
+
+        df = df.drop_duplicates(
+            subset=["release_date", "title", "provider"],
+            keep="first"
+        )
+
+        df = df.sort_values(
+            ["release_date_dt", "provider", "title"],
+            ascending=[True, True, True]
+        )
+
+        df = df.drop(columns=["release_date_dt"])
+    else:
+        df = pd.DataFrame(columns=[
+            "collect_date",
+            "release_date",
+            "title",
+            "provider",
+            "genre",
+            "url",
+            "image_url",
+        ])
+
+    df.to_csv(
+        OUTPUT_FILE,
+        index=False,
+        encoding="utf-8-sig"
+    )
+
+    debug_df = pd.DataFrame(all_debug_rows)
+    debug_df.to_csv(
+        DEBUG_CARDS_FILE,
+        index=False,
+        encoding="utf-8-sig"
+    )
+
+    DEBUG_TEXT_FILE.write_text(
+        "\n".join(debug_texts),
+        encoding="utf-8"
+    )
+
+    print("upcoming rows:", len(df))
+    print(df.head(50).to_string(index=False))
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 
 
-===== PROVIDER: 넷플릭스 / rows=141 =====
+===== 넷플릭스 / rows=42 =====
 예정작 & 신작
 예정작 & 신작
 
@@ -533,7 +533,7 @@ GIGN: 엘리트 포스
 APP STORE
 PLAY STORE
 
-===== PROVIDER: 티빙 / rows=23 =====
+===== 티빙 / rows=6 =====
 예정작 & 신작
 예정작 & 신작
 
@@ -662,7 +662,7 @@ Apple TV
 APP STORE
 PLAY STORE
 
-===== PROVIDER: 쿠팡플레이 / rows=7 =====
+===== 쿠팡플레이 / rows=1 =====
 예정작 & 신작
 예정작 & 신작
 
@@ -729,7 +729,7 @@ Apple TV
 APP STORE
 PLAY STORE
 
-===== PROVIDER: 디즈니+ / rows=21 =====
+===== 디즈니+ / rows=5 =====
 예정작 & 신작
 예정작 & 신작
 
@@ -848,7 +848,7 @@ Apple TV
 APP STORE
 PLAY STORE
 
-===== PROVIDER: 웨이브 / rows=4 =====
+===== 웨이브 / rows=0 =====
 예정작 & 신작
 예정작 & 신작
 
@@ -907,7 +907,7 @@ Apple TV
 APP STORE
 PLAY STORE
 
-===== PROVIDER: 라프텔 / rows=4 =====
+===== 라프텔 / rows=0 =====
 예정작 & 신작
 예정작 & 신작
 
@@ -966,7 +966,7 @@ Apple TV
 APP STORE
 PLAY STORE
 
-===== PROVIDER: 왓챠 / rows=34 =====
+===== 왓챠 / rows=9 =====
 예정작 & 신작
 예정작 & 신작
 
@@ -1117,7 +1117,7 @@ Apple TV
 APP STORE
 PLAY STORE
 
-===== PROVIDER: Apple TV / rows=4 =====
+===== Apple TV / rows=0 =====
 예정작 & 신작
 예정작 & 신작
 
@@ -1176,7 +1176,7 @@ Apple TV
 APP STORE
 PLAY STORE
 
-===== PROVIDER: 아마존 프라임 비디오 / rows=4 =====
+===== 아마존 프라임 비디오 / rows=0 =====
 예정작 & 신작
 예정작 & 신작
 
@@ -1235,7 +1235,7 @@ Apple TV
 APP STORE
 PLAY STORE
 
-===== PROVIDER: 씨네폭스 / rows=4 =====
+===== 씨네폭스 / rows=0 =====
 예정작 & 신작
 예정작 & 신작
 

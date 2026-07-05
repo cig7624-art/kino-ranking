@@ -1,1 +1,2140 @@
-﻿
+﻿provider,text,href,image_url,tag,class_name
+넷플릭스,홈랭킹,https://m.kinolights.com/,,DIV,flex flex-row items-center container mx-auto h-full justify-between gap-4 px-container
+넷플릭스,"전체
+
+넷플릭스
+
+티빙
+
+쿠팡플레이
+
+디즈니+
+
+웨이브
+
+라프텔
+
+왓챠
+
+Apple TV
+
+아마존 프라임 비디오
+
+씨네폭스",,,DIV,flex items-center whitespace-nowrap gap-1
+넷플릭스,7월 8일 공개,,,DIV,sticky z-[9] flex items-center gap-4 bg-background desktop-lg:py-3 py-2 top-[calc(var(--height-global-navigation-bar)+6.5rem)]
+넷플릭스,"공개 3일 전
+
+무섭지 않아
+
+-
+
+2026
+·
+드라마
+
+공개 3일 전
+
+로비
+
+54.9
+
+%
+
+2025
+·
+영화
+
+공개 3일 전
+
+마지막 순간까지
+
+-
+
+2026
+·
+영화
+
+공개 3일 전
+
+더 틱 시즌 1
+
+-
+
+2016
+·
+드라마",https://m.kinolights.com/season/153213,https://file.kinolights.com/m/content_poster/202606/19/e01cd31b-df22-41e8-838a-c4cb92098a73.webp,DIV,flex items-stretch
+넷플릭스,"공개 3일 전
+
+무섭지 않아
+
+-
+
+2026
+·
+드라마",https://m.kinolights.com/season/153213,https://file.kinolights.com/m/content_poster/202606/19/e01cd31b-df22-41e8-838a-c4cb92098a73.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+넷플릭스,공개 3일 전,https://m.kinolights.com/season/153213,https://file.kinolights.com/m/content_poster/202606/19/e01cd31b-df22-41e8-838a-c4cb92098a73.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,공개 3일 전,,,DIV,inline-flex max-w-full flex-row items-center gap-1 rounded-full bg-gray-700
+넷플릭스,"무섭지 않아
+
+-
+
+2026
+·
+드라마",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,"공개 3일 전
+
+로비
+
+54.9
+
+%
+
+2025
+·
+영화",https://m.kinolights.com/season/130610,https://file.kinolights.com/m/content_poster/202503/13/9ee09569-8d1e-465f-af40-f0d68df4f5e9.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+넷플릭스,공개 3일 전,https://m.kinolights.com/season/130610,https://file.kinolights.com/m/content_poster/202503/13/9ee09569-8d1e-465f-af40-f0d68df4f5e9.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,"로비
+
+54.9
+
+%
+
+2025
+·
+영화",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,"공개 3일 전
+
+마지막 순간까지
+
+-
+
+2026
+·
+영화",https://m.kinolights.com/season/153214,https://file.kinolights.com/m/content_poster/202606/19/1e23096b-8bf5-4d59-83aa-bc5974a71295.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+넷플릭스,공개 3일 전,https://m.kinolights.com/season/153214,https://file.kinolights.com/m/content_poster/202606/19/1e23096b-8bf5-4d59-83aa-bc5974a71295.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,"마지막 순간까지
+
+-
+
+2026
+·
+영화",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,"공개 3일 전
+
+더 틱 시즌 1
+
+-
+
+2016
+·
+드라마",https://m.kinolights.com/season/98273,https://file.kinolights.com/m/content_poster/202307/12/38d7fa5b-6020-4feb-a4df-cc2e0a956809.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+넷플릭스,공개 3일 전,https://m.kinolights.com/season/98273,https://file.kinolights.com/m/content_poster/202307/12/38d7fa5b-6020-4feb-a4df-cc2e0a956809.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,"더 틱 시즌 1
+
+-
+
+2016
+·
+드라마",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,7월 9일 공개,,,DIV,sticky z-[9] flex items-center gap-4 bg-background desktop-lg:py-3 py-2 top-[calc(var(--height-global-navigation-bar)+6.5rem)]
+넷플릭스,"공개 4일 전
+
+초원의 집
+
+-
+
+2026
+·
+드라마
+
+공개 4일 전
+
+잃어버린 세계를 찾아서
+
+64.3
+
+%
+
+2008
+·
+영화",https://m.kinolights.com/season/152895,https://file.kinolights.com/m/content_poster/202606/02/2b27773b-a1db-4a98-ab0b-3905fc0c0ae2.webp,DIV,flex items-stretch
+넷플릭스,"공개 4일 전
+
+초원의 집
+
+-
+
+2026
+·
+드라마",https://m.kinolights.com/season/152895,https://file.kinolights.com/m/content_poster/202606/02/2b27773b-a1db-4a98-ab0b-3905fc0c0ae2.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+넷플릭스,공개 4일 전,https://m.kinolights.com/season/152895,https://file.kinolights.com/m/content_poster/202606/02/2b27773b-a1db-4a98-ab0b-3905fc0c0ae2.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,공개 4일 전,,,DIV,inline-flex max-w-full flex-row items-center gap-1 rounded-full bg-gray-700
+넷플릭스,"초원의 집
+
+-
+
+2026
+·
+드라마",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,"공개 4일 전
+
+잃어버린 세계를 찾아서
+
+64.3
+
+%
+
+2008
+·
+영화",https://m.kinolights.com/season/43869,https://file.kinolights.com/m/content_poster/202307/12/6e9793c8-078c-4f14-b37b-2aecef05af92.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+넷플릭스,공개 4일 전,https://m.kinolights.com/season/43869,https://file.kinolights.com/m/content_poster/202307/12/6e9793c8-078c-4f14-b37b-2aecef05af92.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,"잃어버린 세계를 찾아서
+
+64.3
+
+%
+
+2008
+·
+영화",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,7월 10일 공개,,,DIV,sticky z-[9] flex items-center gap-4 bg-background desktop-lg:py-3 py-2 top-[calc(var(--height-global-navigation-bar)+6.5rem)]
+넷플릭스,"공개 5일 전
+
+미겔 앙헬 블랑코: 스페인을 뒤바꾼 48시간
+
+-
+
+2026
+·
+영화
+
+공개 5일 전
+
+코스타 콩코르디아호: 바다 위의 악몽
+
+-
+
+2026
+·
+영화
+
+공개 5일 전
+
+질 수 없는 남자
+
+-
+
+2026
+·
+영화
+
+공개 5일 전
+
+썬더 3
+
+-
+
+2026
+·
+애니메이션
+
+공개 5일 전
+
+슈퍼 뒤에서 담배 피우는 두 사람
+
+-
+
+2026
+·
+애니메이션",https://m.kinolights.com/season/153296,https://file.kinolights.com/m/content_poster/202606/22/9830d7f4-4156-4476-8570-ffafe9c0b75d.webp,DIV,flex items-stretch
+넷플릭스,"공개 5일 전
+
+미겔 앙헬 블랑코: 스페인을 뒤바꾼 48시간
+
+-
+
+2026
+·
+영화",https://m.kinolights.com/season/153296,https://file.kinolights.com/m/content_poster/202606/22/9830d7f4-4156-4476-8570-ffafe9c0b75d.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+넷플릭스,공개 5일 전,https://m.kinolights.com/season/153296,https://file.kinolights.com/m/content_poster/202606/22/9830d7f4-4156-4476-8570-ffafe9c0b75d.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,공개 5일 전,,,DIV,inline-flex max-w-full flex-row items-center gap-1 rounded-full bg-gray-700
+넷플릭스,"미겔 앙헬 블랑코: 스페인을 뒤바꾼 48시간
+
+-
+
+2026
+·
+영화",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,"공개 5일 전
+
+코스타 콩코르디아호: 바다 위의 악몽
+
+-
+
+2026
+·
+영화",https://m.kinolights.com/season/153340,https://file.kinolights.com/m/content_poster/202606/23/588efdb8-2185-4a9f-ae69-ee2a8860f261.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+넷플릭스,공개 5일 전,https://m.kinolights.com/season/153340,https://file.kinolights.com/m/content_poster/202606/23/588efdb8-2185-4a9f-ae69-ee2a8860f261.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,"코스타 콩코르디아호: 바다 위의 악몽
+
+-
+
+2026
+·
+영화",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,"공개 5일 전
+
+질 수 없는 남자
+
+-
+
+2026
+·
+영화",https://m.kinolights.com/season/153339,https://file.kinolights.com/m/content_poster/202606/23/2781ad97-ba32-4aba-9d0d-545acc693f3a.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+넷플릭스,공개 5일 전,https://m.kinolights.com/season/153339,https://file.kinolights.com/m/content_poster/202606/23/2781ad97-ba32-4aba-9d0d-545acc693f3a.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,"질 수 없는 남자
+
+-
+
+2026
+·
+영화",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,"공개 5일 전
+
+썬더 3
+
+-
+
+2026
+·
+애니메이션",https://m.kinolights.com/season/153115,https://file.kinolights.com/m/content_poster/202606/16/b2f3cbe1-090b-4796-b02c-5c14e96842ed.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+넷플릭스,공개 5일 전,https://m.kinolights.com/season/153115,https://file.kinolights.com/m/content_poster/202606/16/b2f3cbe1-090b-4796-b02c-5c14e96842ed.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,"썬더 3
+
+-
+
+2026
+·
+애니메이션",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,"공개 5일 전
+
+슈퍼 뒤에서 담배 피우는 두 사람
+
+-
+
+2026
+·
+애니메이션",https://m.kinolights.com/season/153100,https://file.kinolights.com/m/content_poster/202606/15/94da4613-50ec-447c-b5c9-29347fcc6d7a.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+넷플릭스,공개 5일 전,https://m.kinolights.com/season/153100,https://file.kinolights.com/m/content_poster/202606/15/94da4613-50ec-447c-b5c9-29347fcc6d7a.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,"슈퍼 뒤에서 담배 피우는 두 사람
+
+-
+
+2026
+·
+애니메이션",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,7월 11일 공개,,,DIV,sticky z-[9] flex items-center gap-4 bg-background desktop-lg:py-3 py-2 top-[calc(var(--height-global-navigation-bar)+6.5rem)]
+넷플릭스,"공개 6일 전
+
+언더톤
+
+-
+
+2025
+·
+영화
+
+공개 6일 전
+
+비키퍼
+
+85.4
+
+%
+
+2024
+·
+영화",https://m.kinolights.com/season/149498,https://file.kinolights.com/m/content_poster/202601/16/81edd738-631d-41a4-8a4c-ed99ab7d76e1.webp,DIV,flex items-stretch
+넷플릭스,"공개 6일 전
+
+언더톤
+
+-
+
+2025
+·
+영화",https://m.kinolights.com/season/149498,https://file.kinolights.com/m/content_poster/202601/16/81edd738-631d-41a4-8a4c-ed99ab7d76e1.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+넷플릭스,공개 6일 전,https://m.kinolights.com/season/149498,https://file.kinolights.com/m/content_poster/202601/16/81edd738-631d-41a4-8a4c-ed99ab7d76e1.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,공개 6일 전,,,DIV,inline-flex max-w-full flex-row items-center gap-1 rounded-full bg-gray-700
+넷플릭스,"언더톤
+
+-
+
+2025
+·
+영화",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,"공개 6일 전
+
+비키퍼
+
+85.4
+
+%
+
+2024
+·
+영화",https://m.kinolights.com/season/125582,https://file.kinolights.com/m/content_poster/202409/13/e0002669-deee-4864-a3cb-cb68005dda9c.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+넷플릭스,공개 6일 전,https://m.kinolights.com/season/125582,https://file.kinolights.com/m/content_poster/202409/13/e0002669-deee-4864-a3cb-cb68005dda9c.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,"비키퍼
+
+85.4
+
+%
+
+2024
+·
+영화",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,7월 12일 공개,,,DIV,sticky z-[9] flex items-center gap-4 bg-background desktop-lg:py-3 py-2 top-[calc(var(--height-global-navigation-bar)+6.5rem)]
+넷플릭스,"공개 7일 전
+
+내가 만난 사이코패스
+
+-
+
+2026
+·
+예능
+
+공개 7일 전
+
+아파트
+
+-
+
+2026
+·
+드라마
+
+공개 7일 전
+
+노스페라투
+
+77.0
+
+%
+
+2024
+·
+영화",https://m.kinolights.com/season/153497,https://file.kinolights.com/m/content_poster/202606/29/6be3d901-7b40-4fc7-8c6d-9479a6e2806b.webp,DIV,flex items-stretch
+넷플릭스,"공개 7일 전
+
+내가 만난 사이코패스
+
+-
+
+2026
+·
+예능",https://m.kinolights.com/season/153497,https://file.kinolights.com/m/content_poster/202606/29/6be3d901-7b40-4fc7-8c6d-9479a6e2806b.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+넷플릭스,공개 7일 전,https://m.kinolights.com/season/153497,https://file.kinolights.com/m/content_poster/202606/29/6be3d901-7b40-4fc7-8c6d-9479a6e2806b.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,공개 7일 전,,,DIV,inline-flex max-w-full flex-row items-center gap-1 rounded-full bg-gray-700
+넷플릭스,"내가 만난 사이코패스
+
+-
+
+2026
+·
+예능",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,"공개 7일 전
+
+아파트
+
+-
+
+2026
+·
+드라마",https://m.kinolights.com/season/153338,https://file.kinolights.com/m/content_poster/202606/23/8747972c-5adb-49ed-804d-fe4d2089299d.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+넷플릭스,공개 7일 전,https://m.kinolights.com/season/153338,https://file.kinolights.com/m/content_poster/202606/23/8747972c-5adb-49ed-804d-fe4d2089299d.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,"아파트
+
+-
+
+2026
+·
+드라마",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,"공개 7일 전
+
+노스페라투
+
+77.0
+
+%
+
+2024
+·
+영화",https://m.kinolights.com/season/126217,https://file.kinolights.com/m/content_poster/202412/17/399efbf7-6e66-4020-ad29-7b703ed47efa.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+넷플릭스,공개 7일 전,https://m.kinolights.com/season/126217,https://file.kinolights.com/m/content_poster/202412/17/399efbf7-6e66-4020-ad29-7b703ed47efa.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,"노스페라투
+
+77.0
+
+%
+
+2024
+·
+영화",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,7월 13일 공개,,,DIV,sticky z-[9] flex items-center gap-4 bg-background desktop-lg:py-3 py-2 top-[calc(var(--height-global-navigation-bar)+6.5rem)]
+넷플릭스,"공개 8일 전
+
+골든 카무이: 아바시리 감옥 습격편
+
+-
+
+2026
+·
+영화",https://m.kinolights.com/season/146637,https://file.kinolights.com/m/content_poster/202509/09/46bc272a-71af-4055-959c-d8df54280a92.webp,DIV,flex items-stretch
+넷플릭스,공개 8일 전,https://m.kinolights.com/season/146637,https://file.kinolights.com/m/content_poster/202509/09/46bc272a-71af-4055-959c-d8df54280a92.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,공개 8일 전,,,DIV,inline-flex max-w-full flex-row items-center gap-1 rounded-full bg-gray-700
+넷플릭스,"골든 카무이: 아바시리 감옥 습격편
+
+-
+
+2026
+·
+영화",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,7월 15일 공개,,,DIV,sticky z-[9] flex items-center gap-4 bg-background desktop-lg:py-3 py-2 top-[calc(var(--height-global-navigation-bar)+6.5rem)]
+넷플릭스,"공개 10일 전
+
+나일 강의 죽음
+
+72.8
+
+%
+
+2022
+·
+영화",https://m.kinolights.com/season/84584,https://file.kinolights.com/m/content_poster/202307/12/b850e683-ae50-466a-b7c6-d238e649b79f.webp,DIV,flex items-stretch
+넷플릭스,공개 10일 전,https://m.kinolights.com/season/84584,https://file.kinolights.com/m/content_poster/202307/12/b850e683-ae50-466a-b7c6-d238e649b79f.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,공개 10일 전,,,DIV,inline-flex max-w-full flex-row items-center gap-1 rounded-full bg-gray-700
+넷플릭스,"나일 강의 죽음
+
+72.8
+
+%
+
+2022
+·
+영화",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,7월 16일 공개,,,DIV,sticky z-[9] flex items-center gap-4 bg-background desktop-lg:py-3 py-2 top-[calc(var(--height-global-navigation-bar)+6.5rem)]
+넷플릭스,"공개 11일 전
+
+더 호크
+
+-
+
+2026
+·
+드라마
+
+공개 11일 전
+
+T셔츠가 마를 때까지
+
+-
+
+2026
+·
+드라마
+
+공개 11일 전
+
+그때의 나, 지금의 나
+
+-
+
+2026
+·
+영화",https://m.kinolights.com/season/152892,https://file.kinolights.com/m/content_poster/202606/02/8bb55eb9-329e-4765-be3e-d2ee7e0869fe.webp,DIV,flex items-stretch
+넷플릭스,"공개 11일 전
+
+더 호크
+
+-
+
+2026
+·
+드라마",https://m.kinolights.com/season/152892,https://file.kinolights.com/m/content_poster/202606/02/8bb55eb9-329e-4765-be3e-d2ee7e0869fe.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+넷플릭스,공개 11일 전,https://m.kinolights.com/season/152892,https://file.kinolights.com/m/content_poster/202606/02/8bb55eb9-329e-4765-be3e-d2ee7e0869fe.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,공개 11일 전,,,DIV,inline-flex max-w-full flex-row items-center gap-1 rounded-full bg-gray-700
+넷플릭스,"더 호크
+
+-
+
+2026
+·
+드라마",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,"공개 11일 전
+
+T셔츠가 마를 때까지
+
+-
+
+2026
+·
+드라마",https://m.kinolights.com/season/153440,https://file.kinolights.com/m/content_poster/202606/26/9d2d3795-91bd-48dc-bdb5-e2c0d550e85a.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+넷플릭스,공개 11일 전,https://m.kinolights.com/season/153440,https://file.kinolights.com/m/content_poster/202606/26/9d2d3795-91bd-48dc-bdb5-e2c0d550e85a.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,"T셔츠가 마를 때까지
+
+-
+
+2026
+·
+드라마",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,"공개 11일 전
+
+그때의 나, 지금의 나
+
+-
+
+2026
+·
+영화",https://m.kinolights.com/season/153411,https://file.kinolights.com/m/content_poster/202606/25/e9099be3-b78a-4725-87be-6ebbcfdd30e0.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+넷플릭스,공개 11일 전,https://m.kinolights.com/season/153411,https://file.kinolights.com/m/content_poster/202606/25/e9099be3-b78a-4725-87be-6ebbcfdd30e0.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,"그때의 나, 지금의 나
+
+-
+
+2026
+·
+영화",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,7월 17일 공개,,,DIV,sticky z-[9] flex items-center gap-4 bg-background desktop-lg:py-3 py-2 top-[calc(var(--height-global-navigation-bar)+6.5rem)]
+넷플릭스,"공개 12일 전
+
+동궁
+
+-
+
+2026
+·
+드라마
+
+공개 12일 전
+
+염원의 지도
+
+-
+
+2026
+·
+드라마
+
+공개 12일 전
+
+하트스토퍼 포에버
+
+-
+
+2026
+·
+영화
+
+공개 12일 전
+
+21 점프 스트리트
+
+90.1
+
+%
+
+2012
+·
+영화
+
+공개 12일 전
+
+쿼런틴 2 : 죽음의 공항
+
+52.9
+
+%
+
+2011
+·
+영화
+
+공개 12일 전
+
+당신의 욕망
+
+-
+
+2026
+·
+영화
+
+공개 12일 전
+
+2만 3천 명의 목숨
+
+-
+
+2026
+·
+영화
+
+공개 12일 전
+
+22 점프 스트리트
+
+90.1
+
+%
+
+2014
+·
+영화",https://m.kinolights.com/season/137841,https://file.kinolights.com/m/content_poster/202607/01/4514f597-affd-49e3-8ec5-4fe234ed3a03.webp,DIV,flex items-stretch
+넷플릭스,"공개 12일 전
+
+동궁
+
+-
+
+2026
+·
+드라마",https://m.kinolights.com/season/137841,https://file.kinolights.com/m/content_poster/202607/01/4514f597-affd-49e3-8ec5-4fe234ed3a03.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+넷플릭스,공개 12일 전,https://m.kinolights.com/season/137841,https://file.kinolights.com/m/content_poster/202607/01/4514f597-affd-49e3-8ec5-4fe234ed3a03.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,공개 12일 전,,,DIV,inline-flex max-w-full flex-row items-center gap-1 rounded-full bg-gray-700
+넷플릭스,"동궁
+
+-
+
+2026
+·
+드라마",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,"공개 12일 전
+
+염원의 지도
+
+-
+
+2026
+·
+드라마",https://m.kinolights.com/season/152889,https://file.kinolights.com/m/content_poster/202606/02/ffe9971b-602c-49c3-bbeb-0a49199a06f4.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+넷플릭스,공개 12일 전,https://m.kinolights.com/season/152889,https://file.kinolights.com/m/content_poster/202606/02/ffe9971b-602c-49c3-bbeb-0a49199a06f4.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,"염원의 지도
+
+-
+
+2026
+·
+드라마",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,"공개 12일 전
+
+하트스토퍼 포에버
+
+-
+
+2026
+·
+영화",https://m.kinolights.com/season/152931,https://file.kinolights.com/m/content_poster/202606/05/ba2444e9-9bce-411e-a65e-9de3c7b85f25.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+넷플릭스,공개 12일 전,https://m.kinolights.com/season/152931,https://file.kinolights.com/m/content_poster/202606/05/ba2444e9-9bce-411e-a65e-9de3c7b85f25.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,"하트스토퍼 포에버
+
+-
+
+2026
+·
+영화",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,"공개 12일 전
+
+21 점프 스트리트
+
+90.1
+
+%
+
+2012
+·
+영화",https://m.kinolights.com/season/37781,https://file.kinolights.com/m/content_poster/202307/12/b02d56b6-54d3-4271-ab22-c6bc2025255a.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+넷플릭스,공개 12일 전,https://m.kinolights.com/season/37781,https://file.kinolights.com/m/content_poster/202307/12/b02d56b6-54d3-4271-ab22-c6bc2025255a.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,"21 점프 스트리트
+
+90.1
+
+%
+
+2012
+·
+영화",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,"공개 12일 전
+
+쿼런틴 2 : 죽음의 공항
+
+52.9
+
+%
+
+2011
+·
+영화",https://m.kinolights.com/season/37572,https://file.kinolights.com/m/content_poster/202307/12/86c56a58-b401-4727-8269-992b3f8c8964.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+넷플릭스,공개 12일 전,https://m.kinolights.com/season/37572,https://file.kinolights.com/m/content_poster/202307/12/86c56a58-b401-4727-8269-992b3f8c8964.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,"쿼런틴 2 : 죽음의 공항
+
+52.9
+
+%
+
+2011
+·
+영화",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,"공개 12일 전
+
+당신의 욕망
+
+-
+
+2026
+·
+영화",https://m.kinolights.com/season/153419,https://file.kinolights.com/m/content_poster/202606/25/1734fac6-0d7f-4de9-937d-eb05eaf4df59.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+넷플릭스,공개 12일 전,https://m.kinolights.com/season/153419,https://file.kinolights.com/m/content_poster/202606/25/1734fac6-0d7f-4de9-937d-eb05eaf4df59.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,"당신의 욕망
+
+-
+
+2026
+·
+영화",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,"공개 12일 전
+
+2만 3천 명의 목숨
+
+-
+
+2026
+·
+영화",https://m.kinolights.com/season/153418,https://file.kinolights.com/m/content_poster/202606/25/630b5992-ce44-4844-b622-06337ad1226b.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+넷플릭스,공개 12일 전,https://m.kinolights.com/season/153418,https://file.kinolights.com/m/content_poster/202606/25/630b5992-ce44-4844-b622-06337ad1226b.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,"2만 3천 명의 목숨
+
+-
+
+2026
+·
+영화",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,"공개 12일 전
+
+22 점프 스트리트
+
+90.1
+
+%
+
+2014
+·
+영화",https://m.kinolights.com/season/17507,https://file.kinolights.com/m/content_poster/202307/12/4637228f-0196-4761-bc35-76d02fca98cf.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+넷플릭스,공개 12일 전,https://m.kinolights.com/season/17507,https://file.kinolights.com/m/content_poster/202307/12/4637228f-0196-4761-bc35-76d02fca98cf.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,"22 점프 스트리트
+
+90.1
+
+%
+
+2014
+·
+영화",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,7월 18일 공개,,,DIV,sticky z-[9] flex items-center gap-4 bg-background desktop-lg:py-3 py-2 top-[calc(var(--height-global-navigation-bar)+6.5rem)]
+넷플릭스,"공개 13일 전
+
+고
+
+90.0
+
+%
+
+2000
+·
+영화",https://m.kinolights.com/season/39998,https://file.kinolights.com/m/content_poster/202312/18/71b17100-0316-498a-ac17-75599a37f424.webp,DIV,flex items-stretch
+넷플릭스,공개 13일 전,https://m.kinolights.com/season/39998,https://file.kinolights.com/m/content_poster/202312/18/71b17100-0316-498a-ac17-75599a37f424.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,공개 13일 전,,,DIV,inline-flex max-w-full flex-row items-center gap-1 rounded-full bg-gray-700
+넷플릭스,"고
+
+90.0
+
+%
+
+2000
+·
+영화",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,7월 20일 공개,,,DIV,sticky z-[9] flex items-center gap-4 bg-background desktop-lg:py-3 py-2 top-[calc(var(--height-global-navigation-bar)+6.5rem)]
+넷플릭스,"공개 15일 전
+
+플래툰
+
+94.0
+
+%
+
+1987
+·
+영화
+
+공개 15일 전
+
+래더 49
+
+80.0
+
+%
+
+2005
+·
+영화",https://m.kinolights.com/season/2898,https://file.kinolights.com/m/content_poster/202307/12/70bdc943-f522-46a3-ac04-8eaeddc43b82.webp,DIV,flex items-stretch
+넷플릭스,"공개 15일 전
+
+플래툰
+
+94.0
+
+%
+
+1987
+·
+영화",https://m.kinolights.com/season/2898,https://file.kinolights.com/m/content_poster/202307/12/70bdc943-f522-46a3-ac04-8eaeddc43b82.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+넷플릭스,공개 15일 전,https://m.kinolights.com/season/2898,https://file.kinolights.com/m/content_poster/202307/12/70bdc943-f522-46a3-ac04-8eaeddc43b82.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,공개 15일 전,,,DIV,inline-flex max-w-full flex-row items-center gap-1 rounded-full bg-gray-700
+넷플릭스,"플래툰
+
+94.0
+
+%
+
+1987
+·
+영화",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,"공개 15일 전
+
+래더 49
+
+80.0
+
+%
+
+2005
+·
+영화",https://m.kinolights.com/season/46472,https://file.kinolights.com/m/content_poster/202307/12/fb2fe3e1-0307-413a-a890-05a94954fb9b.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+넷플릭스,공개 15일 전,https://m.kinolights.com/season/46472,https://file.kinolights.com/m/content_poster/202307/12/fb2fe3e1-0307-413a-a890-05a94954fb9b.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,"래더 49
+
+80.0
+
+%
+
+2005
+·
+영화",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,7월 22일 공개,,,DIV,sticky z-[9] flex items-center gap-4 bg-background desktop-lg:py-3 py-2 top-[calc(var(--height-global-navigation-bar)+6.5rem)]
+넷플릭스,"공개 17일 전
+
+GIGN: 엘리트 포스
+
+-
+
+2026
+·
+드라마",https://m.kinolights.com/season/153498,https://file.kinolights.com/m/content_poster/202606/29/81ac9804-7197-4c46-9e50-1277443fad28.webp,DIV,flex items-stretch
+넷플릭스,공개 17일 전,https://m.kinolights.com/season/153498,https://file.kinolights.com/m/content_poster/202606/29/81ac9804-7197-4c46-9e50-1277443fad28.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,공개 17일 전,,,DIV,inline-flex max-w-full flex-row items-center gap-1 rounded-full bg-gray-700
+넷플릭스,"GIGN: 엘리트 포스
+
+-
+
+2026
+·
+드라마",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,7월 23일 공개,,,DIV,sticky z-[9] flex items-center gap-4 bg-background desktop-lg:py-3 py-2 top-[calc(var(--height-global-navigation-bar)+6.5rem)]
+넷플릭스,"공개 18일 전
+
+채권추심원
+
+-
+
+2026
+·
+영화
+
+공개 18일 전
+
+러브 인 슬로우 모션
+
+-
+
+2026
+·
+영화",https://m.kinolights.com/season/153297,https://file.kinolights.com/m/content_poster/202606/22/643d9a24-8954-4eb2-aa74-bc0b6bfc4811.webp,DIV,flex items-stretch
+넷플릭스,"공개 18일 전
+
+채권추심원
+
+-
+
+2026
+·
+영화",https://m.kinolights.com/season/153297,https://file.kinolights.com/m/content_poster/202606/22/643d9a24-8954-4eb2-aa74-bc0b6bfc4811.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+넷플릭스,공개 18일 전,https://m.kinolights.com/season/153297,https://file.kinolights.com/m/content_poster/202606/22/643d9a24-8954-4eb2-aa74-bc0b6bfc4811.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,공개 18일 전,,,DIV,inline-flex max-w-full flex-row items-center gap-1 rounded-full bg-gray-700
+넷플릭스,"채권추심원
+
+-
+
+2026
+·
+영화",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,"공개 18일 전
+
+러브 인 슬로우 모션
+
+-
+
+2026
+·
+영화",https://m.kinolights.com/season/153441,https://file.kinolights.com/m/content_poster/202606/26/a97d667d-6501-4ffc-92b3-761ad8697af7.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+넷플릭스,공개 18일 전,https://m.kinolights.com/season/153441,https://file.kinolights.com/m/content_poster/202606/26/a97d667d-6501-4ffc-92b3-761ad8697af7.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,"러브 인 슬로우 모션
+
+-
+
+2026
+·
+영화",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,7월 24일 공개,,,DIV,sticky z-[9] flex items-center gap-4 bg-background desktop-lg:py-3 py-2 top-[calc(var(--height-global-navigation-bar)+6.5rem)]
+넷플릭스,"공개 19일 전
+
+믿는 자들
+
+-
+
+2026
+·
+영화
+
+공개 19일 전
+
+72시간
+
+-
+
+2026
+·
+영화",https://m.kinolights.com/season/153298,https://file.kinolights.com/m/content_poster/202606/22/47945a27-71de-42a8-ac5d-83a4806c277a.webp,DIV,flex items-stretch
+넷플릭스,"공개 19일 전
+
+믿는 자들
+
+-
+
+2026
+·
+영화",https://m.kinolights.com/season/153298,https://file.kinolights.com/m/content_poster/202606/22/47945a27-71de-42a8-ac5d-83a4806c277a.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+넷플릭스,공개 19일 전,https://m.kinolights.com/season/153298,https://file.kinolights.com/m/content_poster/202606/22/47945a27-71de-42a8-ac5d-83a4806c277a.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,공개 19일 전,,,DIV,inline-flex max-w-full flex-row items-center gap-1 rounded-full bg-gray-700
+넷플릭스,"믿는 자들
+
+-
+
+2026
+·
+영화",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,"공개 19일 전
+
+72시간
+
+-
+
+2026
+·
+영화",https://m.kinolights.com/season/152528,https://file.kinolights.com/m/content_poster/202605/04/30b5d1f1-3f20-4660-b0f5-2f6fe6f91e78.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+넷플릭스,공개 19일 전,https://m.kinolights.com/season/152528,https://file.kinolights.com/m/content_poster/202605/04/30b5d1f1-3f20-4660-b0f5-2f6fe6f91e78.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,"72시간
+
+-
+
+2026
+·
+영화",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,8월 7일 공개,,,DIV,sticky z-[9] flex items-center gap-4 bg-background desktop-lg:py-3 py-2 top-[calc(var(--height-global-navigation-bar)+6.5rem)]
+넷플릭스,"공개 33일 전
+
+이런 엿 같은 사랑
+
+-
+
+2026
+·
+드라마
+
+공개 33일 전
+
+라스트 하우스
+
+-
+
+2026
+·
+영화",https://m.kinolights.com/season/143450,https://file.kinolights.com/m/content_poster/202601/21/ad6e9adc-a5cc-43bc-9ae4-6cd56d3deb75.webp,DIV,flex items-stretch
+넷플릭스,"공개 33일 전
+
+이런 엿 같은 사랑
+
+-
+
+2026
+·
+드라마",https://m.kinolights.com/season/143450,https://file.kinolights.com/m/content_poster/202601/21/ad6e9adc-a5cc-43bc-9ae4-6cd56d3deb75.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+넷플릭스,공개 33일 전,https://m.kinolights.com/season/143450,https://file.kinolights.com/m/content_poster/202601/21/ad6e9adc-a5cc-43bc-9ae4-6cd56d3deb75.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,공개 33일 전,,,DIV,inline-flex max-w-full flex-row items-center gap-1 rounded-full bg-gray-700
+넷플릭스,"이런 엿 같은 사랑
+
+-
+
+2026
+·
+드라마",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,"공개 33일 전
+
+라스트 하우스
+
+-
+
+2026
+·
+영화",https://m.kinolights.com/season/152583,https://file.kinolights.com/m/content_poster/202605/07/8d69266e-1e43-4871-a97c-84b94896d57c.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+넷플릭스,공개 33일 전,https://m.kinolights.com/season/152583,https://file.kinolights.com/m/content_poster/202605/07/8d69266e-1e43-4871-a97c-84b94896d57c.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,"라스트 하우스
+
+-
+
+2026
+·
+영화",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,8월 8일 공개,,,DIV,sticky z-[9] flex items-center gap-4 bg-background desktop-lg:py-3 py-2 top-[calc(var(--height-global-navigation-bar)+6.5rem)]
+넷플릭스,"공개 34일 전
+
+리본 히어로
+
+-
+
+2026
+·
+애니메이션",https://m.kinolights.com/season/153388,https://file.kinolights.com/m/content_poster/202606/24/f0b60189-59b0-4d20-8261-cae3fe4d5e1d.webp,DIV,flex items-stretch
+넷플릭스,공개 34일 전,https://m.kinolights.com/season/153388,https://file.kinolights.com/m/content_poster/202606/24/f0b60189-59b0-4d20-8261-cae3fe4d5e1d.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,공개 34일 전,,,DIV,inline-flex max-w-full flex-row items-center gap-1 rounded-full bg-gray-700
+넷플릭스,"리본 히어로
+
+-
+
+2026
+·
+애니메이션",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,8월 13일 공개,,,DIV,sticky z-[9] flex items-center gap-4 bg-background desktop-lg:py-3 py-2 top-[calc(var(--height-global-navigation-bar)+6.5rem)]
+넷플릭스,"공개 39일 전
+
+이렇게도 저렇게도
+
+-
+
+2026
+·
+영화",https://m.kinolights.com/season/152526,https://file.kinolights.com/m/content_poster/202605/04/2af77c15-75d9-48dc-bdb6-0d3dbb17581a.webp,DIV,flex items-stretch
+넷플릭스,공개 39일 전,https://m.kinolights.com/season/152526,https://file.kinolights.com/m/content_poster/202605/04/2af77c15-75d9-48dc-bdb6-0d3dbb17581a.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,공개 39일 전,,,DIV,inline-flex max-w-full flex-row items-center gap-1 rounded-full bg-gray-700
+넷플릭스,"이렇게도 저렇게도
+
+-
+
+2026
+·
+영화",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,8월 28일 공개,,,DIV,sticky z-[9] flex items-center gap-4 bg-background desktop-lg:py-3 py-2 top-[calc(var(--height-global-navigation-bar)+6.5rem)]
+넷플릭스,"공개 54일 전
+
+침묵의 묘지 시즌 3
+
+-
+
+2026
+·
+드라마",https://m.kinolights.com/season/151874,https://file.kinolights.com/m/content_poster/202604/14/4737875c-52e0-411d-8cae-65ca71b20d04.webp,DIV,flex items-stretch
+넷플릭스,공개 54일 전,https://m.kinolights.com/season/151874,https://file.kinolights.com/m/content_poster/202604/14/4737875c-52e0-411d-8cae-65ca71b20d04.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+넷플릭스,공개 54일 전,,,DIV,inline-flex max-w-full flex-row items-center gap-1 rounded-full bg-gray-700
+넷플릭스,"침묵의 묘지 시즌 3
+
+-
+
+2026
+·
+드라마",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+넷플릭스,"이용약관
+•
+개인정보처리방침
+•
+고객센터
+•
+광고문의
+•
+제휴문의
+
+대표: 양준영, 장승룡
+
+•
+
+사업자등록번호: 406-87-00868
+
+서울 강남구 테헤란로2길 27, 12층 패스트파이브, 1204호(역삼동, 비젼타워)
+
+©2026 KinoLights Inc, All rights reserved.
+
+APP STORE
+PLAY STORE",https://m.kinolights.com/,,DIV,flex w-full desktop:flex-row flex-col desktop:items-start desktop:justify-between gap-6 px-4
+넷플릭스,APP STORE,https://apps.apple.com/kr/app/%ED%82%A4%EB%85%B8%EB%9D%BC%EC%9D%B4%EC%B8%A0/id1411855404,,A,group inline-flex flex-row items-center font-sans transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary-blue-400 focus-visible:ring-offset-2 focus-visible:ring-o
+넷플릭스,PLAY STORE,https://play.google.com/store/apps/details?id=com.kinolights.kinolights&hl=ko,,A,group inline-flex flex-row items-center font-sans transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary-blue-400 focus-visible:ring-offset-2 focus-visible:ring-o
+티빙,홈랭킹,https://m.kinolights.com/,,DIV,flex flex-row items-center container mx-auto h-full justify-between gap-4 px-container
+티빙,"전체
+
+넷플릭스
+
+티빙
+
+쿠팡플레이
+
+디즈니+
+
+웨이브
+
+라프텔
+
+왓챠
+
+Apple TV
+
+아마존 프라임 비디오
+
+씨네폭스",,,DIV,flex items-center whitespace-nowrap gap-1
+티빙,내일 공개,,,DIV,sticky z-[9] flex items-center gap-4 bg-background desktop-lg:py-3 py-2 top-[calc(var(--height-global-navigation-bar)+6.5rem)]
+티빙,"내일 공개
+
+샤먼: 미신전
+
+-
+
+2026
+·
+시사/교양",https://m.kinolights.com/season/153150,https://file.kinolights.com/m/content_poster/202606/17/c35c0654-bd3a-4bc8-b5f6-f282d290547b.webp,DIV,flex items-stretch
+티빙,내일 공개,https://m.kinolights.com/season/153150,https://file.kinolights.com/m/content_poster/202606/17/c35c0654-bd3a-4bc8-b5f6-f282d290547b.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+티빙,"샤먼: 미신전
+
+-
+
+2026
+·
+시사/교양",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+티빙,7월 8일 공개,,,DIV,sticky z-[9] flex items-center gap-4 bg-background desktop-lg:py-3 py-2 top-[calc(var(--height-global-navigation-bar)+6.5rem)]
+티빙,"공개 3일 전
+
+도굴왕
+
+-
+
+2026
+·
+애니메이션",https://m.kinolights.com/season/152966,https://file.kinolights.com/m/content_poster/202606/28/53324e93-a80d-43c1-88d5-0ad69f6d7c16.webp,DIV,flex items-stretch
+티빙,공개 3일 전,https://m.kinolights.com/season/152966,https://file.kinolights.com/m/content_poster/202606/28/53324e93-a80d-43c1-88d5-0ad69f6d7c16.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+티빙,공개 3일 전,,,DIV,inline-flex max-w-full flex-row items-center gap-1 rounded-full bg-gray-700
+티빙,"도굴왕
+
+-
+
+2026
+·
+애니메이션",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+티빙,7월 13일 공개,,,DIV,sticky z-[9] flex items-center gap-4 bg-background desktop-lg:py-3 py-2 top-[calc(var(--height-global-navigation-bar)+6.5rem)]
+티빙,"공개 8일 전
+
+그대에게 드림
+
+-
+
+2026
+·
+드라마",https://m.kinolights.com/season/152264,https://file.kinolights.com/m/content_poster/202606/23/bde5294a-6d33-418f-bdc4-79744e527a1e.webp,DIV,flex items-stretch
+티빙,공개 8일 전,https://m.kinolights.com/season/152264,https://file.kinolights.com/m/content_poster/202606/23/bde5294a-6d33-418f-bdc4-79744e527a1e.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+티빙,공개 8일 전,,,DIV,inline-flex max-w-full flex-row items-center gap-1 rounded-full bg-gray-700
+티빙,"그대에게 드림
+
+-
+
+2026
+·
+드라마",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+티빙,7월 18일 공개,,,DIV,sticky z-[9] flex items-center gap-4 bg-background desktop-lg:py-3 py-2 top-[calc(var(--height-global-navigation-bar)+6.5rem)]
+티빙,"공개 13일 전
+
+오싹한 연애
+
+-
+
+2026
+·
+드라마",https://m.kinolights.com/season/152256,https://file.kinolights.com/m/content_poster/202606/11/200f04bc-61bb-4a4a-a9fa-122daa979aa9.webp,DIV,flex items-stretch
+티빙,공개 13일 전,https://m.kinolights.com/season/152256,https://file.kinolights.com/m/content_poster/202606/11/200f04bc-61bb-4a4a-a9fa-122daa979aa9.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+티빙,공개 13일 전,,,DIV,inline-flex max-w-full flex-row items-center gap-1 rounded-full bg-gray-700
+티빙,"오싹한 연애
+
+-
+
+2026
+·
+드라마",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+티빙,7월 30일 공개,,,DIV,sticky z-[9] flex items-center gap-4 bg-background desktop-lg:py-3 py-2 top-[calc(var(--height-global-navigation-bar)+6.5rem)]
+티빙,"공개 25일 전
+
+어쩔수가없다
+
+88.1
+
+%
+
+2025
+·
+영화",https://m.kinolights.com/season/136358,https://file.kinolights.com/m/content_poster/202509/03/024642a8-2194-4f5e-b36d-5532878f9399.webp,DIV,flex items-stretch
+티빙,공개 25일 전,https://m.kinolights.com/season/136358,https://file.kinolights.com/m/content_poster/202509/03/024642a8-2194-4f5e-b36d-5532878f9399.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+티빙,공개 25일 전,,,DIV,inline-flex max-w-full flex-row items-center gap-1 rounded-full bg-gray-700
+티빙,"어쩔수가없다
+
+88.1
+
+%
+
+2025
+·
+영화",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+티빙,8월 3일 공개,,,DIV,sticky z-[9] flex items-center gap-4 bg-background desktop-lg:py-3 py-2 top-[calc(var(--height-global-navigation-bar)+6.5rem)]
+티빙,"공개 29일 전
+
+최애의 사원
+
+-
+
+2026
+·
+드라마",https://m.kinolights.com/season/152259,https://file.kinolights.com/m/content_poster/202607/01/1dbeafd1-1227-473b-9284-f25d46ebeda7.webp,DIV,flex items-stretch
+티빙,공개 29일 전,https://m.kinolights.com/season/152259,https://file.kinolights.com/m/content_poster/202607/01/1dbeafd1-1227-473b-9284-f25d46ebeda7.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+티빙,공개 29일 전,,,DIV,inline-flex max-w-full flex-row items-center gap-1 rounded-full bg-gray-700
+티빙,"최애의 사원
+
+-
+
+2026
+·
+드라마",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+티빙,"이용약관
+•
+개인정보처리방침
+•
+고객센터
+•
+광고문의
+•
+제휴문의
+
+대표: 양준영, 장승룡
+
+•
+
+사업자등록번호: 406-87-00868
+
+서울 강남구 테헤란로2길 27, 12층 패스트파이브, 1204호(역삼동, 비젼타워)
+
+©2026 KinoLights Inc, All rights reserved.
+
+APP STORE
+PLAY STORE",https://m.kinolights.com/,,DIV,flex w-full desktop:flex-row flex-col desktop:items-start desktop:justify-between gap-6 px-4
+티빙,APP STORE,https://apps.apple.com/kr/app/%ED%82%A4%EB%85%B8%EB%9D%BC%EC%9D%B4%EC%B8%A0/id1411855404,,A,group inline-flex flex-row items-center font-sans transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary-blue-400 focus-visible:ring-offset-2 focus-visible:ring-o
+티빙,PLAY STORE,https://play.google.com/store/apps/details?id=com.kinolights.kinolights&hl=ko,,A,group inline-flex flex-row items-center font-sans transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary-blue-400 focus-visible:ring-offset-2 focus-visible:ring-o
+쿠팡플레이,홈랭킹,https://m.kinolights.com/,,DIV,flex flex-row items-center container mx-auto h-full justify-between gap-4 px-container
+쿠팡플레이,"전체
+
+넷플릭스
+
+티빙
+
+쿠팡플레이
+
+디즈니+
+
+웨이브
+
+라프텔
+
+왓챠
+
+Apple TV
+
+아마존 프라임 비디오
+
+씨네폭스",,,DIV,flex items-center whitespace-nowrap gap-1
+쿠팡플레이,7월 31일 공개,,,DIV,sticky z-[9] flex items-center gap-4 bg-background desktop-lg:py-3 py-2 top-[calc(var(--height-global-navigation-bar)+6.5rem)]
+쿠팡플레이,"공개 26일 전
+
+지금 불륜이 문제가 아닙니다
+
+-
+
+2026
+·
+드라마",https://m.kinolights.com/season/153586,https://file.kinolights.com/m/content_poster/202607/02/d0a120a8-6259-49a0-8ca1-25087de917d2.webp,DIV,flex items-stretch
+쿠팡플레이,공개 26일 전,https://m.kinolights.com/season/153586,https://file.kinolights.com/m/content_poster/202607/02/d0a120a8-6259-49a0-8ca1-25087de917d2.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+쿠팡플레이,공개 26일 전,,,DIV,inline-flex max-w-full flex-row items-center gap-1 rounded-full bg-gray-700
+쿠팡플레이,"지금 불륜이 문제가 아닙니다
+
+-
+
+2026
+·
+드라마",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+쿠팡플레이,"이용약관
+•
+개인정보처리방침
+•
+고객센터
+•
+광고문의
+•
+제휴문의
+
+대표: 양준영, 장승룡
+
+•
+
+사업자등록번호: 406-87-00868
+
+서울 강남구 테헤란로2길 27, 12층 패스트파이브, 1204호(역삼동, 비젼타워)
+
+©2026 KinoLights Inc, All rights reserved.
+
+APP STORE
+PLAY STORE",https://m.kinolights.com/,,DIV,flex w-full desktop:flex-row flex-col desktop:items-start desktop:justify-between gap-6 px-4
+쿠팡플레이,APP STORE,https://apps.apple.com/kr/app/%ED%82%A4%EB%85%B8%EB%9D%BC%EC%9D%B4%EC%B8%A0/id1411855404,,A,group inline-flex flex-row items-center font-sans transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary-blue-400 focus-visible:ring-offset-2 focus-visible:ring-o
+쿠팡플레이,PLAY STORE,https://play.google.com/store/apps/details?id=com.kinolights.kinolights&hl=ko,,A,group inline-flex flex-row items-center font-sans transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary-blue-400 focus-visible:ring-offset-2 focus-visible:ring-o
+디즈니+,홈랭킹,https://m.kinolights.com/,,DIV,flex flex-row items-center container mx-auto h-full justify-between gap-4 px-container
+디즈니+,"전체
+
+넷플릭스
+
+티빙
+
+쿠팡플레이
+
+디즈니+
+
+웨이브
+
+라프텔
+
+왓챠
+
+Apple TV
+
+아마존 프라임 비디오
+
+씨네폭스",,,DIV,flex items-center whitespace-nowrap gap-1
+디즈니+,내일 공개,,,DIV,sticky z-[9] flex items-center gap-4 bg-background desktop-lg:py-3 py-2 top-[calc(var(--height-global-navigation-bar)+6.5rem)]
+디즈니+,"내일 공개
+
+공감세포
+
+-
+
+2026
+·
+드라마",https://m.kinolights.com/season/152960,https://file.kinolights.com/m/content_poster/202606/09/867e3651-6d13-4a55-95ee-2eb92441924c.webp,DIV,flex items-stretch
+디즈니+,내일 공개,https://m.kinolights.com/season/152960,https://file.kinolights.com/m/content_poster/202606/09/867e3651-6d13-4a55-95ee-2eb92441924c.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+디즈니+,"공감세포
+
+-
+
+2026
+·
+드라마",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+디즈니+,7월 8일 공개,,,DIV,sticky z-[9] flex items-center gap-4 bg-background desktop-lg:py-3 py-2 top-[calc(var(--height-global-navigation-bar)+6.5rem)]
+디즈니+,"공개 3일 전
+
+척의 일생
+
+97.5
+
+%
+
+2025
+·
+영화",https://m.kinolights.com/season/141972,https://file.kinolights.com/m/content_poster/202512/23/08aa0407-909a-4241-9136-c3f3cec4f272.webp,DIV,flex items-stretch
+디즈니+,공개 3일 전,https://m.kinolights.com/season/141972,https://file.kinolights.com/m/content_poster/202512/23/08aa0407-909a-4241-9136-c3f3cec4f272.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+디즈니+,공개 3일 전,,,DIV,inline-flex max-w-full flex-row items-center gap-1 rounded-full bg-gray-700
+디즈니+,"척의 일생
+
+97.5
+
+%
+
+2025
+·
+영화",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+디즈니+,7월 10일 공개,,,DIV,sticky z-[9] flex items-center gap-4 bg-background desktop-lg:py-3 py-2 top-[calc(var(--height-global-navigation-bar)+6.5rem)]
+디즈니+,"공개 5일 전
+
+국가대표
+
+84.5
+
+%
+
+2009
+·
+영화
+
+공개 5일 전
+
+우리 생애 최고의 순간
+
+79.5
+
+%
+
+2008
+·
+영화
+
+공개 5일 전
+
+야구여왕
+
+69.0
+
+%
+
+2025
+·
+예능",https://m.kinolights.com/season/8555,https://file.kinolights.com/m/content_poster/202307/12/3620cc38-fec0-4dfc-97c4-0e760e14a8cb.webp,DIV,flex items-stretch
+디즈니+,"공개 5일 전
+
+국가대표
+
+84.5
+
+%
+
+2009
+·
+영화",https://m.kinolights.com/season/8555,https://file.kinolights.com/m/content_poster/202307/12/3620cc38-fec0-4dfc-97c4-0e760e14a8cb.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+디즈니+,공개 5일 전,https://m.kinolights.com/season/8555,https://file.kinolights.com/m/content_poster/202307/12/3620cc38-fec0-4dfc-97c4-0e760e14a8cb.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+디즈니+,공개 5일 전,,,DIV,inline-flex max-w-full flex-row items-center gap-1 rounded-full bg-gray-700
+디즈니+,"국가대표
+
+84.5
+
+%
+
+2009
+·
+영화",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+디즈니+,"공개 5일 전
+
+우리 생애 최고의 순간
+
+79.5
+
+%
+
+2008
+·
+영화",https://m.kinolights.com/season/8546,https://file.kinolights.com/m/content_poster/202307/12/a73e35cc-81cb-4d6c-96a0-85485c44b673.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+디즈니+,공개 5일 전,https://m.kinolights.com/season/8546,https://file.kinolights.com/m/content_poster/202307/12/a73e35cc-81cb-4d6c-96a0-85485c44b673.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+디즈니+,"우리 생애 최고의 순간
+
+79.5
+
+%
+
+2008
+·
+영화",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+디즈니+,"공개 5일 전
+
+야구여왕
+
+69.0
+
+%
+
+2025
+·
+예능",https://m.kinolights.com/season/148121,https://file.kinolights.com/m/content_poster/202511/24/d09702ba-0f8e-4938-b117-a725ce6efc9a.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+디즈니+,공개 5일 전,https://m.kinolights.com/season/148121,https://file.kinolights.com/m/content_poster/202511/24/d09702ba-0f8e-4938-b117-a725ce6efc9a.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+디즈니+,"야구여왕
+
+69.0
+
+%
+
+2025
+·
+예능",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+디즈니+,"이용약관
+•
+개인정보처리방침
+•
+고객센터
+•
+광고문의
+•
+제휴문의
+
+대표: 양준영, 장승룡
+
+•
+
+사업자등록번호: 406-87-00868
+
+서울 강남구 테헤란로2길 27, 12층 패스트파이브, 1204호(역삼동, 비젼타워)
+
+©2026 KinoLights Inc, All rights reserved.
+
+APP STORE
+PLAY STORE",https://m.kinolights.com/,,DIV,flex w-full desktop:flex-row flex-col desktop:items-start desktop:justify-between gap-6 px-4
+디즈니+,APP STORE,https://apps.apple.com/kr/app/%ED%82%A4%EB%85%B8%EB%9D%BC%EC%9D%B4%EC%B8%A0/id1411855404,,A,group inline-flex flex-row items-center font-sans transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary-blue-400 focus-visible:ring-offset-2 focus-visible:ring-o
+디즈니+,PLAY STORE,https://play.google.com/store/apps/details?id=com.kinolights.kinolights&hl=ko,,A,group inline-flex flex-row items-center font-sans transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary-blue-400 focus-visible:ring-offset-2 focus-visible:ring-o
+웨이브,홈랭킹,https://m.kinolights.com/,,DIV,flex flex-row items-center container mx-auto h-full justify-between gap-4 px-container
+웨이브,"전체
+
+넷플릭스
+
+티빙
+
+쿠팡플레이
+
+디즈니+
+
+웨이브
+
+라프텔
+
+왓챠
+
+Apple TV
+
+아마존 프라임 비디오
+
+씨네폭스",,,DIV,flex items-center whitespace-nowrap gap-1
+웨이브,"공개 예정인 작품이 없어요
+
+상단 필터를 변경해 탐색해 보세요!",,,DIV,mx-auto flex w-full max-w-[19.5625rem] flex-col items-center gap-6
+웨이브,"이용약관
+•
+개인정보처리방침
+•
+고객센터
+•
+광고문의
+•
+제휴문의
+
+대표: 양준영, 장승룡
+
+•
+
+사업자등록번호: 406-87-00868
+
+서울 강남구 테헤란로2길 27, 12층 패스트파이브, 1204호(역삼동, 비젼타워)
+
+©2026 KinoLights Inc, All rights reserved.
+
+APP STORE
+PLAY STORE",https://m.kinolights.com/,,DIV,flex w-full desktop:flex-row flex-col desktop:items-start desktop:justify-between gap-6 px-4
+웨이브,APP STORE,https://apps.apple.com/kr/app/%ED%82%A4%EB%85%B8%EB%9D%BC%EC%9D%B4%EC%B8%A0/id1411855404,,A,group inline-flex flex-row items-center font-sans transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary-blue-400 focus-visible:ring-offset-2 focus-visible:ring-o
+웨이브,PLAY STORE,https://play.google.com/store/apps/details?id=com.kinolights.kinolights&hl=ko,,A,group inline-flex flex-row items-center font-sans transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary-blue-400 focus-visible:ring-offset-2 focus-visible:ring-o
+라프텔,홈랭킹,https://m.kinolights.com/,,DIV,flex flex-row items-center container mx-auto h-full justify-between gap-4 px-container
+라프텔,"전체
+
+넷플릭스
+
+티빙
+
+쿠팡플레이
+
+디즈니+
+
+웨이브
+
+라프텔
+
+왓챠
+
+Apple TV
+
+아마존 프라임 비디오
+
+씨네폭스",,,DIV,flex items-center whitespace-nowrap gap-1
+라프텔,"공개 예정인 작품이 없어요
+
+상단 필터를 변경해 탐색해 보세요!",,,DIV,mx-auto flex w-full max-w-[19.5625rem] flex-col items-center gap-6
+라프텔,"이용약관
+•
+개인정보처리방침
+•
+고객센터
+•
+광고문의
+•
+제휴문의
+
+대표: 양준영, 장승룡
+
+•
+
+사업자등록번호: 406-87-00868
+
+서울 강남구 테헤란로2길 27, 12층 패스트파이브, 1204호(역삼동, 비젼타워)
+
+©2026 KinoLights Inc, All rights reserved.
+
+APP STORE
+PLAY STORE",https://m.kinolights.com/,,DIV,flex w-full desktop:flex-row flex-col desktop:items-start desktop:justify-between gap-6 px-4
+라프텔,APP STORE,https://apps.apple.com/kr/app/%ED%82%A4%EB%85%B8%EB%9D%BC%EC%9D%B4%EC%B8%A0/id1411855404,,A,group inline-flex flex-row items-center font-sans transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary-blue-400 focus-visible:ring-offset-2 focus-visible:ring-o
+라프텔,PLAY STORE,https://play.google.com/store/apps/details?id=com.kinolights.kinolights&hl=ko,,A,group inline-flex flex-row items-center font-sans transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary-blue-400 focus-visible:ring-offset-2 focus-visible:ring-o
+왓챠,홈랭킹,https://m.kinolights.com/,,DIV,flex flex-row items-center container mx-auto h-full justify-between gap-4 px-container
+왓챠,"전체
+
+넷플릭스
+
+티빙
+
+쿠팡플레이
+
+디즈니+
+
+웨이브
+
+라프텔
+
+왓챠
+
+Apple TV
+
+아마존 프라임 비디오
+
+씨네폭스",,,DIV,flex items-center whitespace-nowrap gap-1
+왓챠,내일 공개,,,DIV,sticky z-[9] flex items-center gap-4 bg-background desktop-lg:py-3 py-2 top-[calc(var(--height-global-navigation-bar)+6.5rem)]
+왓챠,"내일 공개
+
+무직전생 Ⅲ ~이세계에 갔으면 최선을 다한다~
+
+-
+
+2026
+·
+애니메이션
+
+내일 공개
+
+헬 모드 ~파고들기 좋아하는 게이머는 폐급 설정 이세계에서 무쌍한다~ 2기
+
+-
+
+2026
+·
+애니메이션
+
+내일 공개
+
+블랙 토치
+
+-
+
+2026
+·
+애니메이션
+
+내일 공개
+
+그로우 업 쇼 ~해바라기 서커스단~
+
+-
+
+2026
+·
+애니메이션
+
+내일 공개
+
+정반대의 너와 나 2기
+
+-
+
+2026
+·
+애니메이션
+
+내일 공개
+
+너를 너무너무너무너무 좋아하는 100명의 그녀 3기
+
+-
+
+2026
+·
+애니메이션",https://m.kinolights.com/season/153141,https://file.kinolights.com/m/content_poster/202606/16/790695f1-2ecf-4dc7-9210-a342ce278b41.webp,DIV,flex items-stretch
+왓챠,"내일 공개
+
+무직전생 Ⅲ ~이세계에 갔으면 최선을 다한다~
+
+-
+
+2026
+·
+애니메이션",https://m.kinolights.com/season/153141,https://file.kinolights.com/m/content_poster/202606/16/790695f1-2ecf-4dc7-9210-a342ce278b41.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+왓챠,내일 공개,https://m.kinolights.com/season/153141,https://file.kinolights.com/m/content_poster/202606/16/790695f1-2ecf-4dc7-9210-a342ce278b41.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+왓챠,"무직전생 Ⅲ ~이세계에 갔으면 최선을 다한다~
+
+-
+
+2026
+·
+애니메이션",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+왓챠,"내일 공개
+
+헬 모드 ~파고들기 좋아하는 게이머는 폐급 설정 이세계에서 무쌍한다~ 2기
+
+-
+
+2026
+·
+애니메이션",https://m.kinolights.com/season/153473,https://file.kinolights.com/m/content_poster/202606/28/d309978b-5bc7-4914-9a92-483670a3737a.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+왓챠,내일 공개,https://m.kinolights.com/season/153473,https://file.kinolights.com/m/content_poster/202606/28/d309978b-5bc7-4914-9a92-483670a3737a.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+왓챠,"헬 모드 ~파고들기 좋아하는 게이머는 폐급 설정 이세계에서 무쌍한다~ 2기
+
+-
+
+2026
+·
+애니메이션",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+왓챠,"내일 공개
+
+블랙 토치
+
+-
+
+2026
+·
+애니메이션",https://m.kinolights.com/season/153476,https://file.kinolights.com/m/content_poster/202606/28/eca1d374-3c77-4e84-981e-43c1a663cfdf.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+왓챠,내일 공개,https://m.kinolights.com/season/153476,https://file.kinolights.com/m/content_poster/202606/28/eca1d374-3c77-4e84-981e-43c1a663cfdf.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+왓챠,"블랙 토치
+
+-
+
+2026
+·
+애니메이션",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+왓챠,"내일 공개
+
+그로우 업 쇼 ~해바라기 서커스단~
+
+-
+
+2026
+·
+애니메이션",https://m.kinolights.com/season/153480,https://file.kinolights.com/m/content_poster/202606/28/b698fb14-11ce-4e6e-af16-16818ab42f95.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+왓챠,내일 공개,https://m.kinolights.com/season/153480,https://file.kinolights.com/m/content_poster/202606/28/b698fb14-11ce-4e6e-af16-16818ab42f95.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+왓챠,"그로우 업 쇼 ~해바라기 서커스단~
+
+-
+
+2026
+·
+애니메이션",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+왓챠,"내일 공개
+
+정반대의 너와 나 2기
+
+-
+
+2026
+·
+애니메이션",https://m.kinolights.com/season/153488,https://file.kinolights.com/m/content_poster/202606/29/c5244693-9cb7-44da-be74-0f194809813e.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+왓챠,내일 공개,https://m.kinolights.com/season/153488,https://file.kinolights.com/m/content_poster/202606/29/c5244693-9cb7-44da-be74-0f194809813e.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+왓챠,"정반대의 너와 나 2기
+
+-
+
+2026
+·
+애니메이션",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+왓챠,"내일 공개
+
+너를 너무너무너무너무 좋아하는 100명의 그녀 3기
+
+-
+
+2026
+·
+애니메이션",https://m.kinolights.com/season/153491,https://file.kinolights.com/m/content_poster/202606/29/fa072157-d0c1-4a00-81f2-bc4569e3ce5f.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+왓챠,내일 공개,https://m.kinolights.com/season/153491,https://file.kinolights.com/m/content_poster/202606/29/fa072157-d0c1-4a00-81f2-bc4569e3ce5f.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+왓챠,"너를 너무너무너무너무 좋아하는 100명의 그녀 3기
+
+-
+
+2026
+·
+애니메이션",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+왓챠,7월 9일 공개,,,DIV,sticky z-[9] flex items-center gap-4 bg-background desktop-lg:py-3 py-2 top-[calc(var(--height-global-navigation-bar)+6.5rem)]
+왓챠,"공개 4일 전
+
+도굴왕
+
+-
+
+2026
+·
+애니메이션
+
+공개 4일 전
+
+유녀전기 Ⅱ
+
+-
+
+2026
+·
+애니메이션",https://m.kinolights.com/season/152966,https://file.kinolights.com/m/content_poster/202606/28/53324e93-a80d-43c1-88d5-0ad69f6d7c16.webp,DIV,flex items-stretch
+왓챠,"공개 4일 전
+
+도굴왕
+
+-
+
+2026
+·
+애니메이션",https://m.kinolights.com/season/152966,https://file.kinolights.com/m/content_poster/202606/28/53324e93-a80d-43c1-88d5-0ad69f6d7c16.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+왓챠,공개 4일 전,https://m.kinolights.com/season/152966,https://file.kinolights.com/m/content_poster/202606/28/53324e93-a80d-43c1-88d5-0ad69f6d7c16.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+왓챠,공개 4일 전,,,DIV,inline-flex max-w-full flex-row items-center gap-1 rounded-full bg-gray-700
+왓챠,"도굴왕
+
+-
+
+2026
+·
+애니메이션",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+왓챠,"공개 4일 전
+
+유녀전기 Ⅱ
+
+-
+
+2026
+·
+애니메이션",https://m.kinolights.com/season/153287,https://file.kinolights.com/m/content_poster/202606/22/558f3ff5-27f4-4bc3-8462-0001a3557fb1.webp,ARTICLE,flex select-none flex-col overflow-hidden rounded-lg min-w-0
+왓챠,공개 4일 전,https://m.kinolights.com/season/153287,https://file.kinolights.com/m/content_poster/202606/22/558f3ff5-27f4-4bc3-8462-0001a3557fb1.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+왓챠,"유녀전기 Ⅱ
+
+-
+
+2026
+·
+애니메이션",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+왓챠,7월 20일 공개,,,DIV,sticky z-[9] flex items-center gap-4 bg-background desktop-lg:py-3 py-2 top-[calc(var(--height-global-navigation-bar)+6.5rem)]
+왓챠,"공개 15일 전
+
+도망을 잘 치는 도련님 2기
+
+-
+
+2025
+·
+드라마",https://m.kinolights.com/season/137858,https://file.kinolights.com/m/content_poster/202606/28/545cf03e-336f-4ec0-b52d-5462bc79457c.webp,DIV,flex items-stretch
+왓챠,공개 15일 전,https://m.kinolights.com/season/137858,https://file.kinolights.com/m/content_poster/202606/28/545cf03e-336f-4ec0-b52d-5462bc79457c.webp,A,relative block w-full min-w-0 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+왓챠,공개 15일 전,,,DIV,inline-flex max-w-full flex-row items-center gap-1 rounded-full bg-gray-700
+왓챠,"도망을 잘 치는 도련님 2기
+
+-
+
+2025
+·
+드라마",,,DIV,flex flex-col min-h-[4.9375rem] w-full min-w-0 shrink-0 items-start gap-0.5 bg-gray-700 p-2
+왓챠,"이용약관
+•
+개인정보처리방침
+•
+고객센터
+•
+광고문의
+•
+제휴문의
+
+대표: 양준영, 장승룡
+
+•
+
+사업자등록번호: 406-87-00868
+
+서울 강남구 테헤란로2길 27, 12층 패스트파이브, 1204호(역삼동, 비젼타워)
+
+©2026 KinoLights Inc, All rights reserved.
+
+APP STORE
+PLAY STORE",https://m.kinolights.com/,,DIV,flex w-full desktop:flex-row flex-col desktop:items-start desktop:justify-between gap-6 px-4
+왓챠,APP STORE,https://apps.apple.com/kr/app/%ED%82%A4%EB%85%B8%EB%9D%BC%EC%9D%B4%EC%B8%A0/id1411855404,,A,group inline-flex flex-row items-center font-sans transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary-blue-400 focus-visible:ring-offset-2 focus-visible:ring-o
+왓챠,PLAY STORE,https://play.google.com/store/apps/details?id=com.kinolights.kinolights&hl=ko,,A,group inline-flex flex-row items-center font-sans transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary-blue-400 focus-visible:ring-offset-2 focus-visible:ring-o
+Apple TV,홈랭킹,https://m.kinolights.com/,,DIV,flex flex-row items-center container mx-auto h-full justify-between gap-4 px-container
+Apple TV,"전체
+
+넷플릭스
+
+티빙
+
+쿠팡플레이
+
+디즈니+
+
+웨이브
+
+라프텔
+
+왓챠
+
+Apple TV
+
+아마존 프라임 비디오
+
+씨네폭스",,,DIV,flex items-center whitespace-nowrap gap-1
+Apple TV,"공개 예정인 작품이 없어요
+
+상단 필터를 변경해 탐색해 보세요!",,,DIV,mx-auto flex w-full max-w-[19.5625rem] flex-col items-center gap-6
+Apple TV,"이용약관
+•
+개인정보처리방침
+•
+고객센터
+•
+광고문의
+•
+제휴문의
+
+대표: 양준영, 장승룡
+
+•
+
+사업자등록번호: 406-87-00868
+
+서울 강남구 테헤란로2길 27, 12층 패스트파이브, 1204호(역삼동, 비젼타워)
+
+©2026 KinoLights Inc, All rights reserved.
+
+APP STORE
+PLAY STORE",https://m.kinolights.com/,,DIV,flex w-full desktop:flex-row flex-col desktop:items-start desktop:justify-between gap-6 px-4
+Apple TV,APP STORE,https://apps.apple.com/kr/app/%ED%82%A4%EB%85%B8%EB%9D%BC%EC%9D%B4%EC%B8%A0/id1411855404,,A,group inline-flex flex-row items-center font-sans transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary-blue-400 focus-visible:ring-offset-2 focus-visible:ring-o
+Apple TV,PLAY STORE,https://play.google.com/store/apps/details?id=com.kinolights.kinolights&hl=ko,,A,group inline-flex flex-row items-center font-sans transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary-blue-400 focus-visible:ring-offset-2 focus-visible:ring-o
+아마존 프라임 비디오,홈랭킹,https://m.kinolights.com/,,DIV,flex flex-row items-center container mx-auto h-full justify-between gap-4 px-container
+아마존 프라임 비디오,"전체
+
+넷플릭스
+
+티빙
+
+쿠팡플레이
+
+디즈니+
+
+웨이브
+
+라프텔
+
+왓챠
+
+Apple TV
+
+아마존 프라임 비디오
+
+씨네폭스",,,DIV,flex items-center whitespace-nowrap gap-1
+아마존 프라임 비디오,"공개 예정인 작품이 없어요
+
+상단 필터를 변경해 탐색해 보세요!",,,DIV,mx-auto flex w-full max-w-[19.5625rem] flex-col items-center gap-6
+아마존 프라임 비디오,"이용약관
+•
+개인정보처리방침
+•
+고객센터
+•
+광고문의
+•
+제휴문의
+
+대표: 양준영, 장승룡
+
+•
+
+사업자등록번호: 406-87-00868
+
+서울 강남구 테헤란로2길 27, 12층 패스트파이브, 1204호(역삼동, 비젼타워)
+
+©2026 KinoLights Inc, All rights reserved.
+
+APP STORE
+PLAY STORE",https://m.kinolights.com/,,DIV,flex w-full desktop:flex-row flex-col desktop:items-start desktop:justify-between gap-6 px-4
+아마존 프라임 비디오,APP STORE,https://apps.apple.com/kr/app/%ED%82%A4%EB%85%B8%EB%9D%BC%EC%9D%B4%EC%B8%A0/id1411855404,,A,group inline-flex flex-row items-center font-sans transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary-blue-400 focus-visible:ring-offset-2 focus-visible:ring-o
+아마존 프라임 비디오,PLAY STORE,https://play.google.com/store/apps/details?id=com.kinolights.kinolights&hl=ko,,A,group inline-flex flex-row items-center font-sans transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary-blue-400 focus-visible:ring-offset-2 focus-visible:ring-o
+씨네폭스,홈랭킹,https://m.kinolights.com/,,DIV,flex flex-row items-center container mx-auto h-full justify-between gap-4 px-container
+씨네폭스,"전체
+
+넷플릭스
+
+티빙
+
+쿠팡플레이
+
+디즈니+
+
+웨이브
+
+라프텔
+
+왓챠
+
+Apple TV
+
+아마존 프라임 비디오
+
+씨네폭스",,,DIV,flex items-center whitespace-nowrap gap-1
+씨네폭스,"공개 예정인 작품이 없어요
+
+상단 필터를 변경해 탐색해 보세요!",,,DIV,mx-auto flex w-full max-w-[19.5625rem] flex-col items-center gap-6
+씨네폭스,"이용약관
+•
+개인정보처리방침
+•
+고객센터
+•
+광고문의
+•
+제휴문의
+
+대표: 양준영, 장승룡
+
+•
+
+사업자등록번호: 406-87-00868
+
+서울 강남구 테헤란로2길 27, 12층 패스트파이브, 1204호(역삼동, 비젼타워)
+
+©2026 KinoLights Inc, All rights reserved.
+
+APP STORE
+PLAY STORE",https://m.kinolights.com/,,DIV,flex w-full desktop:flex-row flex-col desktop:items-start desktop:justify-between gap-6 px-4
+씨네폭스,APP STORE,https://apps.apple.com/kr/app/%ED%82%A4%EB%85%B8%EB%9D%BC%EC%9D%B4%EC%B8%A0/id1411855404,,A,group inline-flex flex-row items-center font-sans transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary-blue-400 focus-visible:ring-offset-2 focus-visible:ring-o
+씨네폭스,PLAY STORE,https://play.google.com/store/apps/details?id=com.kinolights.kinolights&hl=ko,,A,group inline-flex flex-row items-center font-sans transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary-blue-400 focus-visible:ring-offset-2 focus-visible:ring-o

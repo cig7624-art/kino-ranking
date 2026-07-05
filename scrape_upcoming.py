@@ -36,19 +36,6 @@ PROVIDERS = [
     "씨네폭스",
 ]
 
-PROVIDER_ALIASES = {
-    "넷플릭스": ["넷플릭스", "Netflix"],
-    "티빙": ["티빙", "TVING"],
-    "쿠팡플레이": ["쿠팡플레이", "Coupang Play"],
-    "디즈니+": ["디즈니+", "Disney+"],
-    "웨이브": ["웨이브", "Wavve"],
-    "라프텔": ["라프텔", "Laftel"],
-    "왓챠": ["왓챠", "Watcha"],
-    "Apple TV": ["Apple TV", "Apple TV+"],
-    "아마존 프라임 비디오": ["아마존 프라임 비디오", "Prime Video", "Amazon Prime"],
-    "씨네폭스": ["씨네폭스", "Cinefox"],
-}
-
 GENRE_WORDS = [
     "영화", "드라마", "예능", "애니메이션", "다큐멘터리", "시리즈",
     "키즈", "교양", "멜로/로맨스", "판타지", "액션", "코미디",
@@ -133,15 +120,12 @@ def is_bad_title(title: str) -> bool:
 
 def extract_genre(text: str) -> str:
     t = norm(text)
-
     for g in ["영화", "드라마", "예능", "애니메이션", "다큐멘터리", "시리즈"]:
         if g in t:
             return g
-
     for g in GENRE_WORDS:
         if g in t:
             return g
-
     return ""
 
 
@@ -153,11 +137,63 @@ def click_upcoming_tab(page) -> None:
         pass
 
 
-def smart_scroll_all(page, max_rounds: int = 80) -> None:
+def click_provider_filter(page, provider: str) -> bool:
     """
-    body뿐 아니라 내부 스크롤 컨테이너까지 전부 내려봄.
-    키노라이츠 모바일 페이지처럼 리스트 영역이 따로 스크롤되는 경우 대응.
+    OTT 필터칩을 실제 클릭.
+    텍스트만 찾지 않고 화면 안쪽으로 스크롤시킨 뒤 가장 가까운 button/a를 클릭.
     """
+    try:
+        return page.evaluate(
+            """
+            async (provider) => {
+              const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+              const findTarget = () => {
+                const els = Array.from(document.querySelectorAll('button, a, div, span'));
+                return els.find(el => {
+                  const txt = (el.innerText || el.textContent || '').trim();
+                  return txt === provider;
+                });
+              };
+
+              // 가로 필터 영역까지 고려해서 여러 번 시도
+              for (let i = 0; i < 20; i++) {
+                const target = findTarget();
+
+                if (target) {
+                  const clickable = target.closest('button, a') || target;
+                  clickable.scrollIntoView({block: 'center', inline: 'center'});
+                  await sleep(300);
+                  clickable.click();
+                  await sleep(1200);
+                  return true;
+                }
+
+                const scrollables = Array.from(document.querySelectorAll('*')).filter(el => {
+                  const s = window.getComputedStyle(el);
+                  return (
+                    (s.overflowX === 'auto' || s.overflowX === 'scroll') &&
+                    el.scrollWidth > el.clientWidth + 20
+                  );
+                });
+
+                for (const el of scrollables) {
+                  el.scrollLeft += 300;
+                }
+
+                await sleep(300);
+              }
+
+              return false;
+            }
+            """,
+            provider,
+        )
+    except Exception:
+        return False
+
+
+def smart_scroll_all(page, max_rounds: int = 90) -> None:
     try:
         page.wait_for_load_state("networkidle", timeout=8000)
     except PlaywrightTimeoutError:
@@ -173,6 +209,7 @@ def smart_scroll_all(page, max_rounds: int = 80) -> None:
             """
             () => {
               const els = Array.from(document.querySelectorAll('*'));
+
               const scrollables = els.filter(el => {
                 const s = window.getComputedStyle(el);
                 return (
@@ -196,7 +233,6 @@ def smart_scroll_all(page, max_rounds: int = 80) -> None:
 
               return {
                 links,
-                bodyHeight: document.body.scrollHeight,
                 scrollables: scrollables.length
               };
             }
@@ -215,11 +251,11 @@ def smart_scroll_all(page, max_rounds: int = 80) -> None:
 
         last_count = count
 
-        if stable >= 8:
+        if stable >= 10:
             break
 
 
-def extract_all_list_items(page, today: date) -> list[dict[str, str]]:
+def extract_list_items(page, today: date, provider: str) -> list[dict[str, str]]:
     js = """
     () => {
       const anchors = Array.from(document.querySelectorAll('a[href]'));
@@ -266,10 +302,8 @@ def extract_all_list_items(page, today: date) -> list[dict[str, str]]:
 
     for item in raw_items:
         text = norm(item.get("text", ""))
-        url = normalize_url(item.get("href", ""))
-        image_url = normalize_url(item.get("image_url", ""))
-
         release_date = parse_release_date(text, today)
+
         if not release_date:
             continue
 
@@ -285,10 +319,10 @@ def extract_all_list_items(page, today: date) -> list[dict[str, str]]:
                 "collect_date": today.isoformat(),
                 "release_date": release_date,
                 "title": title,
-                "provider": "",
+                "provider": provider,
                 "genre": extract_genre(text),
-                "url": url,
-                "image_url": image_url,
+                "url": normalize_url(item.get("href", "")),
+                "image_url": normalize_url(item.get("image_url", "")),
                 "_raw_text": text,
             }
         )
@@ -296,34 +330,19 @@ def extract_all_list_items(page, today: date) -> list[dict[str, str]]:
     return rows
 
 
-def detect_providers_from_text(text: str) -> list[str]:
-    found = []
-
-    for provider, aliases in PROVIDER_ALIASES.items():
-        for alias in aliases:
-            if alias in text:
-                found.append(provider)
-                break
-
-    return found
-
-
-def enrich_from_detail(page, row: dict[str, str], cache: dict[str, dict]) -> list[dict[str, str]]:
+def enrich_title_from_detail(page, row: dict[str, str], cache: dict[str, dict]) -> dict[str, str]:
+    """
+    상세페이지는 제목/장르/이미지만 보정.
+    provider와 release_date는 절대 상세페이지 기준으로 바꾸지 않음.
+    """
     url = row.get("url", "")
-
     if not url:
-        return []
+        return row
 
     if url in cache:
         detail = cache[url]
     else:
-        detail = {
-            "title": "",
-            "genre": "",
-            "image_url": "",
-            "providers": [],
-            "body_text": "",
-        }
+        detail = {"title": "", "genre": "", "image_url": ""}
 
         try:
             page.goto(url, wait_until="domcontentloaded", timeout=30000)
@@ -339,11 +358,6 @@ def enrich_from_detail(page, row: dict[str, str], cache: dict[str, dict]) -> lis
                   const h2 = document.querySelector('h2')?.innerText || '';
                   const img = document.querySelector('img');
 
-                  const altTexts = Array.from(document.querySelectorAll('img'))
-                    .map(img => img.alt || img.getAttribute('alt') || '')
-                    .filter(Boolean)
-                    .join(' ');
-
                   return {
                     document_title: document.title || '',
                     og_title: meta('meta[property="og:title"]'),
@@ -351,8 +365,7 @@ def enrich_from_detail(page, row: dict[str, str], cache: dict[str, dict]) -> lis
                     h1,
                     h2,
                     og_image: meta('meta[property="og:image"]'),
-                    first_img: img ? (img.currentSrc || img.src || img.getAttribute('src') || '') : '',
-                    alt_texts: altTexts
+                    first_img: img ? (img.currentSrc || img.src || img.getAttribute('src') || '') : ''
                   };
                 }
                 """
@@ -371,15 +384,10 @@ def enrich_from_detail(page, row: dict[str, str], cache: dict[str, dict]) -> lis
                     title = cand
                     break
 
-            provider_text = body_text + " " + data.get("alt_texts", "")
-            providers = detect_providers_from_text(provider_text)
-
             detail = {
                 "title": title,
                 "genre": extract_genre(body_text),
                 "image_url": normalize_url(data.get("og_image") or data.get("first_img") or ""),
-                "providers": providers,
-                "body_text": body_text[:3000],
             }
 
         except Exception as e:
@@ -387,35 +395,52 @@ def enrich_from_detail(page, row: dict[str, str], cache: dict[str, dict]) -> lis
 
         cache[url] = detail
 
-    title = row.get("title", "")
-    if is_bad_title(title) and detail.get("title"):
-        title = detail["title"]
+    if is_bad_title(row.get("title", "")) and detail.get("title"):
+        row["title"] = detail["title"]
 
-    genre = row.get("genre") or detail.get("genre", "")
-    image_url = row.get("image_url") or detail.get("image_url", "")
+    if not row.get("genre") and detail.get("genre"):
+        row["genre"] = detail["genre"]
 
-    providers = detail.get("providers") or []
+    if not row.get("image_url") and detail.get("image_url"):
+        row["image_url"] = detail["image_url"]
 
-    # 상세페이지에서도 OTT를 못 찾으면 전체로 남김
-    if not providers:
-        providers = ["전체"]
+    return row
 
-    out = []
 
-    for provider in providers:
-        out.append(
-            {
-                "collect_date": row.get("collect_date", ""),
-                "release_date": row.get("release_date", ""),
-                "title": title,
-                "provider": provider,
-                "genre": genre,
-                "url": row.get("url", ""),
-                "image_url": image_url,
-            }
-        )
+def collect_page(context, today: date, provider: str) -> tuple[list[dict[str, str]], str]:
+    page = context.new_page()
+    page.set_default_timeout(15000)
 
-    return out
+    print(f"[OPEN] {TARGET_URL} / provider={provider}")
+
+    page.goto(TARGET_URL, wait_until="domcontentloaded", timeout=45000)
+    page.wait_for_timeout(1800)
+
+    click_upcoming_tab(page)
+
+    if provider != "전체":
+        clicked = click_provider_filter(page, provider)
+        print(f"[FILTER] {provider} clicked={clicked}")
+        page.wait_for_timeout(1500)
+
+    smart_scroll_all(page)
+
+    try:
+        body_text = page.locator("body").inner_text(timeout=6000)
+    except Exception:
+        body_text = ""
+
+    if provider == "전체":
+        try:
+            page.screenshot(path=str(DEBUG_SCREENSHOT), full_page=True)
+        except Exception:
+            pass
+
+    rows = extract_list_items(page, today, provider)
+    print(f"[LIST] {provider}: {len(rows)} rows")
+
+    page.close()
+    return rows, body_text
 
 
 def dedupe_rows(rows: list[dict[str, str]]) -> list[dict[str, str]]:
@@ -452,7 +477,6 @@ def save_debug(rows: list[dict[str, str]], debug_text: str) -> None:
 def existing_csv_has_rows(path: Path) -> bool:
     if not path.exists():
         return False
-
     try:
         return len(pd.read_csv(path)) > 0
     except Exception:
@@ -495,6 +519,9 @@ def main() -> None:
     today = date.today()
     detail_cache = {}
     all_rows = []
+    debug_chunks = []
+
+    targets = ["전체"] + PROVIDERS
 
     with sync_playwright() as p:
         browser = p.chromium.launch(
@@ -520,44 +547,27 @@ def main() -> None:
             ),
         )
 
-        page = context.new_page()
-        page.set_default_timeout(15000)
-
-        print(f"[OPEN] {TARGET_URL}")
-        page.goto(TARGET_URL, wait_until="domcontentloaded", timeout=45000)
-        page.wait_for_timeout(1800)
-
-        click_upcoming_tab(page)
-        smart_scroll_all(page)
-
-        try:
-            body_text = page.locator("body").inner_text(timeout=6000)
-        except Exception:
-            body_text = ""
-
-        try:
-            page.screenshot(path=str(DEBUG_SCREENSHOT), full_page=True)
-        except Exception:
-            pass
-
-        base_rows = extract_all_list_items(page, today)
-        print(f"[LIST] collected urls: {len(base_rows)}")
-
         detail_page = context.new_page()
         detail_page.set_default_timeout(15000)
 
-        for i, row in enumerate(base_rows, start=1):
-            enriched_rows = enrich_from_detail(detail_page, row, detail_cache)
-            all_rows.extend(enriched_rows)
-            if i % 10 == 0:
-                print(f"[DETAIL] {i}/{len(base_rows)}")
+        for provider in targets:
+            rows, body_text = collect_page(context, today, provider)
+
+            fixed_rows = []
+            for row in rows:
+                row = enrich_title_from_detail(detail_page, row, detail_cache)
+                if not is_bad_title(row.get("title", "")):
+                    fixed_rows.append(row)
+
+            print(f"[COLLECT] {provider}: {len(fixed_rows)} rows")
+            all_rows.extend(fixed_rows)
+            debug_chunks.append(f"\n\n===== {provider} / rows={len(fixed_rows)} =====\n{body_text}")
 
         detail_page.close()
-        page.close()
         context.close()
         browser.close()
 
-    save_debug(all_rows, body_text)
+    save_debug(all_rows, "".join(debug_chunks))
     write_csv_safely(all_rows)
 
 

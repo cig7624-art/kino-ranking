@@ -1,4 +1,4 @@
 streamlit
 requests
-playwright
+playwright>=1.45.0
 pandas

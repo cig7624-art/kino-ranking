@@ -1,10 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-KinoLights 공개 예정작 수집기
-- 리스트 페이지에서 상세 URL 수집
-- 상세 페이지에서 실제 title / release_date / genre 보정
-- 출력: upcoming_releases.csv
-"""
 
 from __future__ import annotations
 
@@ -44,44 +38,16 @@ PROVIDERS = [
 ]
 
 GENRE_WORDS = [
-    "영화",
-    "드라마",
-    "예능",
-    "애니메이션",
-    "다큐멘터리",
-    "시리즈",
-    "키즈",
-    "교양",
-    "멜로/로맨스",
-    "판타지",
-    "액션",
-    "코미디",
-    "스릴러",
-    "공포",
-    "SF",
-    "가족",
-    "범죄",
-    "미스터리",
+    "영화", "드라마", "예능", "애니메이션", "다큐멘터리", "시리즈",
+    "키즈", "교양", "멜로/로맨스", "판타지", "액션", "코미디",
+    "스릴러", "공포", "SF", "가족", "범죄", "미스터리",
 ]
 
 BAD_TITLE_WORDS = {
-    "오늘 공개",
-    "내일 공개",
-    "공개 예정",
-    "공개 예정작",
-    "종료 예정작",
-    "신작",
-    "예정작 & 신작",
-    "전체",
-    "홈",
-    "랭킹",
-    "바로 보기",
-    "찜하기",
-    "보는중",
-    "봤어요",
-    "공유하기",
-    "좋아요",
-    "별로예요",
+    "오늘 공개", "내일 공개", "공개 예정", "공개 예정작",
+    "종료 예정작", "신작", "예정작 & 신작", "전체",
+    "홈", "랭킹", "바로 보기", "찜하기", "보는중", "봤어요",
+    "공유하기", "좋아요", "별로예요",
 }
 
 
@@ -101,21 +67,11 @@ def normalize_url(url: str) -> str:
 def parse_release_date(text: str, today: date) -> str:
     t = norm(text)
 
-    m = re.search(r"(20\d{2})\s*[.\-/년]\s*(\d{1,2})\s*[.\-/월]\s*(\d{1,2})\s*일?", t)
-    if m:
-        y, mo, d = map(int, m.groups())
-        try:
-            return date(y, mo, d).isoformat()
-        except ValueError:
-            pass
+    if "오늘 공개" in t or t == "오늘":
+        return today.isoformat()
 
-    m = re.search(r"공개\s*예정일\s*(20\d{2})[.\-/](\d{1,2})[.\-/](\d{1,2})", t)
-    if m:
-        y, mo, d = map(int, m.groups())
-        try:
-            return date(y, mo, d).isoformat()
-        except ValueError:
-            pass
+    if "내일 공개" in t or t == "내일":
+        return (today + timedelta(days=1)).isoformat()
 
     m = re.search(r"(\d{1,2})\s*월\s*(\d{1,2})\s*일", t)
     if m:
@@ -139,23 +95,15 @@ def parse_release_date(text: str, today: date) -> str:
         except ValueError:
             pass
 
-    if "오늘 공개" in t or t == "오늘":
-        return today.isoformat()
-
-    if "내일 공개" in t or t == "내일":
-        return (today + timedelta(days=1)).isoformat()
-
     return ""
 
 
 def clean_title(title: str) -> str:
     title = norm(title)
-
     title = re.sub(r"\s*다시보기.*$", "", title)
     title = re.sub(r"\s*\|\s*키노라이츠.*$", "", title)
     title = re.sub(r"\s*-\s*키노라이츠.*$", "", title)
     title = re.sub(r"\s*#리뷰.*$", "", title)
-
     return norm(title)
 
 
@@ -177,13 +125,7 @@ def is_bad_title(title: str) -> bool:
     if re.fullmatch(r"\d+", t):
         return True
 
-    if re.fullmatch(r"20\d{2}", t):
-        return True
-
     if re.search(r"\d{1,2}\s*월\s*\d{1,2}\s*일", t):
-        return True
-
-    if re.search(r"20\d{2}[.\-/년]", t):
         return True
 
     if "공개" in t and len(t) <= 12:
@@ -197,21 +139,13 @@ def is_bad_title(title: str) -> bool:
 
 def extract_genre(text: str) -> str:
     t = norm(text)
-
-    found = []
+    for g in ["영화", "드라마", "예능", "애니메이션", "다큐멘터리", "시리즈"]:
+        if g in t:
+            return g
     for g in GENRE_WORDS:
         if g in t:
-            found.append(g)
-
-    if not found:
-        return ""
-
-    priority = ["영화", "드라마", "예능", "애니메이션", "다큐멘터리", "시리즈"]
-    for p in priority:
-        if p in found:
-            return p
-
-    return found[0]
+            return g
+    return ""
 
 
 def click_visible_text(page, label: str, exact: bool = True, timeout_ms: int = 3000) -> bool:
@@ -266,7 +200,7 @@ def wait_and_scroll(page, max_scrolls: int = 12) -> None:
 
 
 def extract_list_items(page, provider: str, today: date) -> list[dict[str, str]]:
-    js = r"""
+    js = """
     () => {
       const anchors = Array.from(document.querySelectorAll('a[href]'));
       const out = [];
@@ -275,12 +209,6 @@ def extract_list_items(page, provider: str, today: date) -> list[dict[str, str]]
       for (const a of anchors) {
         const href = a.href || '';
         if (!href.includes('/season/') && !href.includes('/movie/') && !href.includes('/title/')) {
-          continue;
-        }
-
-        const rect = a.getBoundingClientRect();
-        const style = window.getComputedStyle(a);
-        if (style.display === 'none' || style.visibility === 'hidden') {
           continue;
         }
 
@@ -296,18 +224,10 @@ def extract_list_items(page, provider: str, today: date) -> list[dict[str, str]]
         const aria = a.getAttribute('aria-label') || '';
         const title = a.getAttribute('title') || '';
 
-        const key = href;
-        if (seen.has(key)) continue;
-        seen.add(key);
+        if (seen.has(href)) continue;
+        seen.add(href);
 
-        out.push({
-          href,
-          text,
-          image_url,
-          img_alt,
-          aria,
-          title
-        });
+        out.push({ href, text, image_url, img_alt, aria, title });
       }
 
       return out;
@@ -315,7 +235,6 @@ def extract_list_items(page, provider: str, today: date) -> list[dict[str, str]]
     """
 
     raw_items = page.evaluate(js)
-
     rows = []
 
     for item in raw_items:
@@ -323,21 +242,14 @@ def extract_list_items(page, provider: str, today: date) -> list[dict[str, str]]
         url = normalize_url(item.get("href", ""))
         image_url = normalize_url(item.get("image_url", ""))
 
-        title_candidates = [
-            item.get("img_alt", ""),
-            item.get("aria", ""),
-            item.get("title", ""),
-        ]
+        release_date = parse_release_date(text, today)
 
         title = ""
-        for cand in title_candidates:
+        for cand in [item.get("img_alt", ""), item.get("aria", ""), item.get("title", "")]:
             cand = clean_title(cand)
             if not is_bad_title(cand):
                 title = cand
                 break
-
-        release_date = parse_release_date(text, today)
-        genre = extract_genre(text)
 
         rows.append(
             {
@@ -345,7 +257,7 @@ def extract_list_items(page, provider: str, today: date) -> list[dict[str, str]]
                 "release_date": release_date,
                 "title": title,
                 "provider": provider,
-                "genre": genre,
+                "genre": extract_genre(text),
                 "url": url,
                 "image_url": image_url,
                 "_raw_text": text,
@@ -355,7 +267,7 @@ def extract_list_items(page, provider: str, today: date) -> list[dict[str, str]]
     return rows
 
 
-def enrich_from_detail(page, row: dict[str, str], today: date, cache: dict[str, dict[str, str]]) -> dict[str, str]:
+def enrich_title_from_detail(page, row: dict[str, str], cache: dict[str, dict[str, str]]) -> dict[str, str]:
     url = row.get("url", "")
 
     if not url:
@@ -364,26 +276,16 @@ def enrich_from_detail(page, row: dict[str, str], today: date, cache: dict[str, 
     if url in cache:
         detail = cache[url]
     else:
-        detail = {
-            "title": "",
-            "release_date": "",
-            "genre": "",
-            "image_url": "",
-            "text": "",
-        }
+        detail = {"title": "", "genre": "", "image_url": ""}
 
         try:
             page.goto(url, wait_until="domcontentloaded", timeout=30000)
             page.wait_for_timeout(1200)
 
-            body_text = ""
-            try:
-                body_text = page.locator("body").inner_text(timeout=5000)
-            except Exception:
-                pass
+            body_text = page.locator("body").inner_text(timeout=5000)
 
             data = page.evaluate(
-                r"""
+                """
                 () => {
                   const meta = (sel) => document.querySelector(sel)?.getAttribute('content') || '';
                   const h1 = document.querySelector('h1')?.innerText || '';
@@ -402,16 +304,14 @@ def enrich_from_detail(page, row: dict[str, str], today: date, cache: dict[str, 
                 """
             )
 
-            title_candidates = [
+            title = ""
+            for cand in [
                 data.get("h1", ""),
                 data.get("og_title", ""),
                 data.get("twitter_title", ""),
                 data.get("document_title", ""),
                 data.get("h2", ""),
-            ]
-
-            title = ""
-            for cand in title_candidates:
+            ]:
                 cand = clean_title(cand)
                 if not is_bad_title(cand):
                     title = cand
@@ -419,10 +319,8 @@ def enrich_from_detail(page, row: dict[str, str], today: date, cache: dict[str, 
 
             detail = {
                 "title": title,
-                "release_date": parse_release_date(body_text, today),
                 "genre": extract_genre(body_text),
                 "image_url": normalize_url(data.get("og_image") or data.get("first_img") or ""),
-                "text": body_text[:2000],
             }
 
         except Exception as e:
@@ -433,9 +331,6 @@ def enrich_from_detail(page, row: dict[str, str], today: date, cache: dict[str, 
     if is_bad_title(row.get("title", "")) and detail.get("title"):
         row["title"] = detail["title"]
 
-    if not row.get("release_date") and detail.get("release_date"):
-        row["release_date"] = detail["release_date"]
-
     if not row.get("genre") and detail.get("genre"):
         row["genre"] = detail["genre"]
 
@@ -445,7 +340,7 @@ def enrich_from_detail(page, row: dict[str, str], today: date, cache: dict[str, 
     return row
 
 
-def collect_provider(context, provider: str, today: date, detail_cache: dict[str, dict[str, str]]) -> tuple[list[dict[str, str]], str]:
+def collect_provider(context, provider: str, today: date, detail_cache: dict[str, dict[str, str]]):
     page = context.new_page()
     page.set_default_timeout(12000)
 
@@ -461,31 +356,27 @@ def collect_provider(context, provider: str, today: date, detail_cache: dict[str
 
     wait_and_scroll(page)
 
-    body_text = ""
-    try:
-        body_text = page.locator("body").inner_text(timeout=5000)
-    except Exception:
-        pass
-
+    body_text = page.locator("body").inner_text(timeout=5000)
     rows = extract_list_items(page, provider, today)
-    print(f"[LIST] {provider}: {len(rows)} urls")
 
     detail_page = context.new_page()
     detail_page.set_default_timeout(12000)
 
     enriched = []
+
     for row in rows:
-        row = enrich_from_detail(detail_page, row, today, detail_cache)
+        row = enrich_title_from_detail(detail_page, row, detail_cache)
 
         if not row.get("url"):
             continue
 
-        if is_bad_title(row.get("title", "")):
-            print(f"[SKIP] bad title: {row.get('url')} / {row.get('title')}")
+        if not row.get("release_date"):
             continue
 
-        clean_row = {c: norm(row.get(c, "")) for c in COLUMNS}
-        enriched.append(clean_row)
+        if is_bad_title(row.get("title", "")):
+            continue
+
+        enriched.append({c: norm(row.get(c, "")) for c in COLUMNS})
 
     detail_page.close()
     page.close()
@@ -498,10 +389,7 @@ def dedupe_rows(rows: list[dict[str, str]]) -> list[dict[str, str]]:
     result = []
 
     for r in rows:
-        key = (
-            norm(r.get("provider")),
-            norm(r.get("url")),
-        )
+        key = (norm(r.get("provider")), norm(r.get("url")))
 
         if key in seen:
             continue
@@ -516,21 +404,17 @@ def save_debug(rows: list[dict[str, str]], debug_text: str) -> None:
     DEBUG_TEXT.write_text(debug_text, encoding="utf-8")
 
     with DEBUG_CARDS.open("w", encoding="utf-8-sig", newline="") as f:
-        fieldnames = COLUMNS
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer = csv.DictWriter(f, fieldnames=COLUMNS)
         writer.writeheader()
-
         for r in rows:
-            writer.writerow({k: r.get(k, "") for k in fieldnames})
+            writer.writerow({k: r.get(k, "") for k in COLUMNS})
 
 
 def existing_csv_has_rows(path: Path) -> bool:
     if not path.exists():
         return False
-
     try:
-        df = pd.read_csv(path)
-        return len(df) > 0
+        return len(pd.read_csv(path)) > 0
     except Exception:
         return False
 
@@ -539,12 +423,21 @@ def write_csv_safely(rows: list[dict[str, str]]) -> None:
     rows = dedupe_rows(rows)
     df = pd.DataFrame(rows, columns=COLUMNS)
 
+    if not df.empty:
+        today_str = date.today().isoformat()
+        df["release_date"] = df["release_date"].fillna("").astype(str)
+
+        # 공개예정작만 남김: 오늘 이후만
+        df = df[df["release_date"] >= today_str]
+
+        # 제목 오류 제거
+        df = df[~df["title"].isin(["오늘 공개", "내일 공개", "공개 예정", "공개 예정작"])]
+
     if df.empty:
-        print("[ERROR] 공개예정작을 0건 수집했습니다.")
-        print("[ERROR] 기존 CSV에 데이터가 있으면 덮어쓰지 않습니다.")
+        print("[ERROR] 공개예정작 유효 데이터 0건입니다.")
+        print("[KEEP] 기존 CSV 유지")
 
         if existing_csv_has_rows(OUT_CSV):
-            print(f"[KEEP] 기존 {OUT_CSV} 유지")
             return
 
         pd.DataFrame(columns=COLUMNS).to_csv(OUT_CSV, index=False, encoding="utf-8-sig")
@@ -562,7 +455,6 @@ def write_csv_safely(rows: list[dict[str, str]]) -> None:
 
 def main() -> None:
     today = date.today()
-
     all_rows = []
     debug_chunks = []
     detail_cache = {}
@@ -570,11 +462,7 @@ def main() -> None:
     with sync_playwright() as p:
         browser = p.chromium.launch(
             headless=True,
-            args=[
-                "--no-sandbox",
-                "--disable-dev-shm-usage",
-                "--disable-blink-features=AutomationControlled",
-            ],
+            args=["--no-sandbox", "--disable-dev-shm-usage"],
         )
 
         context = browser.new_context(

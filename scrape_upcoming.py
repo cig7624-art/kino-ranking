@@ -138,47 +138,50 @@ def click_upcoming_tab(page) -> None:
 
 
 def click_provider_filter(page, provider: str) -> bool:
-    """
-    OTT 필터칩을 실제 클릭.
-    텍스트만 찾지 않고 화면 안쪽으로 스크롤시킨 뒤 가장 가까운 button/a를 클릭.
-    """
+    labels = {
+        "디즈니+": ["디즈니+", "디즈니 플러스", "Disney+"],
+        "왓챠": ["왓챠", "Watcha"],
+        "Apple TV": ["Apple TV", "Apple TV+"],
+        "아마존 프라임 비디오": ["아마존", "프라임", "Prime"],
+    }.get(provider, [provider])
+
     try:
-        return page.evaluate(
+        ok = page.evaluate(
             """
-            async (provider) => {
+            async (labels) => {
               const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-              const findTarget = () => {
+              for (let step = 0; step < 30; step++) {
                 const els = Array.from(document.querySelectorAll('button, a, div, span'));
-                return els.find(el => {
-                  const txt = (el.innerText || el.textContent || '').trim();
-                  return txt === provider;
-                });
-              };
 
-              // 가로 필터 영역까지 고려해서 여러 번 시도
-              for (let i = 0; i < 20; i++) {
-                const target = findTarget();
+                for (const label of labels) {
+                  const target = els.find(el => {
+                    const txt = (el.innerText || el.textContent || '').trim();
+                    return txt === label || txt.includes(label);
+                  });
 
-                if (target) {
-                  const clickable = target.closest('button, a') || target;
-                  clickable.scrollIntoView({block: 'center', inline: 'center'});
-                  await sleep(300);
-                  clickable.click();
-                  await sleep(1200);
-                  return true;
+                  if (target) {
+                    const clickable = target.closest('button, a, [role="button"]') || target;
+                    clickable.scrollIntoView({block:'center', inline:'center'});
+                    await sleep(300);
+
+                    clickable.dispatchEvent(new MouseEvent('mousedown', {bubbles:true}));
+                    clickable.dispatchEvent(new MouseEvent('mouseup', {bubbles:true}));
+                    clickable.dispatchEvent(new MouseEvent('click', {bubbles:true}));
+
+                    await sleep(1800);
+                    return true;
+                  }
                 }
 
-                const scrollables = Array.from(document.querySelectorAll('*')).filter(el => {
+                const horizontals = Array.from(document.querySelectorAll('*')).filter(el => {
                   const s = window.getComputedStyle(el);
-                  return (
-                    (s.overflowX === 'auto' || s.overflowX === 'scroll') &&
-                    el.scrollWidth > el.clientWidth + 20
-                  );
+                  return el.scrollWidth > el.clientWidth + 30 &&
+                    (s.overflowX === 'auto' || s.overflowX === 'scroll');
                 });
 
-                for (const el of scrollables) {
-                  el.scrollLeft += 300;
+                for (const h of horizontals) {
+                  h.scrollLeft += 250;
                 }
 
                 await sleep(300);
@@ -187,8 +190,10 @@ def click_provider_filter(page, provider: str) -> bool:
               return false;
             }
             """,
-            provider,
+            labels,
         )
+        return bool(ok)
+
     except Exception:
         return False
 
@@ -231,10 +236,7 @@ def smart_scroll_all(page, max_rounds: int = 90) -> None:
                 })
                 .length;
 
-              return {
-                links,
-                scrollables: scrollables.length
-              };
+              return { links, scrollables: scrollables.length };
             }
             """
         )
@@ -283,14 +285,7 @@ def extract_list_items(page, today: date, provider: str) -> list[dict[str, str]]
         if (seen.has(href)) continue;
         seen.add(href);
 
-        out.push({
-          href,
-          text,
-          image_url,
-          img_alt,
-          aria,
-          title
-        });
+        out.push({ href, text, image_url, img_alt, aria, title });
       }
 
       return out;
@@ -331,10 +326,6 @@ def extract_list_items(page, today: date, provider: str) -> list[dict[str, str]]
 
 
 def enrich_title_from_detail(page, row: dict[str, str], cache: dict[str, dict]) -> dict[str, str]:
-    """
-    상세페이지는 제목/장르/이미지만 보정.
-    provider와 release_date는 절대 상세페이지 기준으로 바꾸지 않음.
-    """
     url = row.get("url", "")
     if not url:
         return row
@@ -421,7 +412,12 @@ def collect_page(context, today: date, provider: str) -> tuple[list[dict[str, st
     if provider != "전체":
         clicked = click_provider_filter(page, provider)
         print(f"[FILTER] {provider} clicked={clicked}")
-        page.wait_for_timeout(1500)
+
+        if not clicked:
+            page.close()
+            return [], ""
+
+        page.wait_for_timeout(2500)
 
     smart_scroll_all(page)
 

@@ -27,12 +27,12 @@ PROVIDER_ALIASES = {
     "넷플릭스": ["넷플릭스", "netflix"],
     "티빙": ["티빙", "tving"],
     "쿠팡플레이": ["쿠팡플레이", "coupang"],
-    "디즈니+": ["디즈니+", "디즈니 플러스", "disney", "disneyplus", "disney-plus"],
+    "디즈니+": ["디즈니+", "디즈니 플러스", "disney+"],
     "웨이브": ["웨이브", "wavve"],
     "라프텔": ["라프텔", "laftel"],
     "왓챠": ["왓챠", "watcha"],
     "Apple TV": ["apple tv", "apple tv+", "appletv"],
-    "아마존 프라임 비디오": ["아마존 프라임", "프라임 비디오", "prime video", "amazon prime"],
+    "아마존 프라임 비디오": ["아마존 프라임", "프라임 비디오", "prime video"],
     "씨네폭스": ["씨네폭스", "cinefox"],
 }
 
@@ -130,6 +130,43 @@ def extract_genre(text: str) -> str:
             return g
 
     return ""
+
+
+def extract_watch_section(text: str) -> str:
+    t = norm(text)
+
+    start_keys = ["보러가기", "정액제", "시청 가능", "감상 가능"]
+    end_keys = [
+        "시청 주의 가이드",
+        "작품 정보",
+        "비슷한 작품",
+        "관련 콘텐츠",
+        "코멘트",
+        "평점",
+        "출연",
+        "감독",
+        "리뷰",
+    ]
+
+    start = -1
+    for key in start_keys:
+        idx = t.find(key)
+        if idx != -1:
+            start = idx
+            break
+
+    if start == -1:
+        return ""
+
+    section = t[start:]
+
+    cut = len(section)
+    for key in end_keys:
+        idx = section.find(key)
+        if idx != -1:
+            cut = min(cut, idx)
+
+    return section[:cut]
 
 
 def detect_providers(text: str) -> list[str]:
@@ -305,7 +342,7 @@ def enrich_detail(page, row: dict[str, str], cache: dict[str, dict]) -> list[dic
             "genre": "",
             "image_url": "",
             "providers": [],
-            "debug_text": "",
+            "watch_section": "",
         }
 
         try:
@@ -313,6 +350,7 @@ def enrich_detail(page, row: dict[str, str], cache: dict[str, dict]) -> list[dic
             page.wait_for_timeout(1600)
 
             body_text = page.locator("body").inner_text(timeout=7000)
+            watch_section = extract_watch_section(body_text)
 
             data = page.evaluate(
                 """
@@ -323,22 +361,6 @@ def enrich_detail(page, row: dict[str, str], cache: dict[str, dict]) -> list[dic
                   const h2 = document.querySelector('h2')?.innerText || '';
                   const img = document.querySelector('img');
 
-                  const domText = Array.from(document.querySelectorAll('img, a, button, div, span, svg, use'))
-                    .map(el => [
-                      el.innerText || '',
-                      el.textContent || '',
-                      el.alt || '',
-                      el.getAttribute('alt') || '',
-                      el.getAttribute('aria-label') || '',
-                      el.getAttribute('title') || '',
-                      el.getAttribute('href') || '',
-                      el.getAttribute('src') || '',
-                      el.getAttribute('xlink:href') || '',
-                      el.getAttribute('class') || '',
-                      String(el.className || '')
-                    ].join(' '))
-                    .join(' ');
-
                   return {
                     document_title: document.title || '',
                     og_title: meta('meta[property="og:title"]'),
@@ -346,8 +368,7 @@ def enrich_detail(page, row: dict[str, str], cache: dict[str, dict]) -> list[dic
                     h1,
                     h2,
                     og_image: meta('meta[property="og:image"]'),
-                    first_img: img ? (img.currentSrc || img.src || img.getAttribute('src') || '') : '',
-                    dom_text: domText
+                    first_img: img ? (img.currentSrc || img.src || img.getAttribute('src') || '') : ''
                   };
                 }
                 """
@@ -366,24 +387,14 @@ def enrich_detail(page, row: dict[str, str], cache: dict[str, dict]) -> list[dic
                     title = cand
                     break
 
-            provider_source = " ".join(
-                [
-                    body_text,
-                    data.get("dom_text", ""),
-                    row.get("_raw_text", ""),
-                    row.get("url", ""),
-                    row.get("image_url", ""),
-                ]
-            )
-
-            providers = detect_providers(provider_source)
+            providers = detect_providers(watch_section)
 
             detail = {
                 "title": title,
                 "genre": extract_genre(body_text),
                 "image_url": normalize_url(data.get("og_image") or data.get("first_img") or ""),
                 "providers": providers,
-                "debug_text": provider_source[:4000],
+                "watch_section": watch_section[:2000],
             }
 
         except Exception as e:
@@ -501,7 +512,6 @@ def main() -> None:
     today = date.today()
     detail_cache = {}
     all_rows = []
-    debug_chunks = []
 
     with sync_playwright() as p:
         browser = p.chromium.launch(
@@ -572,10 +582,7 @@ def main() -> None:
 
     print(f"[PROVIDER COUNT] {provider_count}")
 
-    debug_chunks.append("\n\n===== PROVIDER COUNT =====\n")
-    debug_chunks.append(str(provider_count))
-
-    save_debug(all_rows, body_text + "\n".join(debug_chunks))
+    save_debug(all_rows, body_text + "\n\n===== PROVIDER COUNT =====\n" + str(provider_count))
     write_csv_safely(all_rows)
 
 

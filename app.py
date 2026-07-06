@@ -819,7 +819,7 @@ def render_rank_card(row):
     """, unsafe_allow_html=True)
 
 
-def render_upcoming_releases(release_df, max_items=80):
+def render_upcoming_releases(release_df, max_items=80, hide_provider=False):
     if release_df.empty:
         st.markdown(
             '<div class="release-empty">공개예정작 데이터가 없습니다.</div>',
@@ -839,7 +839,7 @@ def render_upcoming_releases(release_df, max_items=80):
         url = str(row.get("url", "")).strip()
         image_url = str(row.get("image_url", "")).strip()
 
-        logo = get_provider_logo(provider)
+      logo = "" if hide_provider else get_provider_logo(provider)
 
         safe_title = html.escape(title)
         safe_provider = html.escape(provider)
@@ -850,7 +850,7 @@ def render_upcoming_releases(release_df, max_items=80):
 
         meta_parts = []
 
-        if safe_provider:
+        if safe_provider and not hide_provider:
             meta_parts.append(safe_provider)
 
         if safe_genre:
@@ -1206,7 +1206,11 @@ if not release_df.empty:
     with col4:
         with st.container(border=True):
             st.subheader("🗓 공개 예정작")
-            render_upcoming_releases(release_df, max_items=80)
+            render_upcoming_releases(
+    release_df,
+    max_items=80,
+    hide_provider=(selected_release_provider == "전체")
+)
 
 with tab2:
     st.subheader("🔎 타이틀로 OTT 제공처 검색")

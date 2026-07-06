@@ -675,21 +675,20 @@ def load_ranking_data():
 def load_upcoming_releases():
     file = Path("upcoming_releases.csv")
 
+    columns = [
+        "collect_date", "release_date", "title",
+        "provider", "genre", "url", "image_url"
+    ]
+
     if not file.exists():
-        return pd.DataFrame(columns=[
-            "collect_date", "release_date", "title",
-            "provider", "genre", "url", "image_url"
-        ])
+        return pd.DataFrame(columns=columns)
 
     df = pd.read_csv(file)
 
     if df.empty:
-        return pd.DataFrame(columns=[
-            "collect_date", "release_date", "title",
-            "provider", "genre", "url", "image_url"
-        ])
+        return pd.DataFrame(columns=columns)
 
-    for col in ["collect_date", "release_date", "title", "provider", "genre", "url", "image_url"]:
+    for col in columns:
         if col not in df.columns:
             df[col] = ""
 
@@ -708,18 +707,18 @@ def load_upcoming_releases():
     df = df[df["title"].str.strip() != ""].copy()
     df = df[df["release_date_dt"].notna()].copy()
 
+    # 중요: provider까지 포함해야 OTT별 데이터가 안 날아감
     df = df.drop_duplicates(
-        subset=["release_date", "title"],
+        subset=["release_date", "title", "provider"],
         keep="first"
     )
 
     df = df.sort_values(
-        ["release_date_dt", "title"],
-        ascending=[True, True]
+        ["release_date_dt", "provider", "title"],
+        ascending=[True, True, True]
     )
 
     return df
-
 
 def make_meta(row):
     media_type = str(row.get("media_type", "")).upper()

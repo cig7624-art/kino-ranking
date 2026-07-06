@@ -1110,27 +1110,30 @@ with tab1:
     new_df = base[base["is_new"] == True].copy()
     up_df = base[base["delta"] > 0].copy().sort_values("delta", ascending=False)
 
-    release_df = load_upcoming_releases()
+release_df = load_upcoming_releases()
 
-    if not release_df.empty:
-        release_df = release_df[release_df["release_date_dt"].notna()].copy()
+if not release_df.empty:
+    release_df = release_df[release_df["release_date_dt"].notna()].copy()
 
-        if selected_release_provider != "전체":
-            has_provider = release_df["provider"].astype(str).str.strip() != ""
-
-            if has_provider.any():
-                release_df = release_df[
-                    release_df["provider"].str.contains(
-                        selected_release_provider,
-                        na=False
-                    )
-                ].copy()
-
-        release_df = release_df.sort_values(
-            ["release_date_dt", "title"],
-            ascending=[True, True]
+    if selected_release_provider == "전체":
+        # 전체에서는 같은 작품이 여러 OTT에 잡혀도 1개만 노출
+        release_df = (
+            release_df
+            .sort_values(["release_date_dt", "title", "provider"], ascending=[True, True, True])
+            .drop_duplicates(subset=["release_date", "title"], keep="first")
         )
+    else:
+        # OTT별 버튼 클릭 시 해당 provider만 노출
+        release_df = release_df[
+            release_df["provider"]
+            .astype(str)
+            .str.contains(selected_release_provider, na=False, regex=False)
+        ].copy()
 
+    release_df = release_df.sort_values(
+        ["release_date_dt", "title"],
+        ascending=[True, True]
+    )
     st.markdown("<br>", unsafe_allow_html=True)
 
     col1, col2, col3, col4 = st.columns([1.1, 1, 1, 1])

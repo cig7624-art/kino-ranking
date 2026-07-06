@@ -839,7 +839,7 @@ def render_upcoming_releases(release_df, max_items=80, hide_provider=False):
         url = str(row.get("url", "")).strip()
         image_url = str(row.get("image_url", "")).strip()
 
-      logo = "" if hide_provider else get_provider_logo(provider)
+        logo = "" if hide_provider else get_provider_logo(provider)
 
         safe_title = html.escape(title)
         safe_provider = html.escape(provider)
@@ -886,7 +886,6 @@ def render_upcoming_releases(release_df, max_items=80, hide_provider=False):
         )
 
         st.markdown(row_html, unsafe_allow_html=True)
-
 
 def search_contents(keyword):
     query = """
@@ -1207,9 +1206,9 @@ if not release_df.empty:
         with st.container(border=True):
             st.subheader("🗓 공개 예정작")
             render_upcoming_releases(
-    release_df,
-    max_items=80,
-    hide_provider=(selected_release_provider == "전체")
+                release_df,
+                max_items=80,
+                hide_provider=(selected_release_provider == "전체")
 )
 
 with tab2:

@@ -517,7 +517,7 @@ def main() -> None:
     all_rows = []
     debug_chunks = []
 
-    targets = ["전체"] + PROVIDERS
+    targets = ["전체"]
 
     with sync_playwright() as p:
         browser = p.chromium.launch(

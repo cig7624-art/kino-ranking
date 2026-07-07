@@ -1061,12 +1061,11 @@ def extract_subscription_section(text):
 
 
 def detect_ott_from_section(section):
-    section = str(section)
+    section = html.unescape(str(section))
     lower = section.lower()
 
     found = []
 
-    # 상세페이지 버튼 텍스트: "넷플릭스 바로 보기", "티빙 바로 보기" 패턴
     direct_matches = re.findall(
         r"(넷플릭스|티빙|쿠팡플레이|웨이브|디즈니\+|디즈니 플러스|왓챠|라프텔|Apple TV|아마존 프라임 비디오|씨네폭스)\s*바로 보기",
         section
@@ -1078,15 +1077,15 @@ def detect_ott_from_section(section):
         found.append(name)
 
     ott_map = {
-        "넷플릭스": ["넷플릭스", "netflix"],
-        "티빙": ["티빙", "tving"],
-        "쿠팡플레이": ["쿠팡플레이", "coupang", "coupangplay"],
-        "웨이브": ["웨이브", "wavve"],
-        "디즈니+": ["디즈니+", "디즈니 플러스", "disney+", "disneyplus", "disney-plus"],
-        "왓챠": ["왓챠", "watcha"],
+        "넷플릭스": ["넷플릭스", "netflix.com", "netflix"],
+        "티빙": ["티빙", "tving.com", "tving"],
+        "쿠팡플레이": ["쿠팡플레이", "coupangplay", "coupang"],
+        "웨이브": ["웨이브", "wavve.com", "wavve"],
+        "디즈니+": ["디즈니+", "디즈니 플러스", "disneyplus", "disney+", "disney"],
+        "왓챠": ["왓챠", "watcha.com", "watcha"],
         "라프텔": ["라프텔", "laftel"],
-        "Apple TV": ["apple tv", "apple tv+", "appletv"],
-        "아마존 프라임 비디오": ["아마존 프라임", "프라임 비디오", "prime video", "amazon prime", "primevideo"],
+        "Apple TV": ["Apple TV", "tv.apple.com", "appletv"],
+        "아마존 프라임 비디오": ["아마존 프라임", "프라임 비디오", "primevideo", "amazon prime"],
         "씨네폭스": ["씨네폭스", "cinefox"],
     }
 
@@ -1099,50 +1098,47 @@ def detect_ott_from_section(section):
     return sorted(set(found))
 
 def get_ott_providers_from_api(content_id):
-    query = """
-    query ContentDetail($id: ID!) {
-      content(id: $id) {
-        id
-        titleKr
-        titleEn
-      }
+    urls = [
+        f"https://m.kinolights.com/season/{content_id}",
+        f"https://m.kinolights.com/title/{content_id}",
+        f"https://m.kinolights.com/movie/{content_id}",
+        f"https://m.kinolights.com/content/{content_id}",
+    ]
+
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) "
+            "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 "
+            "Mobile/15E148 Safari/604.1"
+        ),
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
     }
-    """
 
-    payload = {
-        "operationName": "ContentDetail",
-        "variables": {"id": str(content_id)},
-        "query": query,
-    }
+    for url in urls:
+        try:
+            res = requests.get(url, headers=headers, timeout=20)
 
-    try:
-        res = requests.post(
-            "https://gateway.kinolights.com/graphql",
-            json=payload,
-            headers={
-                "Content-Type": "application/json",
-                "User-Agent": "Mozilla/5.0",
-            },
-            timeout=20,
-        )
+            if res.status_code != 200:
+                continue
 
-        data = res.json()
+            text = html.unescape(res.text)
 
-        # 임시 디버그: API 응답 확인
-        if "errors" in data:
-            return [f"DEBUG:API_ERROR {str(data['errors'])[:150]}"]
+            # "정액제" 근처가 있으면 우선 그 구간만 확인
+            section = extract_subscription_section(text)
+            providers = detect_ott_from_section(section)
 
-        text = json.dumps(data, ensure_ascii=False)
+            # 없으면 전체 HTML에서 "넷플릭스 바로 보기" / redirect URL 기준으로 확인
+            if not providers:
+                providers = detect_ott_from_section(text)
 
-        providers = detect_ott_from_section(text)
+            if providers:
+                return providers
 
-        if not providers:
-            return [f"DEBUG:NO_PROVIDER {text[:150]}"]
+        except Exception:
+            continue
 
-        return providers
-
-    except Exception as e:
-        return [f"DEBUG:EXCEPTION {str(e)[:150]}"]
+    return []
         
 def set_release_provider(provider):
     st.session_state.selected_release_provider = provider

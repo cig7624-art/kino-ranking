@@ -520,6 +520,46 @@ div[data-testid="stVerticalBlockBorderWrapper"] h3 {
     margin-top:6px;
     font-weight:700;
 }
+
+/* selectbox dropdown menu text fix */
+div[data-baseweb="popover"] {
+    background:#ffffff !important;
+}
+
+div[data-baseweb="popover"] * {
+    color:#111827 !important;
+}
+
+ul[role="listbox"] {
+    background:#ffffff !important;
+}
+
+ul[role="listbox"] li,
+ul[role="listbox"] div,
+ul[role="listbox"] span {
+    color:#111827 !important;
+    background:#ffffff !important;
+}
+
+li[role="option"] {
+    color:#111827 !important;
+    background:#ffffff !important;
+}
+
+li[role="option"] * {
+    color:#111827 !important;
+    background:transparent !important;
+}
+
+li[role="option"][aria-selected="true"],
+li[role="option"]:hover {
+    background:#e5e7eb !important;
+}
+
+li[role="option"][aria-selected="true"] *,
+li[role="option"]:hover * {
+    color:#111827 !important;
+}
 </style>
 """, unsafe_allow_html=True)
 

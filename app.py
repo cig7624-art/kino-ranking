@@ -1017,8 +1017,8 @@ def search_contents(keyword):
 
         return data.get("data", {}).get("contents", []) or []
 
-    except Exception as e:
-        return [f"DEBUG:{str(e)[:120]}"]
+    except Exception
+        return []
 
 
 def extract_subscription_section(text):

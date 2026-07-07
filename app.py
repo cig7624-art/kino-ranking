@@ -567,7 +567,19 @@ li[role="option"][aria-selected="true"] *,
 li[role="option"]:hover * {
     color:#111827 !important;
 }
+/* only restore card title text */
+.rank-card .title,
+.side-card b,
+.release-title,
+.release-title a {
+    color:#f8fafc !important;
+}
 
+.rank-card .meta,
+.side-card .small,
+.release-meta {
+    color:#8fa1bb !important;
+}
 </style>
 """, unsafe_allow_html=True)
 

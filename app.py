@@ -1078,39 +1078,7 @@ def detect_ott_from_section(section):
 
     return sorted(set(found))
     
-def find_candidate_content_ids(keyword):
-    urls = [
-        f"https://m.kinolights.com/search?keyword={keyword}",
-        f"https://m.kinolights.com/search?q={keyword}",
-    ]
 
-    headers = {
-        "User-Agent": (
-            "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) "
-            "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 "
-            "Mobile/15E148 Safari/604.1"
-        ),
-        "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
-    }
-
-    ids = []
-
-    for url in urls:
-        try:
-            res = requests.get(url, headers=headers, timeout=20)
-            text = html.unescape(res.text)
-
-            matches = re.findall(r"/(season|title|movie|content)/(\d+)", text)
-
-            for kind, cid in matches:
-                item = (kind, cid)
-                if item not in ids:
-                    ids.append(item)
-
-        except Exception:
-            continue
-
-    return ids
 def get_ott_providers_from_api(content_id):
     urls = [
         f"https://m.kinolights.com/season/{content_id}",
@@ -1402,21 +1370,9 @@ with tab2:
             results = search_contents(keyword)
 
             enriched_results = []
-            for item in results[:3]:
-                title_for_search = item.get("titleKr") or ""
-                providers = []
-
-                candidate_ids = find_candidate_content_ids(title_for_search)
-
-                if candidate_ids:
-                    for kind, cid in candidate_ids[:3]:
-                        more = get_ott_providers_from_api(cid)
-                        for p in more:
-                            if p not in providers:
-                                providers.append(p)
-                else:
-                    content_id = item.get("id")
-                    providers = get_ott_providers_from_api(content_id) if content_id else []
+            for item in results[:5]:
+                content_id = item.get("id")
+                providers = get_ott_providers_from_api(content_id) if content_id else []
 
                 enriched_results.append({
                     "title": item.get("titleKr") or "",
@@ -1447,7 +1403,8 @@ with tab2:
 
             if providers:
                 provider_html = "".join(
-                    [f'<span class="ott-badge">{html.escape(p)}</span>' for p in providers]
+                    f'<span class="ott-badge">{html.escape(p)}</span>'
+                    for p in providers
                 )
             else:
                 provider_html = '<span class="search-provider-empty">정액제 OTT 없음</span>'

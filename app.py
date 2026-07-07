@@ -142,10 +142,27 @@ div[data-testid="stSelectbox"] label {
 
 [data-baseweb="popover"] * {
     color:#111827 !important;
+}
+
+[data-baseweb="popover"] [role="option"],
+[data-baseweb="popover"] li {
+    color:#111827 !important;
     background:#ffffff !important;
 }
 
-input {
+[data-baseweb="popover"] [role="option"] *,
+[data-baseweb="popover"] li * {
+    color:#111827 !important;
+    background:transparent !important;
+}
+
+[data-baseweb="popover"] [aria-selected="true"],
+[data-baseweb="popover"] li:hover {
+    background:#e5e7eb !important;
+}
+
+[data-baseweb="popover"] [aria-selected="true"] *,
+[data-baseweb="popover"] li:hover * {
     color:#111827 !important;
 }
 

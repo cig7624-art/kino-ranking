@@ -1096,6 +1096,8 @@ def get_ott_providers_from_api(content_id):
         "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
     }
 
+    all_providers = []
+
     for url in urls:
         try:
             res = requests.get(url, headers=headers, timeout=20)
@@ -1105,21 +1107,16 @@ def get_ott_providers_from_api(content_id):
 
             text = html.unescape(res.text)
 
-            # "정액제" 근처가 있으면 우선 그 구간만 확인
-            section = extract_subscription_section(text)
-            providers = detect_ott_from_section(section)
+            providers = detect_ott_from_section(text)
 
-            # 없으면 전체 HTML에서 "넷플릭스 바로 보기" / redirect URL 기준으로 확인
-            if not providers:
-                providers = detect_ott_from_section(text)
-
-            if providers:
-                return providers
+            for p in providers:
+                if p not in all_providers:
+                    all_providers.append(p)
 
         except Exception:
             continue
 
-    return []
+    return all_providers
         
 def set_release_provider(provider):
     st.session_state.selected_release_provider = provider

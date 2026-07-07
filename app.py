@@ -567,36 +567,7 @@ li[role="option"][aria-selected="true"] *,
 li[role="option"]:hover * {
     color:#111827 !important;
 }
-/* card text restore */
-.rank-card,
-.rank-card div,
-.rank-card span,
-.side-card,
-.side-card div,
-.side-card span,
-.release-row,
-.release-row div,
-.release-row span {
-    color:#f8fafc !important;
-}
 
-.rank-card .meta,
-.side-card .small,
-.release-meta {
-    color:#8fa1bb !important;
-}
-
-.badge-new {
-    color:#f97316 !important;
-}
-
-.badge-up {
-    color:#22c55e !important;
-}
-
-.badge-down {
-    color:#ef4444 !important;
-}
 </style>
 """, unsafe_allow_html=True)
 

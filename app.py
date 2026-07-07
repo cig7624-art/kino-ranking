@@ -3,6 +3,7 @@ import pandas as pd
 import requests
 import re
 import html
+import json
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 
@@ -1086,126 +1087,57 @@ def detect_ott_from_section(section):
 
     return sorted(set(found))
 
-def get_ott_providers_by_title(title):
+def get_ott_providers_from_api(content_id):
+    query = """
+    query ContentDetail($id: ID!) {
+      content(id: $id) {
+        id
+        titleKr
+        titleEn
+        watchProviders {
+          name
+          providerName
+          type
+          monetizationType
+        }
+        providers {
+          name
+          providerName
+          type
+        }
+        offers {
+          provider {
+            name
+            providerName
+          }
+          monetizationType
+          type
+        }
+      }
+    }
+    """
+
+    payload = {
+        "operationName": "ContentDetail",
+        "variables": {"id": str(content_id)},
+        "query": query,
+    }
+
     try:
-        with sync_playwright() as p:
-            browser = p.chromium.launch(
-                headless=True,
-                args=["--no-sandbox", "--disable-dev-shm-usage"]
-            )
+        res = requests.post(
+            "https://gateway.kinolights.com/graphql",
+            json=payload,
+            headers={
+                "Content-Type": "application/json",
+                "User-Agent": "Mozilla/5.0",
+            },
+            timeout=20,
+        )
 
-            context = browser.new_context(
-                viewport={"width": 430, "height": 1600},
-                locale="ko-KR",
-                timezone_id="Asia/Seoul",
-                user_agent=(
-                    "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) "
-                    "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 "
-                    "Mobile/15E148 Safari/604.1"
-                ),
-            )
+        data = res.json()
 
-            page = context.new_page()
-            page.set_default_timeout(15000)
-
-            page.goto("https://m.kinolights.com/search", wait_until="domcontentloaded", timeout=60000)
-            page.wait_for_timeout(2500)
-
-            try:
-                page.get_by_placeholder("작품명, 배우, 감독 검색").fill(str(title), timeout=7000)
-            except Exception:
-                inp = page.locator("input").first
-                inp.click(timeout=7000)
-                inp.fill(str(title))
-
-            page.wait_for_timeout(3000)
-
-            # 검색 결과 중 title을 포함한 실제 상세 링크 찾기
-            detail_url = page.evaluate(
-                """
-                (title) => {
-                  const links = Array.from(document.querySelectorAll('a[href]'));
-
-                  const candidates = links.map(a => {
-                    let box = a;
-                    for (let i = 0; i < 4; i++) {
-                      if (box.parentElement) box = box.parentElement;
-                    }
-
-                    const href = a.href || '';
-                    const text = (box.innerText || a.innerText || a.textContent || '').trim();
-
-                    return { href, text };
-                  }).filter(x => {
-                    return (
-                      x.text.includes(title) &&
-                      (
-                        x.href.includes('/title/') ||
-                        x.href.includes('/season/') ||
-                        x.href.includes('/movie/') ||
-                        x.href.includes('/content/')
-                      )
-                    );
-                  });
-
-                  if (candidates.length > 0) return candidates[0].href;
-
-                  return "";
-                }
-                """,
-                str(title),
-            )
-
-            if not detail_url:
-                context.close()
-                browser.close()
-                return ["DEBUG:상세URL못찾음"]
-
-            page.goto(detail_url, wait_until="domcontentloaded", timeout=60000)
-            page.wait_for_timeout(3000)
-
-            # lazy load 대비
-            for _ in range(5):
-                page.mouse.wheel(0, 1200)
-                page.wait_for_timeout(700)
-
-            body_text = page.locator("body").inner_text(timeout=10000)
-
-            dom_text = page.evaluate(
-                """
-                () => {
-                  return Array.from(document.querySelectorAll('img, a, button, div, span, svg, use'))
-                    .map(el => [
-                      el.innerText || '',
-                      el.textContent || '',
-                      el.alt || '',
-                      el.getAttribute('alt') || '',
-                      el.getAttribute('aria-label') || '',
-                      el.getAttribute('title') || '',
-                      el.getAttribute('href') || '',
-                      el.getAttribute('src') || '',
-                      el.getAttribute('xlink:href') || '',
-                      el.getAttribute('class') || '',
-                      String(el.className || '')
-                    ].join(' '))
-                    .join(' ');
-                }
-                """
-            )
-
-            full_text = body_text + " " + dom_text
-
-            section = extract_subscription_section(full_text)
-            providers = detect_ott_from_section(section)
-
-            if not providers:
-                providers = detect_ott_from_section(full_text)
-
-            context.close()
-            browser.close()
-            if not providers:
-                return [f"DEBUG:URL={detail_url}"]
-            return providers
+        text = json.dumps(data, ensure_ascii=False)
+        return detect_ott_from_section(text)
 
     except Exception:
         return []
@@ -1462,8 +1394,8 @@ with tab2:
 
             enriched_results = []
             for item in results[:5]:
-                title = item.get("titleKr") or ""
-                providers = get_ott_providers_by_title(title) if title else []
+                content_id = item.get("id")
+                providers = get_ott_providers_from_api(content_id) if content_id else []
 
                 enriched_results.append({
                     "title": item.get("titleKr") or "",

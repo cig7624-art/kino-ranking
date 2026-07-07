@@ -1365,54 +1365,58 @@ with tab2:
     )
 
     if keyword:
-        with st.spinner("키노라이츠에서 정액제 제공처 확인 중..."):
+        with st.spinner("키노라이츠에서 검색 및 정액제 제공처 확인 중..."):
             results = search_contents(keyword)
 
-        if not results:
+            enriched_results = []
+            for item in results[:6]:
+                content_id = item.get("id")
+                providers = get_ott_providers(content_id) if content_id else []
+
+                enriched_results.append({
+                    "title": item.get("titleKr") or "",
+                    "title_en": item.get("titleEn") or "",
+                    "open_year": item.get("openYear") or "",
+                    "providers": providers,
+                })
+
+        if not enriched_results:
             st.warning("검색 결과 없음")
             st.stop()
 
         st.markdown("### 검색 결과")
 
-        for idx, item in enumerate(results):
-            title = item.get("titleKr") or ""
-            title_en = item.get("titleEn") or ""
-            open_year = item.get("openYear") or ""
-            content_id = item.get("id")
+        for item in enriched_results:
+            title = html.escape(str(item["title"]))
+            title_en = html.escape(str(item["title_en"]))
+            open_year = html.escape(str(item["open_year"]))
+            providers = item["providers"]
 
-            with st.container(border=True):
-                st.markdown(f"#### {html.escape(str(title))}")
+            meta_parts = []
+            if title_en:
+                meta_parts.append(title_en)
+            if open_year:
+                meta_parts.append(open_year)
 
-                meta_parts = []
-                if title_en:
-                    meta_parts.append(str(title_en))
-                if open_year:
-                    meta_parts.append(str(open_year))
+            meta_text = " · ".join(meta_parts)
 
-                if meta_parts:
-                    st.markdown(
-                        f'<div class="small">{" · ".join([html.escape(x) for x in meta_parts])}</div>',
-                        unsafe_allow_html=True
-                    )
+            if providers:
+                provider_html = "".join(
+                    [f'<span class="ott-badge">{html.escape(p)}</span>' for p in providers]
+                )
+            else:
+                provider_html = '<span class="small">정액제 OTT 없음</span>'
 
-                button_key = f"check_ott_{content_id}_{idx}"
-
-                if st.button("정액제 제공처 확인", key=button_key):
-                    with st.spinner("상세페이지에서 정액제 OTT 확인 중..."):
-                        providers = get_ott_providers(content_id)
-
-                    if providers:
-                        provider_html = "".join(
-                            [f'<span class="ott-badge">{html.escape(p)}</span>' for p in providers]
-                        )
-                    else:
-                        provider_html = '<span class="small">정액제 OTT 없음</span>'
-
-                    st.markdown(
-                        f"""
-                        <div style="margin-top:10px;">
-                            {provider_html}
-                        </div>
-                        """,
-                        unsafe_allow_html=True
-                    )
+            st.markdown(f"""
+            <div class="side-card" style="margin-bottom:12px;">
+                <div style="font-size:18px;font-weight:900;color:#f8fafc !important;">
+                    {title}
+                </div>
+                <div class="small" style="margin-top:5px;">
+                    {meta_text}
+                </div>
+                <div style="margin-top:10px;">
+                    {provider_html}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)

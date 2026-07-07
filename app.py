@@ -1207,8 +1207,8 @@ def get_ott_providers_by_title(title):
                 return [f"DEBUG:URL={detail_url}"]
             return providers
 
-    except Exception as e:
-        return [f"DEBUG:{str(e)[:120]}"]
+    except Exception
+        return []
         
 def set_release_provider(provider):
     st.session_state.selected_release_provider = provider

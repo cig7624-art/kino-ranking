@@ -1450,7 +1450,7 @@ with tab1:
 
 with tab2:
     st.subheader("🔎 타이틀로 OTT 제공처 검색")
-    st.info("DEBUG: 새 코드 반영됨")
+
     keyword = st.text_input(
         "작품명을 입력하세요",
         placeholder="예: 멋진 신세계"

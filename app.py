@@ -1094,33 +1094,114 @@ def get_ott_providers_by_title(title):
                 args=["--no-sandbox", "--disable-dev-shm-usage"]
             )
 
-            page = browser.new_page(
+            context = browser.new_context(
                 viewport={"width": 430, "height": 1600},
-                user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)"
+                locale="ko-KR",
+                timezone_id="Asia/Seoul",
+                user_agent=(
+                    "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) "
+                    "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 "
+                    "Mobile/15E148 Safari/604.1"
+                ),
             )
 
-            page.goto("https://m.kinolights.com/search", wait_until="networkidle", timeout=60000)
-            page.wait_for_timeout(2000)
+            page = context.new_page()
+            page.set_default_timeout(15000)
 
-            try:
-                page.get_by_placeholder("작품명, 배우, 감독 검색").click(timeout=7000)
-            except Exception:
-                page.locator("input").first.click(timeout=7000)
-
-            page.keyboard.type(str(title))
+            page.goto("https://m.kinolights.com/search", wait_until="domcontentloaded", timeout=60000)
             page.wait_for_timeout(2500)
 
-            page.get_by_text(str(title), exact=False).first.click(force=True, timeout=7000)
-            page.wait_for_timeout(3500)
+            try:
+                page.get_by_placeholder("작품명, 배우, 감독 검색").fill(str(title), timeout=7000)
+            except Exception:
+                inp = page.locator("input").first
+                inp.click(timeout=7000)
+                inp.fill(str(title))
+
+            page.wait_for_timeout(3000)
+
+            # 검색 결과 중 title을 포함한 실제 상세 링크 찾기
+            detail_url = page.evaluate(
+                """
+                (title) => {
+                  const links = Array.from(document.querySelectorAll('a[href]'));
+
+                  const candidates = links.map(a => {
+                    let box = a;
+                    for (let i = 0; i < 4; i++) {
+                      if (box.parentElement) box = box.parentElement;
+                    }
+
+                    const href = a.href || '';
+                    const text = (box.innerText || a.innerText || a.textContent || '').trim();
+
+                    return { href, text };
+                  }).filter(x => {
+                    return (
+                      x.text.includes(title) &&
+                      (
+                        x.href.includes('/title/') ||
+                        x.href.includes('/season/') ||
+                        x.href.includes('/movie/') ||
+                        x.href.includes('/content/')
+                      )
+                    );
+                  });
+
+                  if (candidates.length > 0) return candidates[0].href;
+
+                  return "";
+                }
+                """,
+                str(title),
+            )
+
+            if not detail_url:
+                context.close()
+                browser.close()
+                return []
+
+            page.goto(detail_url, wait_until="domcontentloaded", timeout=60000)
+            page.wait_for_timeout(3000)
+
+            # lazy load 대비
+            for _ in range(5):
+                page.mouse.wheel(0, 1200)
+                page.wait_for_timeout(700)
 
             body_text = page.locator("body").inner_text(timeout=10000)
-            section = extract_subscription_section(body_text)
 
+            dom_text = page.evaluate(
+                """
+                () => {
+                  return Array.from(document.querySelectorAll('img, a, button, div, span, svg, use'))
+                    .map(el => [
+                      el.innerText || '',
+                      el.textContent || '',
+                      el.alt || '',
+                      el.getAttribute('alt') || '',
+                      el.getAttribute('aria-label') || '',
+                      el.getAttribute('title') || '',
+                      el.getAttribute('href') || '',
+                      el.getAttribute('src') || '',
+                      el.getAttribute('xlink:href') || '',
+                      el.getAttribute('class') || '',
+                      String(el.className || '')
+                    ].join(' '))
+                    .join(' ');
+                }
+                """
+            )
+
+            full_text = body_text + " " + dom_text
+
+            section = extract_subscription_section(full_text)
             providers = detect_ott_from_section(section)
 
             if not providers:
-                providers = detect_ott_from_section(body_text)
+                providers = detect_ott_from_section(full_text)
 
+            context.close()
             browser.close()
             return providers
 

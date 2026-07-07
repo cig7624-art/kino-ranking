@@ -907,9 +907,10 @@ def render_upcoming_releases(release_df, max_items=80, hide_provider=False):
 def search_contents(keyword):
     query = """
     query SearchContents($keyword: String!) {
-      contents(keyword: $keyword, limit: 5) {
+      contents(keyword: $keyword, limit: 8) {
         id
         titleKr
+        titleEn
         openYear
       }
     }
@@ -921,73 +922,141 @@ def search_contents(keyword):
         "query": query,
     }
 
-    res = requests.post(
-        "https://gateway.kinolights.com/graphql",
-        json=payload,
-        headers={
-            "Content-Type": "application/json",
-            "User-Agent": "Mozilla/5.0",
-        },
-        timeout=20,
-    )
+    try:
+        res = requests.post(
+            "https://gateway.kinolights.com/graphql",
+            json=payload,
+            headers={
+                "Content-Type": "application/json",
+                "User-Agent": "Mozilla/5.0",
+            },
+            timeout=20,
+        )
+        data = res.json()
 
-    data = res.json()
+        if "errors" in data:
+            return []
 
-    if "errors" in data:
+        return data.get("data", {}).get("contents", []) or []
+
+    except Exception:
         return []
 
-    return data["data"]["contents"]
+
+def extract_subscription_section(text):
+    text = str(text)
+
+    start_keys = ["정액제", "보러가기"]
+    end_keys = [
+        "구매",
+        "대여",
+        "시청 주의 가이드",
+        "작품 정보",
+        "비슷한 작품",
+        "관련 콘텐츠",
+        "코멘트",
+        "리뷰",
+        "출연",
+        "감독",
+    ]
+
+    start = -1
+    for key in start_keys:
+        idx = text.find(key)
+        if idx != -1:
+            start = idx
+            break
+
+    if start == -1:
+        return ""
+
+    section = text[start:]
+
+    cut = len(section)
+    for key in end_keys:
+        idx = section.find(key)
+        if idx != -1:
+            cut = min(cut, idx)
+
+    return section[:cut]
+
+
+def detect_ott_from_section(section):
+    section = str(section)
+    lower = section.lower()
+
+    ott_map = {
+        "넷플릭스": ["넷플릭스", "netflix"],
+        "티빙": ["티빙", "tving"],
+        "쿠팡플레이": ["쿠팡플레이", "coupang"],
+        "웨이브": ["웨이브", "wavve"],
+        "디즈니+": ["디즈니+", "디즈니 플러스", "disney+"],
+        "왓챠": ["왓챠", "watcha"],
+        "라프텔": ["라프텔", "laftel"],
+        "Apple TV": ["apple tv", "apple tv+", "appletv"],
+        "아마존 프라임 비디오": ["아마존 프라임", "프라임 비디오", "prime video", "amazon prime"],
+        "씨네폭스": ["씨네폭스", "cinefox"],
+    }
+
+    found = []
+
+    for ott, keys in ott_map.items():
+        for key in keys:
+            if key in section or key.lower() in lower:
+                found.append(ott)
+                break
+
+    return sorted(set(found))
 
 
 def get_ott_providers(content_id):
     urls = [
         f"https://m.kinolights.com/title/{content_id}",
+        f"https://m.kinolights.com/season/{content_id}",
         f"https://m.kinolights.com/content/{content_id}",
         f"https://m.kinolights.com/contents/{content_id}",
     ]
 
     found = []
 
-    with sync_playwright() as p:
-        browser = p.chromium.launch(
-            headless=True,
-            executable_path="/usr/bin/chromium"
-        )
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(
+                headless=True,
+                args=["--no-sandbox", "--disable-dev-shm-usage"]
+            )
 
-        page = browser.new_page(
-            viewport={"width": 430, "height": 1600},
-            user_agent="Mozilla/5.0"
-        )
+            page = browser.new_page(
+                viewport={"width": 430, "height": 1600},
+                user_agent="Mozilla/5.0"
+            )
 
-        for url in urls:
-            try:
-                page.goto(url, wait_until="domcontentloaded", timeout=20000)
-                page.wait_for_timeout(1200)
+            for url in urls:
+                try:
+                    page.goto(url, wait_until="domcontentloaded", timeout=25000)
+                    page.wait_for_timeout(1500)
 
-                text = page.locator("body").inner_text()
+                    body_text = page.locator("body").inner_text(timeout=8000)
 
-                if "보러가기" not in text:
+                    section = extract_subscription_section(body_text)
+
+                    if not section:
+                        continue
+
+                    found = detect_ott_from_section(section)
+
+                    if found:
+                        break
+
+                except Exception:
                     continue
 
-                section = text.split("보러가기", 1)[1]
+            browser.close()
 
-                if "시청 주의 가이드" in section:
-                    section = section.split("시청 주의 가이드", 1)[0]
-
-                for ott in OTT_NAMES:
-                    if ott in section:
-                        found.append(ott)
-
-                if found:
-                    break
-
-            except Exception:
-                continue
-
-        browser.close()
+    except Exception:
+        return []
 
     return sorted(set(found))
-
 
 def set_release_provider(provider):
     st.session_state.selected_release_provider = provider
@@ -1240,34 +1309,51 @@ with tab2:
         with st.spinner("키노라이츠에서 정액제 제공처 확인 중..."):
             results = search_contents(keyword)
 
-            if not results:
-                st.warning("검색 결과 없음")
-                st.stop()
+        if not results:
+            st.warning("검색 결과 없음")
+            st.stop()
 
-            item = results[0]
-            title = item.get("titleKr")
-            open_year = item.get("openYear")
+        st.markdown("### 검색 결과")
+
+        for idx, item in enumerate(results):
+            title = item.get("titleKr") or ""
+            title_en = item.get("titleEn") or ""
+            open_year = item.get("openYear") or ""
             content_id = item.get("id")
 
-            providers = get_ott_providers(content_id)
+            with st.container(border=True):
+                st.markdown(f"#### {html.escape(str(title))}")
 
-            if providers:
-                provider_html = "".join(
-                    [f'<span class="ott-badge">{p}</span>' for p in providers]
-                )
-            else:
-                provider_html = '<span class="small">정액제 OTT 없음</span>'
+                meta_parts = []
+                if title_en:
+                    meta_parts.append(str(title_en))
+                if open_year:
+                    meta_parts.append(str(open_year))
 
-            st.markdown(f"""
-            <div class="side-card">
-                <h3>{title}</h3>
-                <div class="small">연도: {open_year}</div>
-                <div style="margin-top:10px;">{provider_html}</div>
-            </div>
-            """, unsafe_allow_html=True)
-
-            with st.expander("다른 검색 후보 보기"):
-                for other in results[1:]:
+                if meta_parts:
                     st.markdown(
-                        f"- {other.get('titleKr')} ({other.get('openYear')})"
+                        f'<div class="small">{" · ".join([html.escape(x) for x in meta_parts])}</div>',
+                        unsafe_allow_html=True
+                    )
+
+                button_key = f"check_ott_{content_id}_{idx}"
+
+                if st.button("정액제 제공처 확인", key=button_key):
+                    with st.spinner("상세페이지에서 정액제 OTT 확인 중..."):
+                        providers = get_ott_providers(content_id)
+
+                    if providers:
+                        provider_html = "".join(
+                            [f'<span class="ott-badge">{html.escape(p)}</span>' for p in providers]
+                        )
+                    else:
+                        provider_html = '<span class="small">정액제 OTT 없음</span>'
+
+                    st.markdown(
+                        f"""
+                        <div style="margin-top:10px;">
+                            {provider_html}
+                        </div>
+                        """,
+                        unsafe_allow_html=True
                     )

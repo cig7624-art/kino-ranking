@@ -1207,7 +1207,7 @@ def get_ott_providers_by_title(title):
                 return [f"DEBUG:URL={detail_url}"]
             return providers
 
-    except Exception
+    except Exception:
         return []
         
 def set_release_provider(provider):

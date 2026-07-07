@@ -580,6 +580,24 @@ li[role="option"]:hover * {
 .release-meta {
     color:#8fa1bb !important;
 }
+
+.search-title {
+    font-size:18px;
+    font-weight:900;
+    color:#f8fafc !important;
+}
+
+.search-meta {
+    color:#8fa1bb !important;
+    font-size:12px;
+    margin-top:5px;
+}
+
+.search-provider-empty {
+    color:#94a3b8 !important;
+    font-size:13px;
+    margin-top:10px;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -1409,7 +1427,7 @@ with tab2:
 
             st.markdown(f"""
             <div class="side-card" style="margin-bottom:12px;">
-                <div style="font-size:18px;font-weight:900;color:#f8fafc !important;">
+                <div class="search-title">
                     {title}
                 </div>
                 <div class="small" style="margin-top:5px;">

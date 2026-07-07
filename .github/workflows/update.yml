@@ -27,14 +27,18 @@ jobs:
         run: |
           python -m playwright install --with-deps chromium
 
-      - name: Run Detail API Debug
+      - name: Run ranking scraper
         run: |
-          python find_detail_api.py
+          python scrape.py
 
-      - name: Commit Debug JSON
+      - name: Run upcoming scraper
+        run: |
+          python scrape_upcoming.py
+
+      - name: Commit CSV
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add detail_graphql_calls.json
-          git commit -m "GraphQL Debug" || echo "No changes"
+          git add ranking_history.csv upcoming_releases.csv debug_provider_ids.csv debug_upcoming_text.txt debug_upcoming_cards.csv debug_upcoming.png
+          git commit -m "Update ranking and upcoming releases" || echo "No changes"
           git push

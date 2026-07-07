@@ -28,10 +28,17 @@ st.markdown("""
     max-width:100%;
 }
 
-h1,h2,h3,p,label,div,span {
+h1,h2,h3,p,label {
     color:#f8fafc !important;
 }
 
+[data-baseweb="popover"] div,
+[data-baseweb="popover"] span,
+[data-baseweb="popover"] li,
+[data-baseweb="popover"] * {
+    color:#111827 !important;
+    opacity:1 !important;
+}
 header, footer {
     visibility:hidden;
 }

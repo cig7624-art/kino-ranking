@@ -527,6 +527,7 @@ div[data-testid="stVerticalBlockBorderWrapper"] h3 {
     margin-right:6px;
     margin-top:6px;
     font-weight:700;
+    color:#f8fafc !important;
 }
 
 /* selectbox dropdown menu text fix */
@@ -1062,7 +1063,6 @@ def extract_subscription_section(text):
 
 def detect_ott_from_section(section):
     section = html.unescape(str(section))
-    lower = section.lower()
 
     found = []
 
@@ -1075,25 +1075,6 @@ def detect_ott_from_section(section):
         if name == "디즈니 플러스":
             name = "디즈니+"
         found.append(name)
-
-    ott_map = {
-        "넷플릭스": ["넷플릭스", "netflix.com", "netflix"],
-        "티빙": ["티빙", "tving.com", "tving"],
-        "쿠팡플레이": ["쿠팡플레이", "coupangplay", "coupang"],
-        "웨이브": ["웨이브", "wavve.com", "wavve"],
-        "디즈니+": ["디즈니+", "디즈니 플러스", "disneyplus", "disney+", "disney"],
-        "왓챠": ["왓챠", "watcha.com", "watcha"],
-        "라프텔": ["라프텔", "laftel"],
-        "Apple TV": ["Apple TV", "tv.apple.com", "appletv"],
-        "아마존 프라임 비디오": ["아마존 프라임", "프라임 비디오", "primevideo", "amazon prime"],
-        "씨네폭스": ["씨네폭스", "cinefox"],
-    }
-
-    for ott, keys in ott_map.items():
-        for key in keys:
-            if key in section or key.lower() in lower:
-                found.append(ott)
-                break
 
     return sorted(set(found))
 

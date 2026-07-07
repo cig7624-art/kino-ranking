@@ -1064,6 +1064,19 @@ def detect_ott_from_section(section):
     section = str(section)
     lower = section.lower()
 
+    found = []
+
+    # 상세페이지 버튼 텍스트: "넷플릭스 바로 보기", "티빙 바로 보기" 패턴
+    direct_matches = re.findall(
+        r"(넷플릭스|티빙|쿠팡플레이|웨이브|디즈니\+|디즈니 플러스|왓챠|라프텔|Apple TV|아마존 프라임 비디오|씨네폭스)\s*바로 보기",
+        section
+    )
+
+    for name in direct_matches:
+        if name == "디즈니 플러스":
+            name = "디즈니+"
+        found.append(name)
+
     ott_map = {
         "넷플릭스": ["넷플릭스", "netflix"],
         "티빙": ["티빙", "tving"],
@@ -1076,8 +1089,6 @@ def detect_ott_from_section(section):
         "아마존 프라임 비디오": ["아마존 프라임", "프라임 비디오", "prime video", "amazon prime", "primevideo"],
         "씨네폭스": ["씨네폭스", "cinefox"],
     }
-
-    found = []
 
     for ott, keys in ott_map.items():
         for key in keys:

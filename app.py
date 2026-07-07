@@ -1066,13 +1066,13 @@ def detect_ott_from_section(section):
     ott_map = {
         "넷플릭스": ["넷플릭스", "netflix"],
         "티빙": ["티빙", "tving"],
-        "쿠팡플레이": ["쿠팡플레이", "coupang"],
+        "쿠팡플레이": ["쿠팡플레이", "coupang", "coupangplay"],
         "웨이브": ["웨이브", "wavve"],
-        "디즈니+": ["디즈니+", "디즈니 플러스", "disney+"],
+        "디즈니+": ["디즈니+", "디즈니 플러스", "disney+", "disneyplus", "disney-plus"],
         "왓챠": ["왓챠", "watcha"],
         "라프텔": ["라프텔", "laftel"],
         "Apple TV": ["apple tv", "apple tv+", "appletv"],
-        "아마존 프라임 비디오": ["아마존 프라임", "프라임 비디오", "prime video", "amazon prime"],
+        "아마존 프라임 비디오": ["아마존 프라임", "프라임 비디오", "prime video", "amazon prime", "primevideo"],
         "씨네폭스": ["씨네폭스", "cinefox"],
     }
 
@@ -1086,7 +1086,6 @@ def detect_ott_from_section(section):
 
     return sorted(set(found))
 
-
 def get_ott_providers(content_id):
     urls = [
         f"https://m.kinolights.com/title/{content_id}",
@@ -1095,47 +1094,86 @@ def get_ott_providers(content_id):
         f"https://m.kinolights.com/contents/{content_id}",
     ]
 
-    found = []
-
     try:
         with sync_playwright() as p:
             browser = p.chromium.launch(
                 headless=True,
-                args=["--no-sandbox", "--disable-dev-shm-usage"]
+                args=[
+                    "--no-sandbox",
+                    "--disable-dev-shm-usage",
+                    "--disable-blink-features=AutomationControlled",
+                ],
             )
 
-            page = browser.new_page(
+            context = browser.new_context(
                 viewport={"width": 430, "height": 1600},
-                user_agent="Mozilla/5.0"
+                locale="ko-KR",
+                timezone_id="Asia/Seoul",
+                user_agent=(
+                    "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) "
+                    "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 "
+                    "Mobile/15E148 Safari/604.1"
+                ),
             )
+
+            page = context.new_page()
+            page.set_default_timeout(15000)
 
             for url in urls:
                 try:
-                    page.goto(url, wait_until="domcontentloaded", timeout=25000)
-                    page.wait_for_timeout(1500)
+                    page.goto(url, wait_until="domcontentloaded", timeout=30000)
+                    page.wait_for_timeout(2500)
 
                     body_text = page.locator("body").inner_text(timeout=8000)
 
-                    section = extract_subscription_section(body_text)
+                    dom_text = page.evaluate(
+                        """
+                        () => {
+                          return Array.from(document.querySelectorAll('img, a, button, div, span, svg, use'))
+                            .map(el => [
+                              el.innerText || '',
+                              el.textContent || '',
+                              el.alt || '',
+                              el.getAttribute('alt') || '',
+                              el.getAttribute('aria-label') || '',
+                              el.getAttribute('title') || '',
+                              el.getAttribute('href') || '',
+                              el.getAttribute('src') || '',
+                              el.getAttribute('xlink:href') || '',
+                              el.getAttribute('class') || '',
+                              String(el.className || '')
+                            ].join(' '))
+                            .join(' ');
+                        }
+                        """
+                    )
 
-                    if not section:
-                        continue
+                    full_text = f"{body_text} {dom_text}"
 
-                    found = detect_ott_from_section(section)
+                    # 우선 정액제/보러가기 주변을 보고
+                    section = extract_subscription_section(full_text)
 
-                    if found:
-                        break
+                    # 못 찾으면 상세 페이지 전체에서 OTT명 탐색
+                    providers = detect_ott_from_section(section) if section else []
+
+                    if not providers:
+                        providers = detect_ott_from_section(full_text)
+
+                    if providers:
+                        context.close()
+                        browser.close()
+                        return providers
 
                 except Exception:
                     continue
 
+            context.close()
             browser.close()
 
     except Exception:
         return []
 
-    return sorted(set(found))
-
+    return []
 def set_release_provider(provider):
     st.session_state.selected_release_provider = provider
 
@@ -1387,7 +1425,7 @@ with tab2:
             results = search_contents(keyword)
 
             enriched_results = []
-            for item in results[:6]:
+            for item in results[:5]:
                 content_id = item.get("id")
                 providers = get_ott_providers(content_id) if content_id else []
 
@@ -1423,16 +1461,12 @@ with tab2:
                     [f'<span class="ott-badge">{html.escape(p)}</span>' for p in providers]
                 )
             else:
-                provider_html = '<span class="small">정액제 OTT 없음</span>'
+                provider_html = '<span class="search-provider-empty">정액제 OTT 없음</span>'
 
             st.markdown(f"""
             <div class="side-card" style="margin-bottom:12px;">
-                <div class="search-title">
-                    {title}
-                </div>
-                <div class="small" style="margin-top:5px;">
-                    {meta_text}
-                </div>
+                <div class="search-title">{title}</div>
+                <div class="search-meta">{meta_text}</div>
                 <div style="margin-top:10px;">
                     {provider_html}
                 </div>

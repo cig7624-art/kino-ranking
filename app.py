@@ -1099,21 +1099,17 @@ def get_ott_providers_by_title(title):
                 user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)"
             )
 
-            page.goto("https://m.kinolights.com", wait_until="networkidle", timeout=60000)
-            page.wait_for_timeout(2000)
-
-
             page.goto("https://m.kinolights.com/search", wait_until="networkidle", timeout=60000)
             page.wait_for_timeout(2000)
 
             try:
-            page.get_by_placeholder("작품명, 배우, 감독 검색").click(timeout=7000)
+                page.get_by_placeholder("작품명, 배우, 감독 검색").click(timeout=7000)
             except Exception:
-            page.locator("input").first.click(timeout=7000)
+                page.locator("input").first.click(timeout=7000)
 
             page.keyboard.type(str(title))
             page.wait_for_timeout(2500)
-             
+
             page.get_by_text(str(title), exact=False).first.click(force=True, timeout=7000)
             page.wait_for_timeout(3500)
 

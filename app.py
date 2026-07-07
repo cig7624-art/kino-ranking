@@ -1159,7 +1159,7 @@ def get_ott_providers_by_title(title):
             if not detail_url:
                 context.close()
                 browser.close()
-                return []
+                return ["DEBUG:상세URL못찾음"]
 
             page.goto(detail_url, wait_until="domcontentloaded", timeout=60000)
             page.wait_for_timeout(3000)
@@ -1203,6 +1203,8 @@ def get_ott_providers_by_title(title):
 
             context.close()
             browser.close()
+            if not providers:
+                return [f"DEBUG:URL={detail_url}"]
             return providers
 
     except Exception:

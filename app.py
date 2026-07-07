@@ -1086,94 +1086,43 @@ def detect_ott_from_section(section):
 
     return sorted(set(found))
 
-def get_ott_providers(content_id):
-    urls = [
-        f"https://m.kinolights.com/title/{content_id}",
-        f"https://m.kinolights.com/season/{content_id}",
-        f"https://m.kinolights.com/content/{content_id}",
-        f"https://m.kinolights.com/contents/{content_id}",
-    ]
-
+def get_ott_providers_by_title(title):
     try:
         with sync_playwright() as p:
             browser = p.chromium.launch(
                 headless=True,
-                args=[
-                    "--no-sandbox",
-                    "--disable-dev-shm-usage",
-                    "--disable-blink-features=AutomationControlled",
-                ],
+                args=["--no-sandbox", "--disable-dev-shm-usage"]
             )
 
-            context = browser.new_context(
+            page = browser.new_page(
                 viewport={"width": 430, "height": 1600},
-                locale="ko-KR",
-                timezone_id="Asia/Seoul",
-                user_agent=(
-                    "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) "
-                    "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 "
-                    "Mobile/15E148 Safari/604.1"
-                ),
+                user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)"
             )
 
-            page = context.new_page()
-            page.set_default_timeout(15000)
+            page.goto("https://m.kinolights.com", wait_until="networkidle", timeout=60000)
+            page.wait_for_timeout(2000)
 
-            for url in urls:
-                try:
-                    page.goto(url, wait_until="domcontentloaded", timeout=30000)
-                    page.wait_for_timeout(2500)
+            page.get_by_placeholder("작품명, 배우, 감독 검색").click(timeout=7000)
+            page.keyboard.type(str(title))
+            page.wait_for_timeout(2500)
 
-                    body_text = page.locator("body").inner_text(timeout=8000)
+            page.get_by_text(str(title), exact=False).first.click(force=True, timeout=7000)
+            page.wait_for_timeout(3500)
 
-                    dom_text = page.evaluate(
-                        """
-                        () => {
-                          return Array.from(document.querySelectorAll('img, a, button, div, span, svg, use'))
-                            .map(el => [
-                              el.innerText || '',
-                              el.textContent || '',
-                              el.alt || '',
-                              el.getAttribute('alt') || '',
-                              el.getAttribute('aria-label') || '',
-                              el.getAttribute('title') || '',
-                              el.getAttribute('href') || '',
-                              el.getAttribute('src') || '',
-                              el.getAttribute('xlink:href') || '',
-                              el.getAttribute('class') || '',
-                              String(el.className || '')
-                            ].join(' '))
-                            .join(' ');
-                        }
-                        """
-                    )
+            body_text = page.locator("body").inner_text(timeout=10000)
+            section = extract_subscription_section(body_text)
 
-                    full_text = f"{body_text} {dom_text}"
+            providers = detect_ott_from_section(section)
 
-                    # 우선 정액제/보러가기 주변을 보고
-                    section = extract_subscription_section(full_text)
+            if not providers:
+                providers = detect_ott_from_section(body_text)
 
-                    # 못 찾으면 상세 페이지 전체에서 OTT명 탐색
-                    providers = detect_ott_from_section(section) if section else []
-
-                    if not providers:
-                        providers = detect_ott_from_section(full_text)
-
-                    if providers:
-                        context.close()
-                        browser.close()
-                        return providers
-
-                except Exception:
-                    continue
-
-            context.close()
             browser.close()
+            return providers
 
     except Exception:
         return []
-
-    return []
+        
 def set_release_provider(provider):
     st.session_state.selected_release_provider = provider
 
@@ -1427,8 +1376,8 @@ with tab2:
 
             enriched_results = []
             for item in results[:5]:
-                content_id = item.get("id")
-                providers = get_ott_providers(content_id) if content_id else []
+                title = item.get("titleKr") or ""
+                providers = get_ott_providers_by_title(title) if title else []
 
                 enriched_results.append({
                     "title": item.get("titleKr") or "",

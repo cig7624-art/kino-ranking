@@ -1017,7 +1017,7 @@ def search_contents(keyword):
 
         return data.get("data", {}).get("contents", []) or []
 
-    except Exception
+    except Exception:
         return []
 
 

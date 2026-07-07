@@ -1,9 +1,9 @@
+import json
 import streamlit as st
 import pandas as pd
 import requests
 import re
 import html
-import json
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 
@@ -1094,25 +1094,6 @@ def get_ott_providers_from_api(content_id):
         id
         titleKr
         titleEn
-        watchProviders {
-          name
-          providerName
-          type
-          monetizationType
-        }
-        providers {
-          name
-          providerName
-          type
-        }
-        offers {
-          provider {
-            name
-            providerName
-          }
-          monetizationType
-          type
-        }
       }
     }
     """
@@ -1136,11 +1117,21 @@ def get_ott_providers_from_api(content_id):
 
         data = res.json()
 
-        text = json.dumps(data, ensure_ascii=False)
-        return detect_ott_from_section(text)
+        # 임시 디버그: API 응답 확인
+        if "errors" in data:
+            return [f"DEBUG:API_ERROR {str(data['errors'])[:150]}"]
 
-    except Exception:
-        return []
+        text = json.dumps(data, ensure_ascii=False)
+
+        providers = detect_ott_from_section(text)
+
+        if not providers:
+            return [f"DEBUG:NO_PROVIDER {text[:150]}"]
+
+        return providers
+
+    except Exception as e:
+        return [f"DEBUG:EXCEPTION {str(e)[:150]}"]
         
 def set_release_provider(provider):
     st.session_state.selected_release_provider = provider

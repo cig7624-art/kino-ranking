@@ -1,0 +1,7 @@
+[
+  {
+    "url": "https://gateway.kinolights.com/graphql",
+    "method": "POST",
+    "post_data": "{\"operationName\":\"Inventories\",\"variables\":{\"inventoryType\":\"TITLE_MIDDLE\"},\"extensions\":{\"clientLibrary\":{\"name\":\"@apollo/client\",\"version\":\"4.1.6\"}},\"query\":\"query Inventories($inventoryType: InventoryType!) {\\n  inventories(inventoryType: $inventoryType) {\\n    ...FragmentInventoryImage\\n    __typename\\n  }\\n}\\n\\nfragment FragmentInventoryImage on BannerOutput {\\n  id\\n  inventory\\n  inventoryImage {\\n    id\\n    pathUrl\\n    __typename\\n  }\\n  link\\n  provider\\n  title\\n  type\\n  __typename\\n}\"}"
+  }
+]

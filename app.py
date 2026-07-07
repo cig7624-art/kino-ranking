@@ -1102,10 +1102,18 @@ def get_ott_providers_by_title(title):
             page.goto("https://m.kinolights.com", wait_until="networkidle", timeout=60000)
             page.wait_for_timeout(2000)
 
+
+            page.goto("https://m.kinolights.com/search", wait_until="networkidle", timeout=60000)
+            page.wait_for_timeout(2000)
+
+            try:
             page.get_by_placeholder("작품명, 배우, 감독 검색").click(timeout=7000)
+            except Exception:
+            page.locator("input").first.click(timeout=7000)
+
             page.keyboard.type(str(title))
             page.wait_for_timeout(2500)
-
+             
             page.get_by_text(str(title), exact=False).first.click(force=True, timeout=7000)
             page.wait_for_timeout(3500)
 
@@ -1372,7 +1380,6 @@ with tab2:
     if keyword:
         with st.spinner("키노라이츠에서 검색 및 정액제 제공처 확인 중..."):
             results = search_contents(keyword)
-            st.write(results)
 
             enriched_results = []
             for item in results[:5]:

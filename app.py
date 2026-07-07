@@ -1423,6 +1423,7 @@ with tab2:
     if keyword:
         with st.spinner("키노라이츠에서 검색 및 정액제 제공처 확인 중..."):
             results = search_contents(keyword)
+            st.write(results)
 
             enriched_results = []
             for item in results[:5]:

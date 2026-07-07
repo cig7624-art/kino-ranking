@@ -1402,14 +1402,14 @@ with tab2:
             results = search_contents(keyword)
 
             enriched_results = []
-            for item in results[:5]:
+            for item in results[:3]:
                 title_for_search = item.get("titleKr") or ""
                 providers = []
 
                 candidate_ids = find_candidate_content_ids(title_for_search)
 
                 if candidate_ids:
-                    for kind, cid in candidate_ids[:8]:
+                    for kind, cid in candidate_ids[:3]:
                         more = get_ott_providers_from_api(cid)
                         for p in more:
                             if p not in providers:

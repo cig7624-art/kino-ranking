@@ -4,6 +4,7 @@ import pandas as pd
 import requests
 import re
 import html
+from difflib import SequenceMatcher
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 
@@ -817,6 +818,129 @@ def load_upcoming_releases():
 
     return df
 
+def normalize_search_text(text):
+    return str(text).lower().replace(" ", "").replace(":", "").replace("-", "").strip()
+
+
+@st.cache_data(ttl=300)
+def load_provider_cache():
+    rows = []
+
+    # 랭킹 데이터 기반
+    rank_file = Path("ranking_history.csv")
+    if rank_file.exists():
+        try:
+            df = pd.read_csv(rank_file).fillna("")
+            for _, r in df.iterrows():
+                title = str(r.get("title", "")).strip()
+                providers = str(r.get("providers", "")).strip()
+                open_year = str(r.get("open_year", "")).strip()
+                media_type = str(r.get("media_type", "")).strip()
+
+                if title and providers:
+                    rows.append({
+                        "title": title,
+                        "title_en": "",
+                        "open_year": open_year,
+                        "media_type": media_type,
+                        "providers": providers,
+                        "source": "랭킹 캐시"
+                    })
+        except Exception:
+            pass
+
+    # 공개예정작 데이터 기반
+    upcoming_file = Path("upcoming_releases.csv")
+    if upcoming_file.exists():
+        try:
+            df = pd.read_csv(upcoming_file).fillna("")
+            for _, r in df.iterrows():
+                title = str(r.get("title", "")).strip()
+                provider = str(r.get("provider", "")).strip()
+
+                if title and provider:
+                    rows.append({
+                        "title": title,
+                        "title_en": "",
+                        "open_year": "",
+                        "media_type": "공개예정",
+                        "providers": provider,
+                        "source": "공개예정작 캐시"
+                    })
+        except Exception:
+            pass
+
+    if not rows:
+        return pd.DataFrame(columns=["title", "title_en", "open_year", "media_type", "providers", "source"])
+
+    cache = pd.DataFrame(rows).fillna("")
+
+    cache["norm_title"] = cache["title"].apply(normalize_search_text)
+
+    cache = (
+        cache.groupby(["title", "open_year", "media_type"], as_index=False)
+        .agg({
+            "title_en": "first",
+            "providers": lambda x: ",".join(sorted(set(",".join(x).replace("/", ",").split(",")))),
+            "source": lambda x: ",".join(sorted(set(x)))
+        })
+    )
+
+    cache["providers"] = (
+        cache["providers"]
+        .str.replace(",,", ",", regex=False)
+        .str.strip(", ")
+    )
+    cache["norm_title"] = cache["title"].apply(normalize_search_text)
+
+    return cache
+
+
+def search_provider_cache(keyword, limit=8):
+    cache = load_provider_cache()
+
+    if cache.empty:
+        return []
+
+    q = normalize_search_text(keyword)
+
+    results = []
+
+    for _, row in cache.iterrows():
+        title = str(row.get("title", ""))
+        norm = str(row.get("norm_title", ""))
+
+        if not norm:
+            continue
+
+        score = 0
+
+        if q == norm:
+            score = 100
+        elif q in norm or norm in q:
+            score = 85
+        else:
+            score = int(SequenceMatcher(None, q, norm).ratio() * 100)
+
+        if score >= 45:
+            results.append({
+                "title": title,
+                "title_en": row.get("title_en", ""),
+                "open_year": row.get("open_year", ""),
+                "media_type": row.get("media_type", ""),
+                "providers": [
+                    p.strip()
+                    for p in str(row.get("providers", "")).replace("/", ",").split(",")
+                    if p.strip()
+                ],
+                "source": row.get("source", ""),
+                "score": score,
+            })
+
+    results = sorted(results, key=lambda x: x["score"], reverse=True)
+
+    return results[:limit]
+
 def make_meta(row):
     media_type = str(row.get("media_type", "")).upper()
     genres = str(row.get("genres", "")).replace(",", "/")
@@ -1362,44 +1486,42 @@ with tab1:
 with tab2:
     st.subheader("🔎 타이틀로 OTT 제공처 검색")
 
+    st.caption(
+        "키노라이츠 API 실시간 검색 대신, 매일 자동 수집된 랭킹/공개예정작 캐시에서 제공처를 검색합니다."
+    )
+
     keyword = st.text_input(
         "작품명을 입력하세요",
-        placeholder="예: 멋진 신세계"
+        placeholder="예: 김부장, 국가대표, 나일 강의 죽음"
     )
 
     if keyword:
-        with st.spinner("키노라이츠에서 검색 및 정액제 제공처 확인 중..."):
-            results = search_contents(keyword)
+        results = search_provider_cache(keyword)
 
-            enriched_results = []
-            for item in results[:5]:
-                content_id = item.get("id")
-                providers = get_ott_providers_from_api(content_id) if content_id else []
-
-                enriched_results.append({
-                    "title": item.get("titleKr") or "",
-                    "title_en": item.get("titleEn") or "",
-                    "open_year": item.get("openYear") or "",
-                    "providers": providers,
-                })
-
-        if not enriched_results:
-            st.warning("검색 결과 없음")
+        if not results:
+            st.warning("캐시에 검색 결과가 없습니다. 랭킹/공개예정작에 수집된 작품만 검색됩니다.")
             st.stop()
 
         st.markdown("### 검색 결과")
 
-        for item in enriched_results:
+        for item in results:
             title = html.escape(str(item["title"]))
-            title_en = html.escape(str(item["title_en"]))
-            open_year = html.escape(str(item["open_year"]))
-            providers = item["providers"]
+            open_year = html.escape(str(item.get("open_year", "")))
+            media_type = html.escape(str(item.get("media_type", "")))
+            source = html.escape(str(item.get("source", "")))
+            score = item.get("score", "")
+
+            providers = item.get("providers", [])
 
             meta_parts = []
-            if title_en:
-                meta_parts.append(title_en)
+            if media_type:
+                meta_parts.append(media_type)
             if open_year:
                 meta_parts.append(open_year)
+            if source:
+                meta_parts.append(source)
+            if score:
+                meta_parts.append(f"유사도 {score}")
 
             meta_text = " · ".join(meta_parts)
 
@@ -1409,7 +1531,7 @@ with tab2:
                     for p in providers
                 )
             else:
-                provider_html = '<span class="search-provider-empty">정액제 OTT 없음</span>'
+                provider_html = '<span class="search-provider-empty">제공처 정보 없음</span>'
 
             st.markdown(f"""
             <div class="side-card" style="margin-bottom:12px;">

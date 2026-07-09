@@ -1,3 +1,4 @@
+from playwright.sync_api import sync_playwright
 import json
 import streamlit as st
 import pandas as pd
@@ -1109,45 +1110,102 @@ def render_upcoming_releases(release_df, max_items=80, hide_provider=False):
         st.markdown(row_html, unsafe_allow_html=True)
 
 def search_contents(keyword):
-    query = """
-    query SearchContents($keyword: String!) {
-      contents(keyword: $keyword, limit: 8) {
-        id
-        titleKr
-        titleEn
-        openYear
-      }
-    }
-    """
+    keyword = str(keyword).strip()
 
-    payload = {
-        "operationName": "SearchContents",
-        "variables": {"keyword": keyword},
-        "query": query,
-    }
+    if not keyword:
+        return []
+
+    results = []
 
     try:
-        res = requests.post(
-            "https://gateway.kinolights.com/graphql",
-            json=payload,
-            headers={
-                "Content-Type": "application/json",
-                "User-Agent": "Mozilla/5.0",
-            },
-            timeout=20,
-        )
+        with sync_playwright() as p:
+            browser = p.chromium.launch(
+                headless=True,
+                args=[
+                    "--no-sandbox",
+                    "--disable-dev-shm-usage",
+                    "--disable-blink-features=AutomationControlled",
+                ],
+            )
 
-        data = res.json()
+            context = browser.new_context(
+                viewport={"width": 430, "height": 1600},
+                locale="ko-KR",
+                timezone_id="Asia/Seoul",
+                user_agent=(
+                    "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) "
+                    "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 "
+                    "Mobile/15E148 Safari/604.1"
+                ),
+            )
 
-        if "errors" in data:
-            st.error(data["errors"])
-            return []
+            page = context.new_page()
+            page.set_default_timeout(12000)
 
-        return data.get("data", {}).get("contents", []) or []
+            page.goto("https://m.kinolights.com/search", wait_until="domcontentloaded", timeout=30000)
+            page.wait_for_timeout(2000)
+
+            try:
+                page.locator("input").first.fill(keyword)
+            except Exception:
+                context.close()
+                browser.close()
+                return []
+
+            page.wait_for_timeout(2500)
+
+            links = page.locator("a[href*='/season/'], a[href*='/title/'], a[href*='/movie/'], a[href*='/content/']")
+            count = min(links.count(), 8)
+
+            seen = set()
+
+            for i in range(count):
+                try:
+                    link = links.nth(i)
+                    href = link.get_attribute("href") or ""
+                    text = link.inner_text(timeout=3000)
+
+                    if not href or not text:
+                        continue
+
+                    if href.startswith("/"):
+                        href = "https://m.kinolights.com" + href
+
+                    m = re.search(r"/(season|title|movie|content)/(\d+)", href)
+                    if not m:
+                        continue
+
+                    content_id = m.group(2)
+
+                    title_line = normalize_text(text).split("\n")[0].strip()
+                    if not title_line:
+                        title_line = keyword
+
+                    key = f"{content_id}_{title_line}"
+                    if key in seen:
+                        continue
+
+                    seen.add(key)
+
+                    results.append({
+                        "id": content_id,
+                        "titleKr": title_line,
+                        "titleEn": "",
+                        "openYear": "",
+                        "detail_url": href,
+                    })
+
+                except Exception:
+                    continue
+
+            context.close()
+            browser.close()
 
     except Exception as e:
-        st.error(f"검색 API 오류: {e}")
+        st.error(f"키노라이츠 검색 오류: {e}")
         return []
+
+    return results
 
 def extract_subscription_section(text):
     text = str(text)

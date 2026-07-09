@@ -987,7 +987,7 @@ def render_upcoming_releases(release_df, max_items=80, hide_provider=False):
 def search_contents(keyword):
     query = """
     query SearchContents($keyword: String!) {
-      contents(keyword: $keyword, limit: 8) {
+      contentsBy(keyword: $keyword, limit: 8) {
         id
         titleKr
         titleEn
@@ -1019,7 +1019,7 @@ def search_contents(keyword):
             st.error(data["errors"])
             return []
 
-        return data.get("data", {}).get("contents", []) or []
+        return data.get("data", {}).get("contentsBy", []) or []
 
     except Exception as e:
         st.error(f"검색 API 오류: {e}")

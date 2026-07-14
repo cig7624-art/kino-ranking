@@ -1012,16 +1012,18 @@ def search_contents(keyword):
             },
             timeout=20,
         )
+
         data = res.json()
 
         if "errors" in data:
+            st.error(data["errors"])
             return []
 
         return data.get("data", {}).get("contents", []) or []
 
-    except Exception:
+    except Exception as e:
+        st.error(f"검색 API 오류: {e}")
         return []
-
 
 def extract_subscription_section(text):
     text = str(text)

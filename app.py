@@ -1110,6 +1110,30 @@ def render_upcoming_releases(release_df, max_items=80, hide_provider=False):
 
         st.markdown(row_html, unsafe_allow_html=True)
 
+def launch_kino_browser(p):
+    chromium_path = (
+        shutil.which("chromium")
+        or shutil.which("chromium-browser")
+    )
+
+    if not chromium_path:
+        raise RuntimeError(
+            "Chromium 실행 파일이 없습니다. "
+            "레포 최상단 packages.txt에 chromium을 추가하세요."
+        )
+
+    return p.chromium.launch(
+        executable_path=chromium_path,
+        headless=True,
+        args=[
+            "--no-sandbox",
+            "--disable-dev-shm-usage",
+            "--disable-gpu",
+            "--disable-software-rasterizer",
+            "--disable-blink-features=AutomationControlled",
+        ],
+    )
+
 def search_contents(keyword):
     keyword = str(keyword).strip()
 
@@ -1120,14 +1144,7 @@ def search_contents(keyword):
 
     try:
         with sync_playwright() as p:
-            browser = p.chromium.launch(
-                headless=True,
-                args=[
-                    "--no-sandbox",
-                    "--disable-dev-shm-usage",
-                    "--disable-blink-features=AutomationControlled",
-                ],
-            )
+            browser = launch_kino_browser(p)
 
             context = browser.new_context(
                 viewport={"width": 430, "height": 1600},
@@ -1343,14 +1360,7 @@ def search_kinolights_with_providers(keyword):
 
     try:
         with sync_playwright() as p:
-            browser = p.chromium.launch(
-                headless=True,
-                args=[
-                    "--no-sandbox",
-                    "--disable-dev-shm-usage",
-                    "--disable-blink-features=AutomationControlled",
-                ],
-            )
+            browser = launch_kino_browser(p)
 
             context = browser.new_context(
                 viewport={"width": 430, "height": 1600},

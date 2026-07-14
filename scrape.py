@@ -568,15 +568,29 @@ def load_previous_ranks(today):
 
 def save_ranking_history(new_df):
     """
-    기존 이력을 유지하면서 오늘 수집 결과를 병합합니다.
-    같은 날짜·기간·작품은 최신 결과로 교체합니다.
+    과거 날짜 데이터는 유지하고,
+    이번에 수집한 날짜의 데이터는 통째로 교체합니다.
     """
+
     path = Path("ranking_history.csv")
+
+    new_df = new_df.copy()
+    new_df["date"] = new_df["date"].astype(str)
+
+    collected_dates = set(new_df["date"].unique())
 
     if path.exists():
         try:
             old_df = pd.read_csv(path).fillna("")
-        except Exception:
+            old_df["date"] = old_df["date"].astype(str)
+
+            # 이번에 다시 수집한 날짜는 기존 행을 전부 삭제
+            old_df = old_df[
+                ~old_df["date"].isin(collected_dates)
+            ].copy()
+
+        except Exception as error:
+            print(f"[기존 랭킹 데이터 로드 실패] {error}")
             old_df = pd.DataFrame()
     else:
         old_df = pd.DataFrame()
@@ -584,44 +598,62 @@ def save_ranking_history(new_df):
     if old_df.empty:
         combined = new_df.copy()
     else:
-        for column in new_df.columns:
+        all_columns = list(
+            dict.fromkeys(
+                list(old_df.columns) + list(new_df.columns)
+            )
+        )
+
+        for column in all_columns:
             if column not in old_df.columns:
                 old_df[column] = ""
 
-        for column in old_df.columns:
             if column not in new_df.columns:
                 new_df[column] = ""
 
-        new_df = new_df[old_df.columns]
-
         combined = pd.concat(
-            [old_df, new_df],
+            [
+                old_df[all_columns],
+                new_df[all_columns],
+            ],
             ignore_index=True,
         )
 
-        combined = combined.drop_duplicates(
-            subset=["date", "period", "title"],
-            keep="last",
-        )
+    period_order = {
+        "일간": 1,
+        "주간": 2,
+        "월간": 3,
+    }
 
-    combined["period_order"] = (
+    combined["_period_order"] = (
         combined["period"]
-        .map(PERIOD_ORDER)
+        .map(period_order)
         .fillna(99)
     )
 
-    combined["rank_numeric"] = pd.to_numeric(
+    combined["_rank_number"] = pd.to_numeric(
         combined["rank"],
         errors="coerce",
     ).fillna(9999)
 
     combined = combined.sort_values(
-        ["date", "period_order", "rank_numeric"],
-        ascending=[True, True, True],
+        [
+            "date",
+            "_period_order",
+            "_rank_number",
+        ],
+        ascending=[
+            True,
+            True,
+            True,
+        ],
     )
 
     combined = combined.drop(
-        columns=["period_order", "rank_numeric"],
+        columns=[
+            "_period_order",
+            "_rank_number",
+        ],
         errors="ignore",
     )
 
@@ -631,6 +663,10 @@ def save_ranking_history(new_df):
         encoding="utf-8-sig",
     )
 
+    print(
+        "[저장 완료]",
+        combined.groupby(["date", "period"]).size().tail(10)
+    )
 
 def main():
     today = datetime.now().strftime("%Y-%m-%d")

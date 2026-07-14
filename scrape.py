@@ -22,7 +22,7 @@ PROVIDER_MAP = {
 }
 
 QUERY = """
-query QueryRanking($rankingType: ContentRankingType!, $limit: Int = 100) {
+query QueryRanking($rankingType: ContentRanking!, $limit: Int = 100) {
   contentRankings(rankingType: $rankingType, limit: $limit) {
     content {
       titleKr

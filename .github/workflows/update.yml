@@ -39,6 +39,14 @@ jobs:
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add ranking_history.csv upcoming_releases.csv debug_provider_ids.csv debug_upcoming_text.txt debug_upcoming_cards.csv debug_upcoming.png
+
+          git add ranking_history.csv
+          git add upcoming_releases.csv
+          git add debug_provider_ids.csv
+
+          [ -f debug_upcoming_text.txt ] && git add debug_upcoming_text.txt || true
+          [ -f debug_upcoming_cards.csv ] && git add debug_upcoming_cards.csv || true
+          [ -f debug_upcoming.png ] && git add debug_upcoming.png || true
+
           git commit -m "Update ranking and upcoming releases" || echo "No changes"
           git push

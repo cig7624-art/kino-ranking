@@ -1,135 +1,273 @@
-import pandas as pd
-import requests
+import re
+import html
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import urljoin
+
+import pandas as pd
+import requests
+from playwright.sync_api import sync_playwright
 
 
-GRAPHQL_URL = "https://gateway.kinolights.com/graphql"
+RANKING_URL = "https://m.kinolights.com/ranking/kino"
 
 OUTPUT_FILE = Path("ranking_history.csv")
 DEBUG_PROVIDER_FILE = Path("debug_provider_ids.csv")
 
-PROVIDER_MAP = {
-    "4": "넷플릭스",
-    "8": "웨이브",
-    "10": "티빙",
-    "14": "쿠팡플레이",
-    "16": "디즈니+",
-    "5": "왓챠",
+OTT_NAMES = [
+    "넷플릭스",
+    "티빙",
+    "쿠팡플레이",
+    "웨이브",
+    "디즈니+",
+    "왓챠",
+    "라프텔",
+    "Apple TV",
+    "아마존 프라임 비디오",
+    "씨네폭스",
+]
+
+BAD_TITLES = {
+    "",
+    "%",
+    "홈",
+    "랭킹",
+    "탐색",
+    "혜택",
+    "마이페이지",
+    "전체",
+    "전체 랭킹",
+    "박스오피스",
+    "정액제",
+    "무료",
+    "대여",
+    "구매",
+    "더보기",
+    "검색",
+    "공유",
+    "로그인",
+    "가입",
 }
 
-PERIOD_MAP = {
-    "DAILY": "일간",
-    "WEEKLY": "주간",
-    "MONTHLY": "월간",
-}
 
-QUERY = """
-query QueryRanking($rankingType: ContentRankingType!, $limit: Int = 100) {
-  contentRankings(rankingType: $rankingType, limit: $limit) {
-    content {
-      titleKr
-      mediaType
-      genres
-      openYear
-      vodOfferItems {
-        providerId
-        isActive
-      }
-    }
-    delta
-    isNew
-  }
-}
-"""
+def normalize_space(text):
+    return re.sub(r"\s+", " ", str(text or "")).strip()
 
 
 def is_bad_title(title):
-    title = str(title or "").strip()
+    title = normalize_space(title)
 
-    if title == "":
+    if title in BAD_TITLES:
         return True
 
-    if title == "%":
+    if len(title) <= 1:
         return True
 
-    if title.replace(".", "", 1).isdigit():
+    if re.fullmatch(r"\d+", title):
         return True
 
-    if title in [
-        "홈",
-        "랭킹",
-        "탐색",
-        "혜택",
-        "마이페이지",
-        "전체",
-        "정액제",
-        "무료",
-        "대여",
-        "구매",
-    ]:
+    if re.fullmatch(r"\d+위", title):
+        return True
+
+    if re.fullmatch(r"\d+(\.\d+)?%?", title):
+        return True
+
+    if re.fullmatch(r"\d+(\.\d+)?", title):
+        return True
+
+    if "리뷰" in title and len(title) <= 20:
+        return True
+
+    if title.startswith("▲") or title.startswith("▼"):
+        return True
+
+    if title in OTT_NAMES:
         return True
 
     return False
 
 
-def get_providers(vod_offer_items):
-    providers = []
-    debug_ids = []
+def extract_title(raw_text, image_alt=""):
+    alt = normalize_space(image_alt)
 
-    if not vod_offer_items:
-        return "", ""
+    if alt:
+        alt = alt.replace("포스터", "").replace("이미지", "").strip()
 
-    for item in vod_offer_items:
-        provider_id = str(item.get("providerId", "")).strip()
-        is_active = item.get("isActive", True)
+        if not is_bad_title(alt):
+            return alt
 
-        debug_ids.append(provider_id)
+    lines = [
+        normalize_space(x)
+        for x in str(raw_text or "").splitlines()
+        if normalize_space(x)
+    ]
 
-        if not is_active:
+    for line in lines:
+        if is_bad_title(line):
             continue
 
-        provider_name = PROVIDER_MAP.get(provider_id)
+        if "·" in line and re.search(r"(19\d{2}|20\d{2})", line):
+            continue
 
-        if provider_name:
-            providers.append(provider_name)
+        if any(x in line for x in ["영화", "드라마", "예능", "애니메이션", "다큐멘터리"]):
+            if re.search(r"(19\d{2}|20\d{2})", line) or "·" in line:
+                continue
 
-    providers = list(dict.fromkeys(providers))
-    debug_ids = list(dict.fromkeys(debug_ids))
+        if len(line) > 60:
+            continue
 
-    return ",".join(providers), ",".join(debug_ids)
+        return line
+
+    return ""
 
 
-def fetch_ranking(ranking_type):
-    payload = {
-        "operationName": "QueryRanking",
-        "variables": {
-            "rankingType": ranking_type,
-            "limit": 100,
-        },
-        "query": QUERY,
-    }
+def extract_meta(raw_text):
+    lines = [
+        normalize_space(x)
+        for x in str(raw_text or "").splitlines()
+        if normalize_space(x)
+    ]
 
-    headers = {
-        "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0",
-    }
+    media_type = ""
+    genres = ""
+    open_year = ""
 
-    res = requests.post(
-        GRAPHQL_URL,
-        json=payload,
-        headers=headers,
-        timeout=30,
+    for line in lines:
+        if re.search(r"(19\d{2}|20\d{2})", line):
+            year_match = re.search(r"(19\d{2}|20\d{2})", line)
+            open_year = year_match.group(1) if year_match else ""
+
+            parts = [x.strip() for x in re.split(r"[·/]", line) if x.strip()]
+
+            if parts:
+                media_type = parts[0]
+
+            if len(parts) >= 2:
+                genres = ",".join(parts[1:])
+
+            break
+
+    return media_type, genres, open_year
+
+
+def extract_delta(raw_text):
+    text = str(raw_text or "")
+
+    if "NEW" in text:
+        return 0, True
+
+    up = re.search(r"[▲△]\s*(\d+)", text)
+    if up:
+        return int(up.group(1)), False
+
+    down = re.search(r"[▼▽]\s*(\d+)", text)
+    if down:
+        return -int(down.group(1)), False
+
+    return 0, False
+
+
+def extract_providers_from_detail(url):
+    found = []
+
+    try:
+        res = requests.get(
+            url,
+            headers={
+                "User-Agent": (
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/120.0 Safari/537.36"
+                )
+            },
+            timeout=15,
+        )
+
+        if res.status_code >= 400:
+            return ""
+
+        text = html.unescape(res.text)
+        text = re.sub(r"<[^>]+>", " ", text)
+        text = normalize_space(text)
+
+        section = ""
+
+        if "정액제" in text:
+            section = text.split("정액제", 1)[1]
+
+            for stop_word in [
+                "무료",
+                "대여",
+                "구매",
+                "시청 주의 가이드",
+                "작품 정보",
+                "비슷한 작품",
+                "리뷰",
+                "출연",
+                "감독",
+            ]:
+                if stop_word in section:
+                    section = section.split(stop_word, 1)[0]
+
+        for ott in OTT_NAMES:
+            if section and ott in section:
+                found.append(ott)
+
+            if f"{ott} 바로 보기" in text:
+                found.append(ott)
+
+        result = []
+
+        for ott in OTT_NAMES:
+            if ott in found and ott not in result:
+                result.append(ott)
+
+        return ",".join(result)
+
+    except Exception:
+        return ""
+
+
+def collect_ranking_cards(page):
+    return page.evaluate(
+        """
+        () => {
+            const rows = [];
+            const seen = new Set();
+
+            const anchors = Array.from(document.querySelectorAll('a[href]'));
+
+            for (const a of anchors) {
+                const href = a.href || "";
+                const rawText = (a.innerText || "").trim();
+
+                const img = a.querySelector("img");
+                const imageAlt = img?.alt || "";
+
+                const looksLikeContent =
+                    href.includes("/season/") ||
+                    href.includes("/title/") ||
+                    href.includes("/content/") ||
+                    href.includes("/contents/");
+
+                if (!looksLikeContent) continue;
+
+                const key = href + "|" + rawText.slice(0, 100) + "|" + imageAlt;
+
+                if (seen.has(key)) continue;
+                seen.add(key);
+
+                rows.push({
+                    href,
+                    rawText,
+                    imageAlt
+                });
+            }
+
+            return rows;
+        }
+        """
     )
-
-    res.raise_for_status()
-
-    data = res.json()
-
-    if "errors" in data:
-        raise Exception(data["errors"])
-
-    return data.get("data", {}).get("contentRankings", []) or []
 
 
 def scrape():
@@ -138,65 +276,101 @@ def scrape():
     rows = []
     debug_rows = []
 
-    for ranking_type, period_name in PERIOD_MAP.items():
-        print(f"Fetching {period_name} ranking...")
+    with sync_playwright() as p:
+        browser = p.chromium.launch(
+            headless=True,
+            executable_path="/usr/bin/chromium",
+        )
 
-        items = fetch_ranking(ranking_type)
+        page = browser.new_page(
+            viewport={"width": 1440, "height": 1800},
+            user_agent=(
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/120.0 Safari/537.36"
+            ),
+        )
 
-        for idx, item in enumerate(items, start=1):
-            content = item.get("content") or {}
+        page.goto(
+            RANKING_URL,
+            wait_until="networkidle",
+            timeout=50000,
+        )
 
-            title = str(content.get("titleKr") or "").strip()
+        page.wait_for_timeout(2500)
 
-            if is_bad_title(title):
-                continue
+        for _ in range(12):
+            page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+            page.wait_for_timeout(700)
 
-            providers, provider_ids = get_providers(
-                content.get("vodOfferItems") or []
-            )
+        cards = collect_ranking_cards(page)
 
-            genres = content.get("genres") or []
+        browser.close()
 
-            if isinstance(genres, list):
-                genres_text = ",".join([str(x) for x in genres])
-            else:
-                genres_text = str(genres or "")
+    rank = 1
+    seen_titles = set()
 
-            row = {
-                "date": today,
-                "period": period_name,
-                "rank": idx,
-                "title": title,
-                "delta": item.get("delta", 0),
-                "is_new": item.get("isNew", False),
-                "providers": providers,
-                "genres": genres_text,
-                "open_year": content.get("openYear", ""),
-                "media_type": content.get("mediaType", ""),
-            }
+    for item in cards:
+        raw_text = item.get("rawText", "")
+        image_alt = item.get("imageAlt", "")
+        href = item.get("href", "")
 
-            rows.append(row)
+        title = extract_title(raw_text, image_alt)
 
-            debug_rows.append({
-                "date": today,
-                "period": period_name,
-                "rank": idx,
-                "title": title,
-                "provider_ids": provider_ids,
-                "providers": providers,
-            })
+        if is_bad_title(title):
+            continue
+
+        if title in seen_titles:
+            continue
+
+        seen_titles.add(title)
+
+        media_type, genres, open_year = extract_meta(raw_text)
+        delta, is_new = extract_delta(raw_text)
+
+        url = urljoin(RANKING_URL, href)
+        providers = extract_providers_from_detail(url)
+
+        rows.append({
+            "date": today,
+            "period": "주간",
+            "rank": rank,
+            "title": title,
+            "delta": delta,
+            "is_new": is_new,
+            "providers": providers,
+            "genres": genres,
+            "open_year": open_year,
+            "media_type": media_type,
+        })
+
+        debug_rows.append({
+            "date": today,
+            "period": "주간",
+            "rank": rank,
+            "title": title,
+            "url": url,
+            "providers": providers,
+            "raw_text": raw_text,
+        })
+
+        rank += 1
+
+        if rank > 100:
+            break
 
     new_df = pd.DataFrame(rows)
 
     if new_df.empty:
         raise Exception("No ranking data collected. ranking_history.csv not updated.")
 
-    # 기존 파일이 있으면 오늘자만 교체하고 과거 데이터는 유지
     if OUTPUT_FILE.exists():
         old_df = pd.read_csv(OUTPUT_FILE)
 
         if not old_df.empty and "date" in old_df.columns:
             old_df["date"] = old_df["date"].astype(str)
+
+            # 오늘자 깨진 데이터 전부 제거
             old_df = old_df[old_df["date"] != today].copy()
 
             final_df = pd.concat([old_df, new_df], ignore_index=True)
@@ -207,29 +381,29 @@ def scrape():
 
     final_df = final_df.drop_duplicates(
         subset=["date", "period", "rank"],
-        keep="last"
+        keep="last",
     )
 
     final_df = final_df.sort_values(
         ["date", "period", "rank"],
-        ascending=[True, True, True]
+        ascending=[True, True, True],
     )
 
     final_df.to_csv(
         OUTPUT_FILE,
         index=False,
-        encoding="utf-8-sig"
+        encoding="utf-8-sig",
     )
 
     debug_df = pd.DataFrame(debug_rows)
     debug_df.to_csv(
         DEBUG_PROVIDER_FILE,
         index=False,
-        encoding="utf-8-sig"
+        encoding="utf-8-sig",
     )
 
     print("ranking rows:", len(new_df))
-    print(new_df.head(20).to_string(index=False))
+    print(new_df.head(30).to_string(index=False))
 
 
 if __name__ == "__main__":

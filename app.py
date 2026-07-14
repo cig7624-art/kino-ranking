@@ -5,6 +5,7 @@ import pandas as pd
 import requests
 import re
 import html
+import shutil
 from difflib import SequenceMatcher
 from pathlib import Path
 from playwright.sync_api import sync_playwright

@@ -1081,45 +1081,120 @@ def detect_ott_from_section(section):
     return sorted(set(found))
     
 
-def get_ott_providers_from_api(content_id):
+def get_ott_providers(content_id):
+    ott_names = [
+        "넷플릭스",
+        "티빙",
+        "쿠팡플레이",
+        "웨이브",
+        "디즈니+",
+        "왓챠",
+        "라프텔",
+        "Apple TV",
+        "아마존 프라임 비디오",
+        "씨네폭스",
+    ]
+
     urls = [
         f"https://m.kinolights.com/season/{content_id}",
         f"https://m.kinolights.com/title/{content_id}",
-        f"https://m.kinolights.com/movie/{content_id}",
         f"https://m.kinolights.com/content/{content_id}",
+        f"https://m.kinolights.com/contents/{content_id}",
     ]
 
-    headers = {
-        "User-Agent": (
-            "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) "
-            "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 "
-            "Mobile/15E148 Safari/604.1"
-        ),
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
-    }
+    def normalize_lines(text):
+        lines = []
 
-    all_providers = []
+        for line in str(text or "").splitlines():
+            line = re.sub(r"\s+", " ", line).strip()
 
-    for url in urls:
-        try:
-            res = requests.get(url, headers=headers, timeout=20)
+            if line:
+                lines.append(line)
 
-            if res.status_code != 200:
+        return lines
+
+    def extract_subscription_providers(text):
+        lines = normalize_lines(text)
+        found = []
+
+        # 1차: '정액제' 근처 영역에서 찾기
+        for i, line in enumerate(lines):
+            if "정액제" in line:
+                section_lines = lines[i:i + 80]
+                section_text = "\n".join(section_lines)
+
+                for ott in ott_names:
+                    if ott in section_text:
+                        found.append(ott)
+
+                if found:
+                    break
+
+        # 2차: provider 주변에 '바로 보기'가 있으면 정액제 제공처로 판단
+        if not found:
+            for i, line in enumerate(lines):
+                for ott in ott_names:
+                    if ott in line:
+                        nearby = "\n".join(lines[max(0, i - 5):i + 8])
+
+                        if "바로 보기" in nearby or "정액제" in nearby:
+                            found.append(ott)
+
+        # 3차: 넷플릭스처럼 상세 페이지에 provider명만 명확히 있는 경우
+        if not found and "정액제" in text:
+            for ott in ott_names:
+                if ott in text:
+                    found.append(ott)
+
+        result = []
+
+        for ott in ott_names:
+            if ott in found and ott not in result:
+                result.append(ott)
+
+        return result
+
+    found = []
+
+    with sync_playwright() as p:
+        browser = p.chromium.launch(
+            headless=True,
+            executable_path="/usr/bin/chromium"
+        )
+
+        page = browser.new_page(
+            viewport={"width": 430, "height": 1600},
+            user_agent=(
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/120.0 Safari/537.36"
+            )
+        )
+
+        for url in urls:
+            try:
+                page.goto(
+                    url,
+                    wait_until="domcontentloaded",
+                    timeout=25000
+                )
+
+                page.wait_for_timeout(2500)
+
+                text = page.locator("body").inner_text(timeout=5000)
+
+                providers = extract_subscription_providers(text)
+
+                if providers:
+                    found = providers
+                    break
+
+            except Exception:
                 continue
 
-            text = html.unescape(res.text)
+        browser.close()
 
-            providers = detect_ott_from_section(text)
-
-            for p in providers:
-                if p not in all_providers:
-                    all_providers.append(p)
-
-        except Exception:
-            continue
-
-    return all_providers
+    return found
         
 def set_release_provider(provider):
     st.session_state.selected_release_provider = provider

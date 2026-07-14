@@ -1,463 +1,463 @@
-﻿date,period,rank,title,url,providers,raw_text
-2026-07-14,주간,1,김부장,https://m.kinolights.com/season/153086,넷플릭스,"76.6
+﻿date,period,rank,title,url,delta,is_new,providers,raw_text
+2026-07-14,일간,1,김부장,https://m.kinolights.com/season/153086,0,True,넷플릭스,"76.6
 
 %"
-2026-07-14,주간,2,호프,https://m.kinolights.com/season/121780,,"1
+2026-07-14,일간,2,호프,https://m.kinolights.com/season/121780,0,True,,"1
 
 87.8
 
 %"
-2026-07-14,주간,3,결혼의 완성,https://m.kinolights.com/season/149625,디즈니+,"1
+2026-07-14,일간,3,결혼의 완성,https://m.kinolights.com/season/149625,-1,False,디즈니+,"1
 
 85.7
 
 %"
-2026-07-14,주간,4,그대에게 드림,https://m.kinolights.com/season/152264,티빙,"15
+2026-07-14,일간,4,그대에게 드림,https://m.kinolights.com/season/152264,0,True,티빙,"15
 
 80.0
 
 %"
-2026-07-14,주간,5,아파트,https://m.kinolights.com/season/153338,넷플릭스,"66.7
+2026-07-14,일간,5,아파트,https://m.kinolights.com/season/153338,0,True,넷플릭스,"66.7
 
 %"
-2026-07-14,주간,6,내일도 출근!,https://m.kinolights.com/season/152263,"티빙,웨이브","10
+2026-07-14,일간,6,내일도 출근!,https://m.kinolights.com/season/152263,0,True,"티빙,웨이브","10
 
 75.0
 
 %"
-2026-07-14,주간,7,눈동자,https://m.kinolights.com/season/152442,,"3
+2026-07-14,일간,7,눈동자,https://m.kinolights.com/season/152442,0,True,,"3
 
 54.6
 
 %"
-2026-07-14,주간,8,군체,https://m.kinolights.com/season/138302,,"86.5
+2026-07-14,일간,8,군체,https://m.kinolights.com/season/138302,0,True,,"86.5
 
 %"
-2026-07-14,주간,9,토이 스토리 5,https://m.kinolights.com/season/119591,,"3
+2026-07-14,일간,9,토이 스토리 5,https://m.kinolights.com/season/119591,0,True,,"3
 
 96.1
 
 %"
-2026-07-14,주간,10,모아나,https://m.kinolights.com/season/147963,,"3
+2026-07-14,일간,10,모아나,https://m.kinolights.com/season/147963,0,True,,"3
 
 84.9
 
 %"
-2026-07-14,주간,11,동궁,https://m.kinolights.com/season/137841,,"2
+2026-07-14,일간,11,동궁,https://m.kinolights.com/season/137841,0,True,,"2
 
 -"
-2026-07-14,주간,12,모태솔로지만 연애는 하고 싶어 시즌 2,https://m.kinolights.com/season/146092,넷플릭스,"3
+2026-07-14,일간,12,모태솔로지만 연애는 하고 싶어 시즌 2,https://m.kinolights.com/season/146092,0,True,넷플릭스,"3
 
 66.7
 
 %"
-2026-07-14,주간,13,킬러들의 쇼핑몰,https://m.kinolights.com/season/122667,디즈니+,"2
+2026-07-14,일간,13,킬러들의 쇼핑몰,https://m.kinolights.com/season/122667,-9,False,디즈니+,"2
 
 92.5
 
 %"
-2026-07-14,주간,14,와일드 씽,https://m.kinolights.com/season/150305,,"4
+2026-07-14,일간,14,와일드 씽,https://m.kinolights.com/season/150305,0,True,,"4
 
 80.3
 
 %"
-2026-07-14,주간,15,참교육,https://m.kinolights.com/season/142034,넷플릭스,"2
+2026-07-14,일간,15,참교육,https://m.kinolights.com/season/142034,10,False,넷플릭스,"2
 
 93.1
 
 %"
-2026-07-14,주간,16,맨 끝줄 소년,https://m.kinolights.com/season/143829,넷플릭스,"2
+2026-07-14,일간,16,맨 끝줄 소년,https://m.kinolights.com/season/143829,0,True,넷플릭스,"2
 
 89.4
 
 %"
-2026-07-14,주간,17,신입사원 강회장,https://m.kinolights.com/season/152594,티빙,"5
+2026-07-14,일간,17,신입사원 강회장,https://m.kinolights.com/season/152594,-16,False,티빙,"5
 
 90.7
 
 %"
-2026-07-14,주간,18,가스인간,https://m.kinolights.com/season/149897,넷플릭스,"81.0
+2026-07-14,일간,18,가스인간,https://m.kinolights.com/season/149897,-13,False,넷플릭스,"81.0
 
 %"
-2026-07-14,주간,19,마티 슈프림,https://m.kinolights.com/season/142931,,"4
+2026-07-14,일간,19,마티 슈프림,https://m.kinolights.com/season/142931,0,True,,"4
 
 95.6
 
 %"
-2026-07-14,주간,20,하트시그널5,https://m.kinolights.com/season/151625,티빙,"4
+2026-07-14,일간,20,하트시그널5,https://m.kinolights.com/season/151625,0,True,티빙,"4
 
 44.4
 
 %"
-2026-07-14,주간,21,도깨비 10주년 여행,https://m.kinolights.com/season/152906,티빙,"NEW
+2026-07-14,일간,21,도깨비 10주년 여행,https://m.kinolights.com/season/152906,0,True,티빙,"NEW
 
 75.0
 
 %"
-2026-07-14,주간,22,하나코리아,https://m.kinolights.com/season/146405,,"1
+2026-07-14,일간,22,하나코리아,https://m.kinolights.com/season/146405,-14,False,,"1
 
 93.8
 
 %"
-2026-07-14,주간,23,왕과 사는 남자,https://m.kinolights.com/season/148606,,"1
+2026-07-14,일간,23,왕과 사는 남자,https://m.kinolights.com/season/148606,-17,False,,"1
 
 89.8
 
 %"
-2026-07-14,주간,24,멋진 신세계,https://m.kinolights.com/season/152265,넷플릭스,"1
+2026-07-14,일간,24,멋진 신세계,https://m.kinolights.com/season/152265,0,True,넷플릭스,"1
 
 88.4
 
 %"
-2026-07-14,주간,25,오싹한 연애,https://m.kinolights.com/season/152256,,-
-2026-07-14,주간,26,원정빌라,https://m.kinolights.com/season/128886,"넷플릭스,티빙,웨이브,왓챠","6
+2026-07-14,일간,25,오싹한 연애,https://m.kinolights.com/season/152256,0,True,,-
+2026-07-14,일간,26,원정빌라,https://m.kinolights.com/season/128886,0,True,"넷플릭스,티빙,웨이브,왓챠","6
 
 33.3
 
 %"
-2026-07-14,주간,27,비키퍼,https://m.kinolights.com/season/125582,넷플릭스,"9
+2026-07-14,일간,27,비키퍼,https://m.kinolights.com/season/125582,0,True,넷플릭스,"9
 
 85.3
 
 %"
-2026-07-14,주간,28,사람과 고기,https://m.kinolights.com/season/146409,"넷플릭스,티빙,웨이브,왓챠","1
+2026-07-14,일간,28,사람과 고기,https://m.kinolights.com/season/146409,0,True,"넷플릭스,티빙,웨이브,왓챠","1
 
 96.2
 
 %"
-2026-07-14,주간,29,그린랜드 2: 마이그레이션,https://m.kinolights.com/season/125588,,"3
+2026-07-14,일간,29,그린랜드 2: 마이그레이션,https://m.kinolights.com/season/125588,0,True,,"3
 
 54.9
 
 %"
-2026-07-14,주간,30,백룸,https://m.kinolights.com/season/147899,,"2
+2026-07-14,일간,30,백룸,https://m.kinolights.com/season/147899,0,True,,"2
 
 88.3
 
 %"
-2026-07-14,주간,31,다윗,https://m.kinolights.com/season/151558,,"1
+2026-07-14,일간,31,다윗,https://m.kinolights.com/season/151558,0,True,,"1
 
 90.0
 
 %"
-2026-07-14,주간,32,프로젝트 헤일메리,https://m.kinolights.com/season/145055,,"2
+2026-07-14,일간,32,프로젝트 헤일메리,https://m.kinolights.com/season/145055,0,True,,"2
 
 97.5
 
 %"
-2026-07-14,주간,33,이런 엿 같은 사랑,https://m.kinolights.com/season/143450,,"6
+2026-07-14,일간,33,이런 엿 같은 사랑,https://m.kinolights.com/season/143450,0,True,,"6
 
 -"
-2026-07-14,주간,34,유부녀 킬러,https://m.kinolights.com/season/152258,,"2
+2026-07-14,일간,34,유부녀 킬러,https://m.kinolights.com/season/152258,0,True,,"2
 
 -"
-2026-07-14,주간,35,짝사랑 세계,https://m.kinolights.com/season/137255,,"4
+2026-07-14,일간,35,짝사랑 세계,https://m.kinolights.com/season/137255,0,True,,"4
 
 89.1
 
 %"
-2026-07-14,주간,36,노트북,https://m.kinolights.com/season/5549,쿠팡플레이,"3
+2026-07-14,일간,36,노트북,https://m.kinolights.com/season/5549,-25,False,쿠팡플레이,"3
 
 91.3
 
 %"
-2026-07-14,주간,37,레디 오어 낫: 죽음의 숨바꼭질,https://m.kinolights.com/season/148445,,"4
+2026-07-14,일간,37,레디 오어 낫: 죽음의 숨바꼭질,https://m.kinolights.com/season/148445,0,True,,"4
 
 76.7
 
 %"
-2026-07-14,주간,38,취사병 전설이 되다,https://m.kinolights.com/season/151688,티빙,"95.9
+2026-07-14,일간,38,취사병 전설이 되다,https://m.kinolights.com/season/151688,0,True,티빙,"95.9
 
 %"
-2026-07-14,주간,39,최애의 사원,https://m.kinolights.com/season/152259,,"1
+2026-07-14,일간,39,최애의 사원,https://m.kinolights.com/season/152259,0,True,,"1
 
 -"
-2026-07-14,주간,40,극장판 도라에몽: 신 진구의 해저비밀성,https://m.kinolights.com/season/147141,,"5
+2026-07-14,일간,40,극장판 도라에몽: 신 진구의 해저비밀성,https://m.kinolights.com/season/147141,0,True,,"5
 
 83.3
 
 %"
-2026-07-14,주간,41,한란,https://m.kinolights.com/season/135662,"넷플릭스,티빙,웨이브,왓챠","4
+2026-07-14,일간,41,한란,https://m.kinolights.com/season/135662,0,True,"넷플릭스,티빙,웨이브,왓챠","4
 
 94.0
 
 %"
-2026-07-14,주간,42,블랙 박스,https://m.kinolights.com/season/85710,아마존 프라임 비디오,"NEW
+2026-07-14,일간,42,블랙 박스,https://m.kinolights.com/season/85710,0,True,아마존 프라임 비디오,"NEW
 
 블랙 박스
 
 85.7
 
 %"
-2026-07-14,주간,43,시크릿 에이전트,https://m.kinolights.com/season/142674,,"3
+2026-07-14,일간,43,시크릿 에이전트,https://m.kinolights.com/season/142674,0,True,,"3
 
 89.3
 
 %"
-2026-07-14,주간,44,쇼생크 탈출,https://m.kinolights.com/season/9766,쿠팡플레이,"NEW
+2026-07-14,일간,44,쇼생크 탈출,https://m.kinolights.com/season/9766,0,True,쿠팡플레이,"NEW
 
 99.0
 
 %"
-2026-07-14,주간,45,허수아비,https://m.kinolights.com/season/151039,티빙,"91.4
+2026-07-14,일간,45,허수아비,https://m.kinolights.com/season/151039,0,True,티빙,"91.4
 
 %"
-2026-07-14,주간,46,디스클로저 데이,https://m.kinolights.com/season/148906,,"2
+2026-07-14,일간,46,디스클로저 데이,https://m.kinolights.com/season/148906,0,True,,"2
 
 74.1
 
 %"
-2026-07-14,주간,47,극장판 암살교실 모두의 시간,https://m.kinolights.com/season/153400,,"5
+2026-07-14,일간,47,극장판 암살교실 모두의 시간,https://m.kinolights.com/season/153400,0,True,,"5
 
 극장판 암살교실 모두의 시간
 
 -"
-2026-07-14,주간,48,비긴 어게인,https://m.kinolights.com/season/10784,"넷플릭스,티빙,쿠팡플레이,웨이브,왓챠","5
+2026-07-14,일간,48,비긴 어게인,https://m.kinolights.com/season/10784,0,True,"넷플릭스,티빙,쿠팡플레이,웨이브,왓챠","5
 
 94.9
 
 %"
-2026-07-14,주간,49,슈퍼걸,https://m.kinolights.com/season/119038,,"4
+2026-07-14,일간,49,슈퍼걸,https://m.kinolights.com/season/119038,0,True,,"4
 
 42.5
 
 %"
-2026-07-14,주간,50,싱 스트리트,https://m.kinolights.com/season/8599,,"9
+2026-07-14,일간,50,싱 스트리트,https://m.kinolights.com/season/8599,0,True,,"9
 
 95.1
 
 %"
-2026-07-14,주간,51,날씨의 아이,https://m.kinolights.com/season/71110,웨이브,"3
+2026-07-14,일간,51,날씨의 아이,https://m.kinolights.com/season/71110,0,True,웨이브,"3
 
 78.0
 
 %"
-2026-07-14,주간,52,검사실의 제안,https://m.kinolights.com/season/153089,웨이브,"NEW
+2026-07-14,일간,52,검사실의 제안,https://m.kinolights.com/season/153089,0,True,웨이브,"NEW
 
 -"
-2026-07-14,주간,53,세계의 주인,https://m.kinolights.com/season/145152,넷플릭스,"6
+2026-07-14,일간,53,세계의 주인,https://m.kinolights.com/season/145152,0,True,넷플릭스,"6
 
 96.3
 
 %"
-2026-07-14,주간,54,암살교실,https://m.kinolights.com/season/13255,웨이브,"4
+2026-07-14,일간,54,암살교실,https://m.kinolights.com/season/13255,0,True,웨이브,"4
 
 60.6
 
 %"
-2026-07-14,주간,55,마이클,https://m.kinolights.com/season/147744,,"1
+2026-07-14,일간,55,마이클,https://m.kinolights.com/season/147744,0,True,,"1
 
 85.9
 
 %"
-2026-07-14,주간,56,어쩔수가없다,https://m.kinolights.com/season/136358,넷플릭스,"88.1
+2026-07-14,일간,56,어쩔수가없다,https://m.kinolights.com/season/136358,0,True,넷플릭스,"88.1
 
 %"
-2026-07-14,주간,57,훌라걸스,https://m.kinolights.com/season/48168,,"6
+2026-07-14,일간,57,훌라걸스,https://m.kinolights.com/season/48168,0,True,,"6
 
 91.2
 
 %"
-2026-07-14,주간,58,디어 마이 히어로,https://m.kinolights.com/season/153112,,"디어 마이 히어로
+2026-07-14,일간,58,디어 마이 히어로,https://m.kinolights.com/season/153112,0,True,,"디어 마이 히어로
 
 -"
-2026-07-14,주간,59,우주떡집,https://m.kinolights.com/season/153692,,"5
+2026-07-14,일간,59,우주떡집,https://m.kinolights.com/season/153692,0,True,,"5
 
 -"
-2026-07-14,주간,60,피아노,https://m.kinolights.com/season/15952,"티빙,웨이브","2
+2026-07-14,일간,60,피아노,https://m.kinolights.com/season/15952,0,True,"티빙,웨이브,왓챠","2
 
 92.8
 
 %"
-2026-07-14,주간,61,해피엔드,https://m.kinolights.com/season/136483,디즈니+,"9
+2026-07-14,일간,61,해피엔드,https://m.kinolights.com/season/136483,0,True,디즈니+,"9
 
 95.1
 
 %"
-2026-07-14,주간,62,옵세션,https://m.kinolights.com/season/152999,,"1
+2026-07-14,일간,62,옵세션,https://m.kinolights.com/season/152999,0,True,,"1
 
 100
 
 %"
-2026-07-14,주간,63,악마는 프라다를 입는다 2,https://m.kinolights.com/season/147857,,"3
+2026-07-14,일간,63,악마는 프라다를 입는다 2,https://m.kinolights.com/season/147857,0,True,,"3
 
 79.7
 
 %"
-2026-07-14,주간,64,마들렌,https://m.kinolights.com/season/37279,"티빙,웨이브,왓챠","2
+2026-07-14,일간,64,마들렌,https://m.kinolights.com/season/37279,0,True,"티빙,웨이브,왓챠","2
 
 35.3
 
 %"
-2026-07-14,주간,65,클립,https://m.kinolights.com/season/28867,"티빙,왓챠","NEW
+2026-07-14,일간,65,클립,https://m.kinolights.com/season/28867,0,True,"티빙,왓챠","NEW
 
 -"
-2026-07-14,주간,66,퍼펙트 데이즈,https://m.kinolights.com/season/122326,"넷플릭스,웨이브,왓챠","NEW
+2026-07-14,일간,66,퍼펙트 데이즈,https://m.kinolights.com/season/122326,0,True,"넷플릭스,웨이브,왓챠","NEW
 
 95.5
 
 %"
-2026-07-14,주간,67,회로,https://m.kinolights.com/season/14060,,"7
+2026-07-14,일간,67,회로,https://m.kinolights.com/season/14060,0,True,,"7
 
 78.2
 
 %"
-2026-07-14,주간,68,비포 선라이즈,https://m.kinolights.com/season/6694,쿠팡플레이,"17
+2026-07-14,일간,68,비포 선라이즈,https://m.kinolights.com/season/6694,0,True,쿠팡플레이,"17
 
 95.2
 
 %"
-2026-07-14,주간,69,지금 불륜이 문제가 아닙니다,https://m.kinolights.com/season/153586,,"5
+2026-07-14,일간,69,지금 불륜이 문제가 아닙니다,https://m.kinolights.com/season/153586,0,True,,"5
 
 -"
-2026-07-14,주간,70,원더풀 고스트,https://m.kinolights.com/season/218,"티빙,쿠팡플레이,웨이브","29.3
+2026-07-14,일간,70,원더풀 고스트,https://m.kinolights.com/season/218,0,True,"티빙,쿠팡플레이,웨이브","29.3
 
 %"
-2026-07-14,주간,71,큐어,https://m.kinolights.com/season/38906,쿠팡플레이,"26
+2026-07-14,일간,71,큐어,https://m.kinolights.com/season/38906,0,True,쿠팡플레이,"26
 
 92.8
 
 %"
-2026-07-14,주간,72,슈퍼 뒤에서 담배 피우는 두 사람,https://m.kinolights.com/season/153100,넷플릭스,"NEW
+2026-07-14,일간,72,슈퍼 뒤에서 담배 피우는 두 사람,https://m.kinolights.com/season/153100,0,True,넷플릭스,"NEW
 
 83.3
 
 %"
-2026-07-14,주간,73,언더톤,https://m.kinolights.com/season/149498,넷플릭스,"NEW
+2026-07-14,일간,73,언더톤,https://m.kinolights.com/season/149498,0,True,넷플릭스,"NEW
 
 33.3
 
 %"
-2026-07-14,주간,74,원 배틀 애프터 어나더,https://m.kinolights.com/season/145054,,"3
+2026-07-14,일간,74,원 배틀 애프터 어나더,https://m.kinolights.com/season/145054,-53,False,,"3
 
 95.8
 
 %"
-2026-07-14,주간,75,이반리 장만옥,https://m.kinolights.com/season/144157,,"NEW
+2026-07-14,일간,75,이반리 장만옥,https://m.kinolights.com/season/144157,0,True,,"NEW
 
 92.0
 
 %"
-2026-07-14,주간,76,신빨토크쇼 귀묘한 이야기 2,https://m.kinolights.com/season/149324,"티빙,웨이브,왓챠","44
+2026-07-14,일간,76,신빨토크쇼 귀묘한 이야기 2,https://m.kinolights.com/season/149324,0,True,"티빙,웨이브,왓챠","44
 
 신빨토크쇼 귀묘한 이야기 2
 
 -"
-2026-07-14,주간,77,만달로리안과 그로구,https://m.kinolights.com/season/146829,,"2
+2026-07-14,일간,77,만달로리안과 그로구,https://m.kinolights.com/season/146829,0,True,,"2
 
 96.6
 
 %"
-2026-07-14,주간,78,트루먼 쇼,https://m.kinolights.com/season/45823,"넷플릭스,쿠팡플레이,웨이브","NEW
+2026-07-14,일간,78,트루먼 쇼,https://m.kinolights.com/season/45823,0,True,"넷플릭스,쿠팡플레이,웨이브","NEW
 
 99.1
 
 %"
-2026-07-14,주간,79,월남보살,https://m.kinolights.com/season/153314,넷플릭스,"14
+2026-07-14,일간,79,월남보살,https://m.kinolights.com/season/153314,0,True,넷플릭스,"14
 
 93.4
 
 %"
-2026-07-14,주간,80,은하,https://m.kinolights.com/season/3430,"티빙,웨이브,왓챠","3
+2026-07-14,일간,80,은하,https://m.kinolights.com/season/3430,0,True,"티빙,웨이브,왓챠","3
 
 17.4
 
 %"
-2026-07-14,주간,81,시간추적자 설록,https://m.kinolights.com/season/153693,,"26
+2026-07-14,일간,81,시간추적자 설록,https://m.kinolights.com/season/153693,0,True,,"26
 
 시간추적자 설록
 
 -"
-2026-07-14,주간,82,국가대표,https://m.kinolights.com/season/8555,"넷플릭스,티빙,웨이브,왓챠","9
+2026-07-14,일간,82,국가대표,https://m.kinolights.com/season/8555,0,True,"넷플릭스,티빙,웨이브,왓챠","9
 
 84.6
 
 %"
-2026-07-14,주간,83,T셔츠가 마를 때까지,https://m.kinolights.com/season/153440,,"5
+2026-07-14,일간,83,T셔츠가 마를 때까지,https://m.kinolights.com/season/153440,0,True,,"5
 
 T셔츠가 마를 때까지
 
 -"
-2026-07-14,주간,84,척의 일생,https://m.kinolights.com/season/141972,디즈니+,"3
+2026-07-14,일간,84,척의 일생,https://m.kinolights.com/season/141972,0,True,디즈니+,"3
 
 97.6
 
 %"
-2026-07-14,주간,85,양들의 침묵,https://m.kinolights.com/season/41128,,"NEW
+2026-07-14,일간,85,양들의 침묵,https://m.kinolights.com/season/41128,0,True,,"NEW
 
 97.5
 
 %"
-2026-07-14,주간,86,정동원 팬콘서트 필름 : 다시 만나는 길,https://m.kinolights.com/season/153512,,"3
+2026-07-14,일간,86,정동원 팬콘서트 필름 : 다시 만나는 길,https://m.kinolights.com/season/153512,0,True,,"3
 
 정동원 팬콘서트 필름 : 다시 만나는 길
 
 -"
-2026-07-14,주간,87,극장판 귀멸의 칼날: 무한성편,https://m.kinolights.com/season/135303,,"11
+2026-07-14,일간,87,극장판 귀멸의 칼날: 무한성편,https://m.kinolights.com/season/135303,0,True,,"11
 
 94.1
 
 %"
-2026-07-14,주간,88,미녀와 야수,https://m.kinolights.com/season/3472,디즈니+,"NEW
+2026-07-14,일간,88,미녀와 야수,https://m.kinolights.com/season/3472,0,True,디즈니+,"NEW
 
 86.5
 
 %"
-2026-07-14,주간,89,바바라,https://m.kinolights.com/season/35994,"티빙,웨이브,왓챠","9
+2026-07-14,일간,89,바바라,https://m.kinolights.com/season/35994,0,True,"티빙,웨이브,왓챠","9
 
 바바라
 
 95.4
 
 %"
-2026-07-14,주간,90,아이 인 더 스카이,https://m.kinolights.com/season/8046,"티빙,웨이브,왓챠","NEW
+2026-07-14,일간,90,아이 인 더 스카이,https://m.kinolights.com/season/8046,0,True,"티빙,웨이브,왓챠","NEW
 
 93.5
 
 %"
-2026-07-14,주간,91,피아니스트,https://m.kinolights.com/season/8282,,"NEW
+2026-07-14,일간,91,피아니스트,https://m.kinolights.com/season/8282,-67,True,,"NEW
 
 85.4
 
 %"
-2026-07-14,주간,92,남태령,https://m.kinolights.com/season/151284,,"NEW
+2026-07-14,일간,92,남태령,https://m.kinolights.com/season/151284,0,True,,"NEW
 
 88.9
 
 %"
-2026-07-14,주간,93,톰과 제리,https://m.kinolights.com/season/35120,,"NEW
+2026-07-14,일간,93,톰과 제리,https://m.kinolights.com/season/35120,0,True,,"NEW
 
 톰과 제리
 
 97.1
 
 %"
-2026-07-14,주간,94,과속스캔들,https://m.kinolights.com/season/8110,"넷플릭스,티빙,웨이브,왓챠","1
+2026-07-14,일간,94,과속스캔들,https://m.kinolights.com/season/8110,0,True,"넷플릭스,티빙,웨이브,왓챠","1
 
 89.0
 
 %"
-2026-07-14,주간,95,아이즈 와이드 셧,https://m.kinolights.com/season/20678,,"3
+2026-07-14,일간,95,아이즈 와이드 셧,https://m.kinolights.com/season/20678,0,True,,"3
 
 88.7
 
 %"
-2026-07-14,주간,96,메트로폴리탄 라이드,https://m.kinolights.com/season/151582,넷플릭스,"22
+2026-07-14,일간,96,메트로폴리탄 라이드,https://m.kinolights.com/season/151582,0,True,넷플릭스,"22
 
 88.5
 
 %"
-2026-07-14,주간,97,수어사이드 스쿼드,https://m.kinolights.com/season/7677,,"1
+2026-07-14,일간,97,수어사이드 스쿼드,https://m.kinolights.com/season/7677,0,True,,"1
 
 37.8
 
 %"
-2026-07-14,주간,98,친구 2,https://m.kinolights.com/season/26689,"넷플릭스,티빙,웨이브,왓챠","NEW
+2026-07-14,일간,98,친구 2,https://m.kinolights.com/season/26689,0,True,"넷플릭스,티빙,웨이브,왓챠","NEW
 
 24.8
 
 %"
-2026-07-14,주간,99,더 울프 오브 월 스트리트,https://m.kinolights.com/season/26271,티빙,"4
+2026-07-14,일간,99,더 울프 오브 월 스트리트,https://m.kinolights.com/season/26271,-58,False,티빙,"4
 
 92.5
 

@@ -1,12 +1,9 @@
-from playwright.sync_api import sync_playwright
 import json
 import streamlit as st
 import pandas as pd
 import requests
 import re
 import html
-import shutil
-from difflib import SequenceMatcher
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 
@@ -820,129 +817,6 @@ def load_upcoming_releases():
 
     return df
 
-def normalize_search_text(text):
-    return str(text).lower().replace(" ", "").replace(":", "").replace("-", "").strip()
-
-
-@st.cache_data(ttl=300)
-def load_provider_cache():
-    rows = []
-
-    # 랭킹 데이터 기반
-    rank_file = Path("ranking_history.csv")
-    if rank_file.exists():
-        try:
-            df = pd.read_csv(rank_file).fillna("")
-            for _, r in df.iterrows():
-                title = str(r.get("title", "")).strip()
-                providers = str(r.get("providers", "")).strip()
-                open_year = str(r.get("open_year", "")).strip()
-                media_type = str(r.get("media_type", "")).strip()
-
-                if title and providers:
-                    rows.append({
-                        "title": title,
-                        "title_en": "",
-                        "open_year": open_year,
-                        "media_type": media_type,
-                        "providers": providers,
-                        "source": "랭킹 캐시"
-                    })
-        except Exception:
-            pass
-
-    # 공개예정작 데이터 기반
-    upcoming_file = Path("upcoming_releases.csv")
-    if upcoming_file.exists():
-        try:
-            df = pd.read_csv(upcoming_file).fillna("")
-            for _, r in df.iterrows():
-                title = str(r.get("title", "")).strip()
-                provider = str(r.get("provider", "")).strip()
-
-                if title and provider:
-                    rows.append({
-                        "title": title,
-                        "title_en": "",
-                        "open_year": "",
-                        "media_type": "공개예정",
-                        "providers": provider,
-                        "source": "공개예정작 캐시"
-                    })
-        except Exception:
-            pass
-
-    if not rows:
-        return pd.DataFrame(columns=["title", "title_en", "open_year", "media_type", "providers", "source"])
-
-    cache = pd.DataFrame(rows).fillna("")
-
-    cache["norm_title"] = cache["title"].apply(normalize_search_text)
-
-    cache = (
-        cache.groupby(["title", "open_year", "media_type"], as_index=False)
-        .agg({
-            "title_en": "first",
-            "providers": lambda x: ",".join(sorted(set(",".join(x).replace("/", ",").split(",")))),
-            "source": lambda x: ",".join(sorted(set(x)))
-        })
-    )
-
-    cache["providers"] = (
-        cache["providers"]
-        .str.replace(",,", ",", regex=False)
-        .str.strip(", ")
-    )
-    cache["norm_title"] = cache["title"].apply(normalize_search_text)
-
-    return cache
-
-
-def search_provider_cache(keyword, limit=8):
-    cache = load_provider_cache()
-
-    if cache.empty:
-        return []
-
-    q = normalize_search_text(keyword)
-
-    results = []
-
-    for _, row in cache.iterrows():
-        title = str(row.get("title", ""))
-        norm = str(row.get("norm_title", ""))
-
-        if not norm:
-            continue
-
-        score = 0
-
-        if q == norm:
-            score = 100
-        elif q in norm or norm in q:
-            score = 85
-        else:
-            score = int(SequenceMatcher(None, q, norm).ratio() * 100)
-
-        if score >= 45:
-            results.append({
-                "title": title,
-                "title_en": row.get("title_en", ""),
-                "open_year": row.get("open_year", ""),
-                "media_type": row.get("media_type", ""),
-                "providers": [
-                    p.strip()
-                    for p in str(row.get("providers", "")).replace("/", ",").split(",")
-                    if p.strip()
-                ],
-                "source": row.get("source", ""),
-                "score": score,
-            })
-
-    results = sorted(results, key=lambda x: x["score"], reverse=True)
-
-    return results[:limit]
-
 def make_meta(row):
     media_type = str(row.get("media_type", "")).upper()
     genres = str(row.get("genres", "")).replace(",", "/")
@@ -1110,120 +984,44 @@ def render_upcoming_releases(release_df, max_items=80, hide_provider=False):
 
         st.markdown(row_html, unsafe_allow_html=True)
 
-def launch_kino_browser(p):
-    chromium_path = (
-        shutil.which("chromium")
-        or shutil.which("chromium-browser")
-    )
-
-    if not chromium_path:
-        raise RuntimeError(
-            "Chromium 실행 파일이 없습니다. "
-            "레포 최상단 packages.txt에 chromium을 추가하세요."
-        )
-
-    return p.chromium.launch(
-        executable_path=chromium_path,
-        headless=True,
-        args=[
-            "--no-sandbox",
-            "--disable-dev-shm-usage",
-            "--disable-gpu",
-            "--disable-software-rasterizer",
-            "--disable-blink-features=AutomationControlled",
-        ],
-    )
-
 def search_contents(keyword):
-    keyword = str(keyword).strip()
+    query = """
+    query SearchContents($keyword: String!) {
+      contents(keyword: $keyword, limit: 8) {
+        id
+        titleKr
+        titleEn
+        openYear
+      }
+    }
+    """
 
-    if not keyword:
-        return []
-
-    results = []
+    payload = {
+        "operationName": "SearchContents",
+        "variables": {"keyword": keyword},
+        "query": query,
+    }
 
     try:
-        with sync_playwright() as p:
-            browser = launch_kino_browser(p)
+        res = requests.post(
+            "https://gateway.kinolights.com/graphql",
+            json=payload,
+            headers={
+                "Content-Type": "application/json",
+                "User-Agent": "Mozilla/5.0",
+            },
+            timeout=20,
+        )
+        data = res.json()
 
-            context = browser.new_context(
-                viewport={"width": 430, "height": 1600},
-                locale="ko-KR",
-                timezone_id="Asia/Seoul",
-                user_agent=(
-                    "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) "
-                    "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 "
-                    "Mobile/15E148 Safari/604.1"
-                ),
-            )
+        if "errors" in data:
+            return []
 
-            page = context.new_page()
-            page.set_default_timeout(12000)
+        return data.get("data", {}).get("contents", []) or []
 
-            page.goto("https://m.kinolights.com/search", wait_until="domcontentloaded", timeout=30000)
-            page.wait_for_timeout(2000)
-
-            try:
-                page.locator("input").first.fill(keyword)
-            except Exception:
-                context.close()
-                browser.close()
-                return []
-
-            page.wait_for_timeout(2500)
-
-            links = page.locator("a[href*='/season/'], a[href*='/title/'], a[href*='/movie/'], a[href*='/content/']")
-            count = min(links.count(), 8)
-
-            seen = set()
-
-            for i in range(count):
-                try:
-                    link = links.nth(i)
-                    href = link.get_attribute("href") or ""
-                    text = link.inner_text(timeout=3000)
-
-                    if not href or not text:
-                        continue
-
-                    if href.startswith("/"):
-                        href = "https://m.kinolights.com" + href
-
-                    m = re.search(r"/(season|title|movie|content)/(\d+)", href)
-                    if not m:
-                        continue
-
-                    content_id = m.group(2)
-
-                    title_line = normalize_text(text).split("\n")[0].strip()
-                    if not title_line:
-                        title_line = keyword
-
-                    key = f"{content_id}_{title_line}"
-                    if key in seen:
-                        continue
-
-                    seen.add(key)
-
-                    results.append({
-                        "id": content_id,
-                        "titleKr": title_line,
-                        "titleEn": "",
-                        "openYear": "",
-                        "detail_url": href,
-                    })
-
-                except Exception:
-                    continue
-
-            context.close()
-            browser.close()
-
-    except Exception as e:
-        st.error(f"키노라이츠 검색 오류: {e}")
+    except Exception:
         return []
 
-    return results
 
 def extract_subscription_section(text):
     text = str(text)
@@ -1262,233 +1060,7 @@ def extract_subscription_section(text):
 
     return section[:cut]
 
-@st.cache_data(ttl=3600)
-def search_kinolights_with_providers(keyword):
-    keyword = str(keyword).strip()
-    if not keyword:
-        return []
 
-    OTT_NAMES = [
-        "넷플릭스",
-        "티빙",
-        "웨이브",
-        "왓챠",
-        "쿠팡플레이",
-        "디즈니+",
-        "디즈니 플러스",
-        "Apple TV",
-        "애플TV",
-        "라프텔",
-        "아마존 프라임 비디오",
-        "씨네폭스",
-    ]
-
-    def clean_title(text):
-        lines = [x.strip() for x in str(text).splitlines() if x.strip()]
-        if not lines:
-            return ""
-        return lines[0]
-
-    def normalize_url(href):
-        if not href:
-            return ""
-        if href.startswith("/"):
-            return "https://m.kinolights.com" + href
-        return href
-
-    def detect_providers_from_page(page):
-        providers = []
-
-        # 1차: 실제 "바로 보기" 버튼/링크 텍스트에서만 추출
-        try:
-            buttons = page.locator("a:has-text('바로 보기'), button:has-text('바로 보기')")
-            count = min(buttons.count(), 20)
-
-            for i in range(count):
-                try:
-                    txt = buttons.nth(i).inner_text(timeout=2000)
-                    txt = html.unescape(str(txt))
-
-                    for ott in OTT_NAMES:
-                        if ott in txt:
-                            name = ott
-                            if name == "디즈니 플러스":
-                                name = "디즈니+"
-                            if name == "애플TV":
-                                name = "Apple TV"
-                            if name not in providers:
-                                providers.append(name)
-                except Exception:
-                    continue
-        except Exception:
-            pass
-
-        # 2차 fallback: 본문에서 "OTT명 바로 보기" 패턴만 추출
-        if not providers:
-            try:
-                body = page.locator("body").inner_text(timeout=5000)
-                body = html.unescape(str(body))
-
-                patterns = [
-                    r"(넷플릭스)\s*바로 보기",
-                    r"(티빙)\s*바로 보기",
-                    r"(웨이브)\s*바로 보기",
-                    r"(왓챠)\s*바로 보기",
-                    r"(쿠팡플레이)\s*바로 보기",
-                    r"(디즈니\+|디즈니 플러스)\s*바로 보기",
-                    r"(Apple TV|애플TV)\s*바로 보기",
-                    r"(라프텔)\s*바로 보기",
-                    r"(아마존 프라임 비디오)\s*바로 보기",
-                    r"(씨네폭스)\s*바로 보기",
-                ]
-
-                for pat in patterns:
-                    for m in re.findall(pat, body):
-                        name = m
-                        if name == "디즈니 플러스":
-                            name = "디즈니+"
-                        if name == "애플TV":
-                            name = "Apple TV"
-                        if name not in providers:
-                            providers.append(name)
-            except Exception:
-                pass
-
-        return providers
-
-    results = []
-
-    try:
-        with sync_playwright() as p:
-            browser = launch_kino_browser(p)
-
-            context = browser.new_context(
-                viewport={"width": 430, "height": 1600},
-                locale="ko-KR",
-                timezone_id="Asia/Seoul",
-                user_agent=(
-                    "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) "
-                    "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 "
-                    "Mobile/15E148 Safari/604.1"
-                ),
-            )
-
-            page = context.new_page()
-            page.set_default_timeout(12000)
-
-            # 검색 페이지 진입
-            page.goto("https://m.kinolights.com/search", wait_until="domcontentloaded", timeout=30000)
-            page.wait_for_timeout(1500)
-
-            # 검색어 입력
-            try:
-                page.get_by_placeholder("작품명, 배우, 감독 검색").fill(keyword, timeout=5000)
-            except Exception:
-                try:
-                    page.locator("input").first.fill(keyword, timeout=5000)
-                except Exception:
-                    context.close()
-                    browser.close()
-                    return []
-
-            page.wait_for_timeout(2500)
-
-            # 검색 결과 링크 수집
-            links = page.locator(
-                "a[href*='/season/'], a[href*='/title/'], a[href*='/movie/'], a[href*='/content/']"
-            )
-
-            raw_items = []
-            seen_urls = set()
-            count = min(links.count(), 12)
-
-            for i in range(count):
-                try:
-                    link = links.nth(i)
-                    href = normalize_url(link.get_attribute("href") or "")
-                    text = link.inner_text(timeout=3000)
-                    title = clean_title(text)
-
-                    if not href or not title:
-                        continue
-
-                    if href in seen_urls:
-                        continue
-
-                    # 검색어와 너무 무관한 링크 제외
-                    norm_keyword = keyword.replace(" ", "")
-                    norm_title = title.replace(" ", "")
-                    if norm_keyword not in norm_title and norm_title not in norm_keyword:
-                        # 완전 일치가 아니어도 검색 결과 후보일 수 있으니 너무 빡세게 막지는 않음
-                        pass
-
-                    seen_urls.add(href)
-
-                    raw_items.append({
-                        "title": title,
-                        "detail_url": href,
-                    })
-
-                except Exception:
-                    continue
-
-            # 검색 결과가 링크로 안 잡히면, 텍스트 클릭 방식 fallback
-            if not raw_items:
-                try:
-                    page.get_by_text(keyword, exact=False).first.click(force=True, timeout=5000)
-                    page.wait_for_timeout(2500)
-
-                    current_url = page.url
-                    if "/season/" in current_url or "/title/" in current_url or "/movie/" in current_url or "/content/" in current_url:
-                        raw_items.append({
-                            "title": keyword,
-                            "detail_url": current_url,
-                        })
-                except Exception:
-                    pass
-
-            # 상세 페이지 돌면서 제공처 추출
-            for item in raw_items[:6]:
-                try:
-                    detail = context.new_page()
-                    detail.goto(item["detail_url"], wait_until="domcontentloaded", timeout=30000)
-                    detail.wait_for_timeout(2000)
-
-                    providers = detect_providers_from_page(detail)
-
-                    body_text = ""
-                    try:
-                        body_text = detail.locator("body").inner_text(timeout=5000)
-                    except Exception:
-                        body_text = ""
-
-                    year = ""
-                    year_match = re.search(r"(19|20)\d{2}", body_text)
-                    if year_match:
-                        year = year_match.group(0)
-
-                    detail.close()
-
-                    results.append({
-                        "title": item["title"],
-                        "title_en": "",
-                        "open_year": year,
-                        "providers": providers,
-                        "detail_url": item["detail_url"],
-                    })
-
-                except Exception:
-                    continue
-
-            context.close()
-            browser.close()
-
-    except Exception as e:
-        st.error(f"키노라이츠 검색 오류: {e}")
-        return []
-
-    return results
-    
 def detect_ott_from_section(section):
     section = html.unescape(str(section))
 
@@ -1546,10 +1118,7 @@ def get_ott_providers_from_api(content_id):
             continue
 
     return all_providers
-
-
-
-
+        
 def set_release_provider(provider):
     st.session_state.selected_release_provider = provider
 
@@ -1793,12 +1362,24 @@ with tab2:
 
     keyword = st.text_input(
         "작품명을 입력하세요",
-        placeholder="예: 국가대표, 김부장, 멋진 신세계"
+        placeholder="예: 멋진 신세계"
     )
 
     if keyword:
-        with st.spinner("키노라이츠에서 검색 결과와 제공처를 확인 중..."):
-            enriched_results = search_kinolights_with_providers(keyword)
+        with st.spinner("키노라이츠에서 검색 및 정액제 제공처 확인 중..."):
+            results = search_contents(keyword)
+
+            enriched_results = []
+            for item in results[:5]:
+                content_id = item.get("id")
+                providers = get_ott_providers_from_api(content_id) if content_id else []
+
+                enriched_results.append({
+                    "title": item.get("titleKr") or "",
+                    "title_en": item.get("titleEn") or "",
+                    "open_year": item.get("openYear") or "",
+                    "providers": providers,
+                })
 
         if not enriched_results:
             st.warning("검색 결과 없음")
@@ -1807,11 +1388,10 @@ with tab2:
         st.markdown("### 검색 결과")
 
         for item in enriched_results:
-            title = html.escape(str(item.get("title", "")))
-            title_en = html.escape(str(item.get("title_en", "")))
-            open_year = html.escape(str(item.get("open_year", "")))
-            providers = item.get("providers", [])
-            detail_url = item.get("detail_url", "")
+            title = html.escape(str(item["title"]))
+            title_en = html.escape(str(item["title_en"]))
+            open_year = html.escape(str(item["open_year"]))
+            providers = item["providers"]
 
             meta_parts = []
             if title_en:
@@ -1829,10 +1409,6 @@ with tab2:
             else:
                 provider_html = '<span class="search-provider-empty">정액제 OTT 없음</span>'
 
-            link_html = ""
-            if detail_url:
-                link_html = f'<a href="{html.escape(detail_url)}" target="_blank" class="source-link">키노라이츠 상세 보기 ↗</a>'
-
             st.markdown(f"""
             <div class="side-card" style="margin-bottom:12px;">
                 <div class="search-title">{title}</div>
@@ -1840,6 +1416,5 @@ with tab2:
                 <div style="margin-top:10px;">
                     {provider_html}
                 </div>
-                {link_html}
             </div>
             """, unsafe_allow_html=True)

@@ -72,10 +72,7 @@ def is_bad_title(title):
     if re.fullmatch(r"\d+(\.\d+)?%?", title):
         return True
 
-    if re.fullmatch(r"\d+(\.\d+)?", title):
-        return True
-
-    if "리뷰" in title and len(title) <= 20:
+    if "리뷰" in title and len(title) <= 24:
         return True
 
     if title.startswith("▲") or title.startswith("▼"):
@@ -92,7 +89,6 @@ def extract_title(raw_text, image_alt=""):
 
     if alt:
         alt = alt.replace("포스터", "").replace("이미지", "").strip()
-
         if not is_bad_title(alt):
             return alt
 
@@ -136,7 +132,6 @@ def extract_meta(raw_text):
         if re.search(r"(19\d{2}|20\d{2})", line):
             year_match = re.search(r"(19\d{2}|20\d{2})", line)
             open_year = year_match.group(1) if year_match else ""
-
             parts = [x.strip() for x in re.split(r"[·/]", line) if x.strip()]
 
             if parts:
@@ -150,7 +145,7 @@ def extract_meta(raw_text):
     return media_type, genres, open_year
 
 
-def extract_delta(raw_text):
+def extract_dom_delta(raw_text):
     text = str(raw_text or "")
 
     if "NEW" in text:
@@ -180,7 +175,7 @@ def extract_providers_from_detail(url):
                     "Chrome/120.0 Safari/537.36"
                 )
             },
-            timeout=15,
+            timeout=10,
         )
 
         if res.status_code >= 400:
@@ -191,10 +186,8 @@ def extract_providers_from_detail(url):
         text = normalize_space(text)
 
         section = ""
-
         if "정액제" in text:
             section = text.split("정액제", 1)[1]
-
             for stop_word in [
                 "무료",
                 "대여",
@@ -212,12 +205,10 @@ def extract_providers_from_detail(url):
         for ott in OTT_NAMES:
             if section and ott in section:
                 found.append(ott)
-
             if f"{ott} 바로 보기" in text:
                 found.append(ott)
 
         result = []
-
         for ott in OTT_NAMES:
             if ott in found and ott not in result:
                 result.append(ott)
@@ -234,16 +225,13 @@ def collect_ranking_cards(page):
         () => {
             const rows = [];
             const seen = new Set();
-
             const anchors = Array.from(document.querySelectorAll('a[href]'));
 
             for (const a of anchors) {
                 const href = a.href || "";
                 const rawText = (a.innerText || "").trim();
-
                 const img = a.querySelector("img");
                 const imageAlt = img?.alt || "";
-
                 const looksLikeContent =
                     href.includes("/season/") ||
                     href.includes("/title/") ||
@@ -253,15 +241,10 @@ def collect_ranking_cards(page):
                 if (!looksLikeContent) continue;
 
                 const key = href + "|" + rawText.slice(0, 100) + "|" + imageAlt;
-
                 if (seen.has(key)) continue;
                 seen.add(key);
 
-                rows.push({
-                    href,
-                    rawText,
-                    imageAlt
-                });
+                rows.push({ href, rawText, imageAlt });
             }
 
             return rows;
@@ -270,11 +253,52 @@ def collect_ranking_cards(page):
     )
 
 
+def get_previous_rank_map(today):
+    if not OUTPUT_FILE.exists():
+        return {}
+
+    try:
+        old_df = pd.read_csv(OUTPUT_FILE)
+    except Exception:
+        return {}
+
+    if old_df.empty or "title" not in old_df.columns or "rank" not in old_df.columns or "date" not in old_df.columns:
+        return {}
+
+    old_df["date"] = old_df["date"].astype(str)
+    old_df["title"] = old_df["title"].fillna("").astype(str).str.strip()
+    old_df["rank"] = pd.to_numeric(old_df["rank"], errors="coerce")
+    old_df = old_df[old_df["date"] < today].copy()
+    old_df = old_df[~old_df["title"].apply(is_bad_title)].copy()
+    old_df = old_df[old_df["rank"].notna()].copy()
+
+    if old_df.empty:
+        return {}
+
+    if "period" in old_df.columns:
+        daily_df = old_df[old_df["period"].astype(str).str.strip() == "일간"].copy()
+        if not daily_df.empty:
+            old_df = daily_df
+
+    latest_prev_date = sorted(old_df["date"].unique(), reverse=True)[0]
+    prev_df = old_df[old_df["date"] == latest_prev_date].copy()
+
+    rank_map = {}
+    for _, row in prev_df.iterrows():
+        title = str(row.get("title", "")).strip()
+        if title and title not in rank_map:
+            rank_map[title] = int(row["rank"])
+
+    return rank_map
+
+
 def scrape():
     today = datetime.today().strftime("%Y-%m-%d")
+    prev_rank_map = get_previous_rank_map(today)
 
     rows = []
     debug_rows = []
+    provider_cache = {}
 
     with sync_playwright() as p:
         browser = p.chromium.launch(
@@ -291,12 +315,7 @@ def scrape():
             ),
         )
 
-        page.goto(
-            RANKING_URL,
-            wait_until="networkidle",
-            timeout=50000,
-        )
-
+        page.goto(RANKING_URL, wait_until="networkidle", timeout=50000)
         page.wait_for_timeout(2500)
 
         for _ in range(12):
@@ -304,7 +323,6 @@ def scrape():
             page.wait_for_timeout(700)
 
         cards = collect_ranking_cards(page)
-
         browser.close()
 
     rank = 1
@@ -324,16 +342,33 @@ def scrape():
             continue
 
         seen_titles.add(title)
-
         media_type, genres, open_year = extract_meta(raw_text)
-        delta, is_new = extract_delta(raw_text)
+        dom_delta, dom_is_new = extract_dom_delta(raw_text)
+
+        prev_rank = prev_rank_map.get(title)
+        if prev_rank is None:
+            delta = 0
+            is_new = True
+        else:
+            delta = prev_rank - rank
+            is_new = False
+
+        if delta == 0 and dom_delta != 0:
+            delta = dom_delta
+
+        if dom_is_new:
+            is_new = True
 
         url = urljoin(RANKING_URL, href)
-        providers = extract_providers_from_detail(url)
+        if url in provider_cache:
+            providers = provider_cache[url]
+        else:
+            providers = extract_providers_from_detail(url)
+            provider_cache[url] = providers
 
         rows.append({
             "date": today,
-            "period": "주간",
+            "period": "일간",
             "rank": rank,
             "title": title,
             "delta": delta,
@@ -346,16 +381,17 @@ def scrape():
 
         debug_rows.append({
             "date": today,
-            "period": "주간",
+            "period": "일간",
             "rank": rank,
             "title": title,
             "url": url,
+            "delta": delta,
+            "is_new": is_new,
             "providers": providers,
             "raw_text": raw_text,
         })
 
         rank += 1
-
         if rank > 100:
             break
 
@@ -366,13 +402,9 @@ def scrape():
 
     if OUTPUT_FILE.exists():
         old_df = pd.read_csv(OUTPUT_FILE)
-
         if not old_df.empty and "date" in old_df.columns:
             old_df["date"] = old_df["date"].astype(str)
-
-            # 오늘자 깨진 데이터 전부 제거
             old_df = old_df[old_df["date"] != today].copy()
-
             final_df = pd.concat([old_df, new_df], ignore_index=True)
         else:
             final_df = new_df
@@ -389,18 +421,10 @@ def scrape():
         ascending=[True, True, True],
     )
 
-    final_df.to_csv(
-        OUTPUT_FILE,
-        index=False,
-        encoding="utf-8-sig",
-    )
+    final_df.to_csv(OUTPUT_FILE, index=False, encoding="utf-8-sig")
 
     debug_df = pd.DataFrame(debug_rows)
-    debug_df.to_csv(
-        DEBUG_PROVIDER_FILE,
-        index=False,
-        encoding="utf-8-sig",
-    )
+    debug_df.to_csv(DEBUG_PROVIDER_FILE, index=False, encoding="utf-8-sig")
 
     print("ranking rows:", len(new_df))
     print(new_df.head(30).to_string(index=False))
